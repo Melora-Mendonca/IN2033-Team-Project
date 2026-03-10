@@ -104,7 +104,7 @@ public class LoginForm extends JFrame{
 
 
     public static void main(String[] a){
-        // Launch the book editor form
+        // Launch the login form
         SwingUtilities.invokeLater(new Runnable() {
             public void run() {
                 LoginForm loginForm = new LoginForm();
