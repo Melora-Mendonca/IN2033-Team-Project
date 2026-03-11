@@ -228,7 +228,7 @@ public class LoginForm extends JFrame{
         LoginPanel.add(loginBtn);
         LoginPanel.add(Box.createVerticalStrut(8));
 
-        // Sets the frame to be visible
+        // Sets the frame to be visible when running
         setVisible(true);
     }
 }
