@@ -3,6 +3,7 @@ package IPOS.SA.ACC;
 import javax.swing.*;
 import java.awt.*;
 
+// A public class that builds and manages the GUI for the login form - setting the buttons, logos and labels associated with the form.
 public class LoginForm extends JFrame{
     private JPanel MainPanel;
     private JPanel HeaderPanel;
@@ -28,52 +29,58 @@ public class LoginForm extends JFrame{
     private String selectedRole = "Administrator";
 
     public LoginForm() {
-        // Create the Frame
+        // Creates the Frame and gives it a title
         setTitle("Login Form");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setContentPane(MainPanel);
         pack();
-        // Set the frame location to the center of the screen
+        // Sets the frame location to the center of the screen
         setLocationRelativeTo(null);
 
         // HEADER:
-        // Header panel
+        // Sets the layout and size of the header panel, so other components within the panel can be correctly aligned
         HeaderPanel.setLayout(new FlowLayout(FlowLayout.LEFT, 24, 0));
-        HeaderPanel.setBackground(new Color(14, 37, 48));
         HeaderPanel.setPreferredSize(new Dimension(1000, 54));
+        // Gives the panel a colour for the background
+        HeaderPanel.setBackground(new Color(14, 37, 48));
 
+        // A new JLabel is created to store a logo image for the header, places next to the title
         ImageIcon Icon = new ImageIcon(new ImageIcon("data/Logo.png")
                 .getImage().getScaledInstance(70, 50, Image.SCALE_SMOOTH));
         headerIcon = new JLabel(Icon);
 
+        // A label is created to name the system with the font colour and style set
         headerLabel = new JLabel("InfoPharma Ordering System");
         headerLabel.setForeground(Color.WHITE);
         headerLabel.setFont(new Font("Segoe UI", Font.BOLD, 14));
 
-        // Vertically centre both in the header
+        // Vertically centres both in the header
         headerIcon.setAlignmentY(Component.CENTER_ALIGNMENT);
         headerLabel.setAlignmentY(Component.CENTER_ALIGNMENT);
 
+        // Adds the Icon and the label to the header panel in their set positions
         HeaderPanel.add(headerIcon);
         HeaderPanel.add(headerLabel);
 
         //LOGO PANEL
+        // Sets the layout and background of the logo panel, so other components within the panel can be correctly aligned
         LogoPanel.setLayout(new BoxLayout(LogoPanel, BoxLayout.Y_AXIS));
         LogoPanel.setBackground(new Color(14, 37, 48));
+        // A border is set for the panel so that content does not overflow to the login panel
         LogoPanel.setBorder(BorderFactory.createEmptyBorder(30, 30, 30, 30));
 
-        // Logo — centred
+        // A new JLabel is created to store a logo image, and is centered to look more professional
         ImageIcon logoIcon = new ImageIcon(new ImageIcon("data/Logo.png")
                 .getImage().getScaledInstance(120, 100, Image.SCALE_SMOOTH));
         logoImg = new JLabel(logoIcon);
         logoImg.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        // Divider line
+        // Creates Divider line separating the logo and label from the list of features.
         divider = new JSeparator();
-        divider.setForeground(Color.WHITE);
+        divider.setForeground(Color.WHITE); // Sets a colour for the divider, with a size for the divider thickness.
         divider.setMaximumSize(new Dimension(Integer.MAX_VALUE, 1));
 
-        // Company name
+        // Creates a two line label to display the company name with a professional font style, and alignment. Colour is based on the decided IPOS colour palate
         LabelLine1 = new JLabel("InfoPharma");
         LabelLine1.setFont(new Font("Segoe UI", Font.BOLD, 20));
         LabelLine1.setForeground(Color.WHITE);
@@ -84,7 +91,7 @@ public class LoginForm extends JFrame{
         LabelLine2.setForeground(Color.WHITE);
         LabelLine2.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        // Feature list - Could be removed if not needed
+        // Features list - Could be removed if not needed
         String[] features = {
                 "  Catalogue management",
                 "  Order processing",
@@ -93,8 +100,9 @@ public class LoginForm extends JFrame{
                 "  Reports & analytics"
         };
 
+        // The following lines all add the designed components to the Logo panel in the correct positions with accurate alignment and spacing
         LogoPanel.add(logoImg);
-        LogoPanel.add(Box.createVerticalStrut(20));
+        LogoPanel.add(Box.createVerticalStrut(20)); // The following line creates invisible boxes of set heights to force certain gaps between components
         LogoPanel.add(LabelLine1);
         LogoPanel.add(LabelLine2);
         LogoPanel.add(Box.createVerticalStrut(6));
@@ -102,7 +110,7 @@ public class LoginForm extends JFrame{
         LogoPanel.add(divider);
         LogoPanel.add(Box.createVerticalStrut(16));
 
-        // Displays features - Could be removed if not needed
+        // Displays the list of features - Could be removed if not needed
         for (String f : features) {
             featureList = new JLabel("● " + f);
             featureList.setFont(new Font("Arial", Font.PLAIN, 11));
@@ -113,15 +121,19 @@ public class LoginForm extends JFrame{
         }
 
         // LOGIN PANEL
+        // Sets the layout and background of the login panel, so other components within the panel can be correctly aligned
         LoginPanel.setLayout(new BoxLayout(LoginPanel, BoxLayout.Y_AXIS));
         LoginPanel.setBackground(new Color(245, 247, 250));
+        // A border is set for the panel so that content does not overflow out of the login panel
         LoginPanel.setBorder(BorderFactory.createEmptyBorder(30, 44, 30, 44));
 
-        // Role buttons
+        // Creates a panel to store all the user role buttons
         roleRow = new JPanel(new FlowLayout(FlowLayout.CENTER, 8, 0));
         roleRow.setOpaque(false);
         roleRow.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
 
+        // Creates a group of buttons that when clicked, will display the login form for that user, and will assist in directing the user, once they are fully logged in.
+        // Standard professional font and colours are used for the buttons, with borders and colour changing when clicked.
         ButtonGroup group = new ButtonGroup();
         String[] roles = {"Administrator", "Manager", "Staff"};
         for (String role : roles) {
@@ -137,6 +149,7 @@ public class LoginForm extends JFrame{
             group.add(tb);
             roleRow.add(tb);
 
+            // Action listener updates the signin text to the appropriate user role for consistency
             tb.addActionListener(e -> {
                 subtitleLb1.setText("Sign in as " + role);
                 subtitleLb1.setFont(new Font("Segoe UI", Font.PLAIN, 12));
@@ -146,13 +159,19 @@ public class LoginForm extends JFrame{
             });
         }
 
-        // Title
+        //  Sets the Title label for the login panel
         titleLbl = new JLabel("Welcome back");
         titleLbl.setFont(new Font("Segoe UI", Font.BOLD, 22));
         titleLbl.setForeground(new Color(17, 24, 39));
-        //titleLbl.setAlignmentX(Component.LEFT_ALIGNMENT);
+        titleLbl.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        // Username
+        // Adds a subtitle to inform the user of what the current role is set to
+        subtitleLb1 = new JLabel("Sign in as Administrator");
+        subtitleLb1.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        subtitleLb1.setForeground(new Color(107, 114, 128));
+        //subtitleLb1.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        // Sets the Username label and the corresponding text entry field
         userLbl = new JLabel("USERNAME");
         userLbl.setFont(new Font("Segoe UI", Font.BOLD, 10));
         userLbl.setForeground(new Color(55, 65, 81));
@@ -166,16 +185,11 @@ public class LoginForm extends JFrame{
                 BorderFactory.createEmptyBorder(0, 12, 0, 12)
         ));
 
-        // Password
+        // Sets the Password label with a corresponding password field, that hides the text being entered for privacy.
         passLbl = new JLabel("PASSWORD");
         passLbl.setFont(new Font("Segoe UI", Font.BOLD, 10));
         passLbl.setForeground(new Color(55, 65, 81));
         passLbl.setAlignmentX(Component.LEFT_ALIGNMENT);
-
-        subtitleLb1 = new JLabel("Signing in as Administrator");
-        subtitleLb1.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        subtitleLb1.setForeground(new Color(107, 114, 128));
-        subtitleLb1.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         passField = new JPasswordField();
         passField.setFont(new Font("Segoe UI", Font.PLAIN, 13));
@@ -185,7 +199,7 @@ public class LoginForm extends JFrame{
                 BorderFactory.createEmptyBorder(0, 12, 0, 12)
         ));
 
-// Login button
+        // Creates a Login button that directs the user to the appropriate landing page upon logging in
         loginBtn = new JButton("Sign In");
         loginBtn.setFont(new Font("Segoe UI", Font.BOLD, 13));
         loginBtn.setBackground(new Color(17, 24, 39));
@@ -195,7 +209,8 @@ public class LoginForm extends JFrame{
         loginBtn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
         loginBtn.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-// Add everything to right panel
+        // Add all components to login panel at the set locations and with accurate alignment.
+        // Invisible components are used again for formatting and professional appearance
         LoginPanel.add(roleRow);
         LoginPanel.add(Box.createVerticalStrut(24));
         LoginPanel.add(titleLbl);
@@ -213,7 +228,7 @@ public class LoginForm extends JFrame{
         LoginPanel.add(loginBtn);
         LoginPanel.add(Box.createVerticalStrut(8));
 
-        // Set the frame visible
+        // Sets the frame to be visible
         setVisible(true);
     }
 }
