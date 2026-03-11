@@ -6,6 +6,20 @@ import java.awt.*;
 public class LoginForm extends JFrame{
     private JPanel MainPanel;
     private JPanel HeaderPanel;
+    private JLabel headerIcon;
+    private JLabel headerLabel;
+    private JLabel logoImg;
+    private JSeparator divider;
+    private JLabel LabelLine1;
+    private JLabel LabelLine2;
+    private JLabel featureList;
+    private JPanel roleRow;
+    private JLabel titleLbl;
+    private JLabel userLbl;
+    private JTextField userField;
+    private JLabel passLbl;
+    private JPasswordField passField;
+    private JButton loginBtn;
     private JPanel ContentPanel;
     private JPanel LogoPanel;
     private JPanel FooterPanel;
@@ -30,9 +44,9 @@ public class LoginForm extends JFrame{
 
         ImageIcon Icon = new ImageIcon(new ImageIcon("data/Logo.png")
                 .getImage().getScaledInstance(70, 50, Image.SCALE_SMOOTH));
-        JLabel headerIcon = new JLabel(Icon);
+        headerIcon = new JLabel(Icon);
 
-        JLabel headerLabel = new JLabel("InfoPharma Ordering System");
+        headerLabel = new JLabel("InfoPharma Ordering System");
         headerLabel.setForeground(Color.WHITE);
         headerLabel.setFont(new Font("Segoe UI", Font.BOLD, 14));
 
@@ -51,21 +65,21 @@ public class LoginForm extends JFrame{
         // Logo — centred
         ImageIcon logoIcon = new ImageIcon(new ImageIcon("data/Logo.png")
                 .getImage().getScaledInstance(120, 100, Image.SCALE_SMOOTH));
-        JLabel logoImg = new JLabel(logoIcon);
+        logoImg = new JLabel(logoIcon);
         logoImg.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         // Divider line
-        JSeparator divider = new JSeparator();
+        divider = new JSeparator();
         divider.setForeground(Color.WHITE);
         divider.setMaximumSize(new Dimension(Integer.MAX_VALUE, 1));
 
         // Company name
-        JLabel LabelLine1 = new JLabel("InfoPharma");
+        LabelLine1 = new JLabel("InfoPharma");
         LabelLine1.setFont(new Font("Segoe UI", Font.BOLD, 20));
         LabelLine1.setForeground(Color.WHITE);
         LabelLine1.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        JLabel LabelLine2 = new JLabel("Server Portal");
+        LabelLine2 = new JLabel("Server Portal");
         LabelLine2.setFont(new Font("Segoe UI", Font.BOLD, 20));
         LabelLine2.setForeground(Color.WHITE);
         LabelLine2.setAlignmentX(Component.CENTER_ALIGNMENT);
@@ -90,11 +104,11 @@ public class LoginForm extends JFrame{
 
         // Displays features - Could be removed if not needed
         for (String f : features) {
-            JLabel fl = new JLabel("● " + f);
-            fl.setFont(new Font("Arial", Font.PLAIN, 11));
-            fl.setForeground(new Color(179, 226, 255));
-            fl.setAlignmentX(Component.CENTER_ALIGNMENT);
-            LogoPanel.add(fl);
+            featureList = new JLabel("● " + f);
+            featureList.setFont(new Font("Arial", Font.PLAIN, 11));
+            featureList.setForeground(new Color(179, 226, 255));
+            featureList.setAlignmentX(Component.CENTER_ALIGNMENT);
+            LogoPanel.add(featureList);
             LogoPanel.add(Box.createVerticalStrut(8));
         }
 
@@ -104,7 +118,7 @@ public class LoginForm extends JFrame{
         LoginPanel.setBorder(BorderFactory.createEmptyBorder(30, 44, 30, 44));
 
         // Role buttons
-        JPanel roleRow = new JPanel(new FlowLayout(FlowLayout.CENTER, 8, 0));
+        roleRow = new JPanel(new FlowLayout(FlowLayout.CENTER, 8, 0));
         roleRow.setOpaque(false);
         roleRow.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
 
@@ -133,18 +147,18 @@ public class LoginForm extends JFrame{
         }
 
         // Title
-        JLabel titleLbl = new JLabel("Welcome back");
+        titleLbl = new JLabel("Welcome back");
         titleLbl.setFont(new Font("Segoe UI", Font.BOLD, 22));
         titleLbl.setForeground(new Color(17, 24, 39));
         //titleLbl.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         // Username
-        JLabel userLbl = new JLabel("USERNAME");
+        userLbl = new JLabel("USERNAME");
         userLbl.setFont(new Font("Segoe UI", Font.BOLD, 10));
         userLbl.setForeground(new Color(55, 65, 81));
         userLbl.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        JTextField userField = new JTextField();
+        userField = new JTextField();
         userField.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         userField.setMaximumSize(new Dimension(Integer.MAX_VALUE, 38));
         userField.setBorder(BorderFactory.createCompoundBorder(
@@ -153,7 +167,7 @@ public class LoginForm extends JFrame{
         ));
 
         // Password
-        JLabel passLbl = new JLabel("PASSWORD");
+        passLbl = new JLabel("PASSWORD");
         passLbl.setFont(new Font("Segoe UI", Font.BOLD, 10));
         passLbl.setForeground(new Color(55, 65, 81));
         passLbl.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -163,7 +177,7 @@ public class LoginForm extends JFrame{
         subtitleLb1.setForeground(new Color(107, 114, 128));
         subtitleLb1.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        JPasswordField passField = new JPasswordField();
+        passField = new JPasswordField();
         passField.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         passField.setMaximumSize(new Dimension(Integer.MAX_VALUE, 38));
         passField.setBorder(BorderFactory.createCompoundBorder(
@@ -172,7 +186,7 @@ public class LoginForm extends JFrame{
         ));
 
 // Login button
-        JButton loginBtn = new JButton("Sign In");
+        loginBtn = new JButton("Sign In");
         loginBtn.setFont(new Font("Segoe UI", Font.BOLD, 13));
         loginBtn.setBackground(new Color(17, 24, 39));
         loginBtn.setForeground(Color.WHITE);
@@ -180,12 +194,6 @@ public class LoginForm extends JFrame{
         loginBtn.setBorderPainted(false);
         loginBtn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
         loginBtn.setAlignmentX(Component.LEFT_ALIGNMENT);
-
-// Status
-        JLabel statusLbl = new JLabel(" ");
-        statusLbl.setFont(new Font("Segoe UI", Font.PLAIN, 11));
-        statusLbl.setForeground(new Color(218, 30, 40));
-        statusLbl.setAlignmentX(Component.LEFT_ALIGNMENT);
 
 // Add everything to right panel
         LoginPanel.add(roleRow);
@@ -204,10 +212,8 @@ public class LoginForm extends JFrame{
         LoginPanel.add(Box.createVerticalStrut(20));
         LoginPanel.add(loginBtn);
         LoginPanel.add(Box.createVerticalStrut(8));
-        LoginPanel.add(statusLbl);
 
         // Set the frame visible
         setVisible(true);
-
     }
 }
