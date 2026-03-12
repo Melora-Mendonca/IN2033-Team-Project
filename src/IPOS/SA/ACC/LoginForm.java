@@ -2,6 +2,7 @@ package IPOS.SA.ACC;
 
 import javax.swing.*;
 import java.awt.*;
+import IPOS.SA.ACC.AdminDashboard;
 
 // A public class that builds and manages the GUI for the login form - setting the buttons, logos and labels associated with the form.
 public class LoginForm extends JFrame{
@@ -26,6 +27,7 @@ public class LoginForm extends JFrame{
     private JPanel FooterPanel;
     private JPanel LoginPanel;
     private JLabel subtitleLb1;
+    private JLabel statusLbl;
     private String selectedRole = "Administrator";
 
     public LoginForm() {
@@ -149,7 +151,7 @@ public class LoginForm extends JFrame{
             group.add(tb);
             roleRow.add(tb);
 
-            // Action listener updates the signin text to the appropriate user role for consistency
+            // Action listener updates the sign-in text to the appropriate user role for consistency
             tb.addActionListener(e -> {
                 subtitleLb1.setText("Sign in as " + role);
                 subtitleLb1.setFont(new Font("Segoe UI", Font.PLAIN, 12));
@@ -209,6 +211,20 @@ public class LoginForm extends JFrame{
         loginBtn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
         loginBtn.setAlignmentX(Component.LEFT_ALIGNMENT);
 
+        statusLbl = new JLabel("");
+        statusLbl.setFont(new Font("Segoe UI", Font.PLAIN, 11));
+        statusLbl.setForeground(new Color(218, 30, 40));
+        statusLbl.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        loginBtn.addActionListener(e -> {
+            String username = userField.getText();
+            String password = new String(passField.getPassword());
+
+            //dispose();
+            AdminDashboard adminDashboard = new AdminDashboard();
+            adminDashboard.setVisible(true);
+        });
+
         // Add all components to login panel at the set locations and with accurate alignment.
         // Invisible components are used again for formatting and professional appearance
         LoginPanel.add(roleRow);
@@ -227,6 +243,7 @@ public class LoginForm extends JFrame{
         LoginPanel.add(Box.createVerticalStrut(20));
         LoginPanel.add(loginBtn);
         LoginPanel.add(Box.createVerticalStrut(8));
+        LoginPanel.add(statusLbl);
 
         // Sets the frame to be visible when running
         setVisible(true);
