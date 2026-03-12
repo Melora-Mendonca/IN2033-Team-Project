@@ -35,7 +35,7 @@ public class LoginForm extends JFrame{
         setTitle("Login Form");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setContentPane(MainPanel);
-        pack();
+        setExtendedState(JFrame.MAXIMIZED_BOTH);
         // Sets the frame location to the center of the screen
         setLocationRelativeTo(null);
 

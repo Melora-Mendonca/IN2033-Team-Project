@@ -3,65 +3,116 @@ package IPOS.SA.ACC;
 import javax.swing.*;
 import java.awt.*;
 
-public class AdminDashboard extends JFrame{
+public class AdminDashboard extends JFrame {
     private JPanel MainPanel;
     private JPanel ContentPanel;
     private JPanel HeaderPanel;
     private JPanel NavPanel;
     private JPanel FooterPanel;
     private JPanel CardsPanel;
+    private JLabel headerLabel;
+    private JLabel headerIcon;
+    private JLabel headerSubTitle;
+    private JButton logoutBtn;
 
     public AdminDashboard() {
         setTitle("Admin Dashboard");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setContentPane(MainPanel);
-        pack();
+        // Sets the form size to the size of the display
+        setExtendedState(JFrame.MAXIMIZED_BOTH);
         // Sets the frame location to the center of the screen
         setLocationRelativeTo(null);
         // Sets the frame to be visible when running
         setVisible(true);
 
-        // CardsPanel sits at the top of ContentPanel, 3 equal columns
-        CardsPanel.setLayout(new GridLayout(1, 3, 16, 0));
-        CardsPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 80));
-
-        // Add the three stat cards
-        CardsPanel.add(buildCard("Total Orders", "0", "Orders this month",
-                new Color(17, 24, 39), Color.WHITE));
-        CardsPanel.add(buildCard("Low Stock Items", "0", "Below minimum level",
-                new Color(255, 248, 230), new Color(133, 100, 4)));
-        CardsPanel.add(buildCard("Stock Deliveries", "0", "This month",
-                new Color(245, 247, 250), new Color(17, 24, 39)));
+        // HEADER:
+        createHeaderPanel();
+        createNavPanel();
     }
 
-    private JPanel buildCard(String title, String value, String subtitle,
-                             Color bg, Color titleFg) {
-        JPanel card = new JPanel();
-        card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
-        card.setBackground(bg);
-        card.setBorder(BorderFactory.createEmptyBorder(24, 24, 24, 24));
+    private void createHeaderPanel() {
+        HeaderPanel.setLayout(new BoxLayout(HeaderPanel, BoxLayout.X_AXIS));
+        HeaderPanel.setPreferredSize(new Dimension(1000, 54));
+        HeaderPanel.setBackground(new Color(240, 252, 255));
+        HeaderPanel.setBorder(BorderFactory.createEmptyBorder(0, 24, 0, 24));
 
-        JLabel titleLbl = new JLabel(title);
-        titleLbl.setFont(new Font("Segoe UI", Font.BOLD, 13));
-        titleLbl.setForeground(titleFg);
-        titleLbl.setAlignmentX(Component.LEFT_ALIGNMENT);
+        // Logo icon
+        ImageIcon Icon = new ImageIcon(new ImageIcon("data/Logo.png")
+                .getImage().getScaledInstance(70, 50, Image.SCALE_SMOOTH));
+        headerIcon = new JLabel(Icon);
 
-        JLabel valueLbl = new JLabel(value);
-        valueLbl.setFont(new Font("Segoe UI", Font.BOLD, 32));
-        valueLbl.setForeground(titleFg);
-        valueLbl.setAlignmentX(Component.LEFT_ALIGNMENT);
+        // Nested panel stacks title and subtitle vertically
+        JPanel textPanel = new JPanel();
+        textPanel.setLayout(new BoxLayout(textPanel, BoxLayout.Y_AXIS));
+        textPanel.setOpaque(false);
 
-        JLabel subLbl = new JLabel(subtitle);
-        subLbl.setFont(new Font("Segoe UI", Font.PLAIN, 11));
-        subLbl.setAlignmentX(Component.LEFT_ALIGNMENT);
+        // Creates a Label beside the logo, with the user's name
+        headerLabel = new JLabel("Welcome back, USERNAME");
+        headerLabel.setForeground(Color.BLACK);
+        headerLabel.setFont(new Font("Segoe UI", Font.BOLD, 18));
 
-        card.add(titleLbl);
-        card.add(Box.createVerticalStrut(10));
-        card.add(valueLbl);
-        card.add(Box.createVerticalStrut(4));
-        card.add(subLbl);
+        // Adds a smaller subtitle below the username to show the role
+        headerSubTitle = new JLabel("Administrator");
+        headerSubTitle.setForeground(new Color(107, 114, 128));
+        headerSubTitle.setFont(new Font("Segoe UI", Font.PLAIN, 12));
 
-        return card;
+        // Adds both labels to the inner panel, one under the other.
+        textPanel.add(headerLabel);
+        textPanel.add(headerSubTitle);
+
+        // X_AXIS puts icon and textPanel side by side
+        HeaderPanel.add(headerIcon);
+        HeaderPanel.add(Box.createHorizontalStrut(12));
+        HeaderPanel.add(textPanel);
     }
 
+    private void createNavPanel() {
+        NavPanel.setLayout(new BoxLayout(NavPanel, BoxLayout.Y_AXIS));
+        NavPanel.setBackground(new Color(14, 37, 48));
+        NavPanel.setBorder(BorderFactory.createEmptyBorder(20, 16, 20, 16));
+
+        // Nav buttons — Overview is active by default
+        String[] navItems = {"Overview", "Catalogue", "Orders", "Merchants", "Staff Accounts", "Reports", "Settings"};
+        for (String item : navItems) {
+            NavPanel.add(buildNavButton(item, item.equals("Overview")));
+            NavPanel.add(Box.createVerticalStrut(4));
+        }
+
+        // Pushes logout to the bottom
+        NavPanel.add(Box.createVerticalGlue());
+
+        // Logout button
+        logoutBtn = new JButton("→  Log out");
+        logoutBtn.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        logoutBtn.setForeground(new Color(200, 80, 80));
+        logoutBtn.setBackground(new Color(14, 37, 48));
+        logoutBtn.setBorderPainted(false);
+        logoutBtn.setFocusPainted(false);
+        logoutBtn.setAlignmentX(Component.LEFT_ALIGNMENT);
+        logoutBtn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 36));
+        logoutBtn.setHorizontalAlignment(SwingConstants.LEFT);
+        logoutBtn.addActionListener(e -> handleLogout());
+
+        NavPanel.add(logoutBtn);
+    }
+
+    private JButton buildNavButton(String label, boolean active) {
+        JButton btn = new JButton(label);
+        btn.setFont(new Font("Segoe UI", active ? Font.BOLD : Font.PLAIN, 13));
+        btn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 36));
+        btn.setAlignmentX(Component.LEFT_ALIGNMENT);
+        btn.setHorizontalAlignment(SwingConstants.LEFT);
+        btn.setFocusPainted(false);
+        btn.setBorderPainted(false);
+        btn.setBackground(active ? new Color(30, 70, 90) : new Color(14, 37, 48));
+        btn.setForeground(active ? Color.WHITE : new Color(160, 190, 210));
+        return btn;
+    }
+
+    private void handleLogout() {
+        dispose();
+        new LoginForm();
+    }
 }
+
