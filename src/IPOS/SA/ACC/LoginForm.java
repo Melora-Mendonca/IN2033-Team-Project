@@ -3,6 +3,8 @@ package IPOS.SA.ACC;
 import javax.swing.*;
 import java.awt.*;
 import IPOS.SA.ACC.AdminDashboard;
+import IPOS.SA.ACC.LoginDBConnector;
+import IPOS.SA.ACC.User;
 
 // A public class that builds and manages the GUI for the login form - setting the buttons, logos and labels associated with the form.
 public class LoginForm extends JFrame{
@@ -161,7 +163,7 @@ public class LoginForm extends JFrame{
         // Creates a group of buttons that when clicked, will display the login form for that user, and will assist in directing the user, once they are fully logged in.
         // Standard professional font and colours are used for the buttons, with borders and colour changing when clicked.
         ButtonGroup group = new ButtonGroup();
-        String[] roles = {"Administrator", "Manager", "Staff"};
+        String[] roles = {"administrator", "manager", "staff"};
         for (String role : roles) {
             JToggleButton tb = new JToggleButton(role);
             tb.setFont(new Font("Segoe UI", Font.PLAIN, 12));
@@ -268,9 +270,36 @@ public class LoginForm extends JFrame{
             String username = userField.getText();
             String password = new String(passField.getPassword());
 
-            dispose();
-            AdminDashboard adminDashboard = new AdminDashboard();
-            adminDashboard.setVisible(true);
+            if (username.isEmpty() || password.isEmpty()){
+                statusLbl.setText("Sign In Failed, please enter your username and password.");
+                return;
+            }
+
+            LoginDBConnector connector = new LoginDBConnector();
+            System.out.println("Selected role: " + selectedRole);
+            System.out.println("Username: " + username);
+            System.out.println("Password: " + password);
+            User user = connector.authenticate(username, password, selectedRole);
+
+            if (user != null) {
+                dispose();
+                switch (user.getRole()) {
+                    case "administrator":
+                        AdminDashboard adminDashboard = new AdminDashboard(user.getFullName());
+                        adminDashboard.setVisible(true);
+                        break;
+                    case "manager":
+                        ManagerDashboard managerDashboard = new ManagerDashboard(user.getFullName());
+                        managerDashboard.setVisible(true);
+                        break;
+                    case "staff":
+                        StaffDashboard staffDashboard = new StaffDashboard(user.getFullName());
+                        staffDashboard.setVisible(true);
+                        break;
+                }
+            } else {
+                statusLbl.setText("Invalid username, password or role.");
+            }
         });
     }
 }

@@ -1,6 +1,7 @@
 package IPOS.SA;
 
 import IPOS.SA.ACC.LoginForm;
+import IPOS.SA.DB.DBConnection;
 
 import javax.swing.SwingUtilities;
 
@@ -11,6 +12,8 @@ public class Main {
             public void run() {
                 LoginForm loginForm = new LoginForm();
                 loginForm.setVisible(true);
+
+                DBConnection db = new DBConnection();
             }
         });
     }

@@ -4,6 +4,7 @@ import javax.swing.*;
 import java.awt.*;
 
 public class AdminDashboard extends JFrame {
+    private String fullname;
     private JPanel MainPanel;
     private JPanel ContentPanel;
     private JPanel HeaderPanel;
@@ -26,7 +27,9 @@ public class AdminDashboard extends JFrame {
     private JButton logoutBtn;
     private JSeparator divider;
 
-    public AdminDashboard() {
+
+    public AdminDashboard(String fullname) {
+        this.fullname = fullname;
         setTitle("Admin Dashboard");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setContentPane(MainPanel);
@@ -57,7 +60,7 @@ public class AdminDashboard extends JFrame {
         textPanel.setOpaque(false);
 
         // Creates a Label beside the logo, with the user's name
-        headerLabel = new JLabel("Welcome back, USERNAME");
+        headerLabel = new JLabel("Welcome back, " + fullname);
         headerLabel.setForeground(Color.BLACK);
         headerLabel.setFont(new Font("Segoe UI", Font.BOLD, 18));
 
