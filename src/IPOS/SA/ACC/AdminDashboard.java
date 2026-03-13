@@ -97,6 +97,7 @@ public class AdminDashboard extends JFrame {
             NavPanel.add(Box.createVerticalStrut(4));
         }
 
+
         // Creates Divider line separating the logo and label from the list of features.
         divider = new JSeparator();
         divider.setForeground(Color.WHITE); // Sets a colour for the divider, with a size for the divider thickness.
@@ -107,7 +108,7 @@ public class AdminDashboard extends JFrame {
         NavPanel.add(Box.createVerticalGlue());
 
         // Logout button
-        logoutBtn = new JButton("→  Log out");
+        logoutBtn = new JButton("[]→ Log out");
         logoutBtn.setFont(new Font("Segoe UI", Font.BOLD, 13));
         logoutBtn.setForeground(new Color(200, 80, 80));
         logoutBtn.setBackground(new Color(14, 37, 48));

@@ -16,6 +16,7 @@ public class StaffDashboard extends JFrame {
     private JLabel navIcon;
     private JButton logoutBtn;
     private JSeparator divider;
+    private JPanel tableWrapper;
 
     public StaffDashboard(String fullname) {
         this.fullname = fullname;
@@ -31,6 +32,7 @@ public class StaffDashboard extends JFrame {
 
         // HEADER:
         createHeaderPanel();
+        createNavPanel();
     }
 
     private void createHeaderPanel() {
@@ -76,7 +78,7 @@ public class StaffDashboard extends JFrame {
         NavPanel.add(navIcon);
 
         // generates Navigation buttons — Overview is active by default
-        String[] navItems = {"Overview", "Catalogue", "Orders", "Stock", "Payments", "Settings"};
+        String[] navItems = {"Overview", "Orders", "Finance", "Settings"};
         for (String item : navItems) {
             NavPanel.add(buildNavButton(item, item.equals("Overview")));
             NavPanel.add(Box.createVerticalStrut(4));
@@ -92,7 +94,7 @@ public class StaffDashboard extends JFrame {
         NavPanel.add(Box.createVerticalGlue());
 
         // Logout button
-        logoutBtn = new JButton("→  Log out");
+        logoutBtn = new JButton("[]→ Log out");
         logoutBtn.setFont(new Font("Segoe UI", Font.BOLD, 13));
         logoutBtn.setForeground(new Color(200, 80, 80));
         logoutBtn.setBackground(new Color(14, 37, 48));
