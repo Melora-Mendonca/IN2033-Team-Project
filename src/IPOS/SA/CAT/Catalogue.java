@@ -1,4 +1,4 @@
-package IPOS.SA.ACC;
+package IPOS.SA.CAT;
 
 public class Catalogue {
 }
