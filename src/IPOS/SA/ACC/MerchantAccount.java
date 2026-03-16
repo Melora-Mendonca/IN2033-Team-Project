@@ -38,54 +38,71 @@ public class MerchantAccount {
     public String getMerchantId() {
         return merchantId;
     }
+
     public String getBusinessName() {
         return businessName;
     }
+
     public String getEmail() {
         return email;
     }
+
     public String getPhone() {
         return phone;
     }
+
     public String getAddress() {
         return address;
     }
+
     public double getCreditLimit() {
         return creditLimit;
     }
+
     public double getOutstandingBalance() {
         return outstandingBalance;
     }
+
     public DiscountPlan getDiscountPlan() {
         return discountPlan;
     }
+
     public AccountStatus getStatus() {
         return status;
     }
+
     public LocalDate getLastPaymentDate() {
         return lastPaymentDate;
     }
+
     public void setBusinessName(String businessName) {
         this.businessName = businessName;
     }
+
     public void setEmail(String email) {
         this.email = email;
     }
+
     public void setPhone(String phone) {
         this.phone = phone;
     }
+
     public void setAddress(String address) {
         this.address = address;
     }
+
     public void setCreditLimit(double creditLimit) {
         this.creditLimit = creditLimit;
     }
+
     public void setDiscountPlan(DiscountPlan discountPlan) {
         this.discountPlan = discountPlan;
     }
+
     public void setStatus(AccountStatus status) {
         this.status = status;
     }
+
     public boolean canPlaceOrder(double orderValue) {
         return status == AccountStatus.NORMAL
                 && (outstandingBalance + orderValue) <= creditLimit;
