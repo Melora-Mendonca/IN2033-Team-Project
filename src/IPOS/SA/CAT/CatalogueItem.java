@@ -1,7 +1,7 @@
 // CatalogueItem represents a single item (medicine/product) in the catalogue.
 // Each item contains details such as ID, description, package type, cost and stock information
 
-package IPOS.SA.ACC;
+package IPOS.SA.CAT;
 
 // Fields that store information about each catalogue item
 public class CatalogueItem {
