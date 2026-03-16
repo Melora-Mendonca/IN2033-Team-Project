@@ -1,5 +1,7 @@
 package IPOS.SA.ACC;
 
+import IPOS.SA.ORD.OrderItem;
+
 import java.time.LocalDate;
 import java.util.List;
 

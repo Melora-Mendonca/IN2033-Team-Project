@@ -2,9 +2,8 @@ package IPOS.SA.ACC;
 
 import javax.swing.*;
 import java.awt.*;
-import IPOS.SA.ACC.AdminDashboard;
-import IPOS.SA.ACC.LoginDBConnector;
-import IPOS.SA.ACC.User;
+
+import IPOS.SA.DB.LoginDBConnector;
 
 // A public class that builds and manages the GUI for the login form - setting the buttons, logos and labels associated with the form.
 public class LoginForm extends JFrame{
