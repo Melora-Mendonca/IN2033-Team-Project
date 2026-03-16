@@ -109,7 +109,7 @@ public class StaffDashboard extends JFrame {
         NavPanel.add(logoutBtn);
     }
 
-    // Creates the button funtionality for the items in the navigation panel
+    // Creates the button functionality for the items in the navigation panel
     private JButton buildNavButton(String label, boolean active) {
         JButton btn = new JButton(label);
         btn.setFont(new Font("Segoe UI", active ? Font.BOLD : Font.PLAIN, 13));
@@ -123,7 +123,7 @@ public class StaffDashboard extends JFrame {
         return btn;
     }
 
-    // Manages the logout funtionality for the logout button
+    // Manages the logout functionality for the logout button
     private void handleLogout() {
         dispose();
         new LoginForm();
