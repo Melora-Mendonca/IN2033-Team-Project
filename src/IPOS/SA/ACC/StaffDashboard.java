@@ -5,6 +5,7 @@ import java.awt.*;
 
 public class StaffDashboard extends JFrame {
     private String fullname;
+    private String role;
     private JPanel MainPanel;
     private JPanel ContentPanel;
     private JPanel HeaderPanel;
@@ -18,8 +19,9 @@ public class StaffDashboard extends JFrame {
     private JSeparator divider;
     private JPanel tableWrapper;
 
-    public StaffDashboard(String fullname) {
+    public StaffDashboard(String fullname, String role) {
         this.fullname = fullname;
+        this.role = role;
         setTitle("Staff Dashboard");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setContentPane(MainPanel);

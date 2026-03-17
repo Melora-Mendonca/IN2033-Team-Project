@@ -59,11 +59,13 @@ public class Catalogue extends JFrame {
     private JButton logoutBtn;
     private JSeparator divider;
     private String fullname;
+    private String role;
 
 
     // Constructor that creates the catalogue window and loads the GUI
-    public Catalogue(String fullname) {
+    public Catalogue(String fullname, String role) {
         this.fullname = fullname;
+        this.role = role;
         setTitle("Catalogue");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setContentPane(MainPanel);
@@ -148,7 +150,7 @@ public class Catalogue extends JFrame {
         NavPanel.add(logoutBtn);
     }
 
-    // Creates the button funtionality for the items in the navigation panel
+    // Creates the button functionality for the items in the navigation panel
     private JButton buildNavButton(String label, boolean active) {
         JButton btn = new JButton(label);
         btn.setFont(new Font("Segoe UI", active ? Font.BOLD : Font.PLAIN, 13));
@@ -164,11 +166,11 @@ public class Catalogue extends JFrame {
             dispose();
             switch (label) {
                 case "Catalogue":
-                    new Catalogue(fullname);
+                    new Catalogue(fullname, role);
                     dispose();
                     break;
                 case "Overview":
-                    new AdminDashboard(fullname);
+                    new AdminDashboard(fullname, role);
                     dispose();
                     break;
             }
@@ -199,9 +201,17 @@ public class Catalogue extends JFrame {
         roleLabel.setForeground(Color.WHITE);
         roleLabel.setFont(new Font("Segoe UI", Font.PLAIN, 12));
 
-        roleComboBox = new JComboBox<>(new String[]{"Admin", "Merchant", "Manager"});
-        roleComboBox.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        roleComboBox.addActionListener(e -> updateTableForSelectedRole());
+        // Only show role selector for admin
+        if (role.equals("administrator")) {
+            roleComboBox = new JComboBox<>(new String[]{"Admin", "Merchant", "Manager"});
+            roleComboBox.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+            roleComboBox.addActionListener(e -> updateTableForSelectedRole());
+            rolePanel.add(roleLabel);
+            rolePanel.add(roleComboBox);
+        } else {
+            // Non-admins don't see the dropdown at all
+            roleComboBox = new JComboBox<>(new String[]{role});
+        }
 
         JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
         searchPanel.setBackground(new Color(17, 24, 39));
@@ -319,16 +329,22 @@ public class Catalogue extends JFrame {
 
     // Updates the catalogue table depending on which role is selected
     private void updateTableForSelectedRole() {
-        String role = roleComboBox.getSelectedItem().toString();
+        String selectedRole;
 
-        if (role.equals("Admin")) {
-            setAdminView();
-        } else if (role.equals("Merchant")) {
-            setMerchantView();
+        if (role.equals("administrator")) {
+            selectedRole = roleComboBox.getSelectedItem().toString().toLowerCase();
         } else {
-            setManagerView();
+            selectedRole = role;
+        }
+
+        switch (selectedRole) {
+            case "admin":
+            case "administrator": setAdminView();    break;
+            case "manager":       setManagerView();  break;
+            default:              setMerchantView(); break;
         }
     }
+
     // Admin users can see the full catalogue including stock limits
     private void setAdminView() {
         String[] columns = {

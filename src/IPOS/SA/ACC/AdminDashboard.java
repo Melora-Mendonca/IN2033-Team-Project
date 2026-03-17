@@ -7,6 +7,7 @@ import java.awt.*;
 
 public class AdminDashboard extends JFrame {
     private String fullname;
+    private String role;
     private JPanel MainPanel;
     private JPanel ContentPanel;
     private JPanel HeaderPanel;
@@ -30,8 +31,9 @@ public class AdminDashboard extends JFrame {
     private JSeparator divider;
 
 
-    public AdminDashboard(String fullname) {
+    public AdminDashboard(String fullname, String role) {
         this.fullname = fullname;
+        this.role = role;
         setTitle("Admin Dashboard");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setContentPane(MainPanel);
@@ -141,11 +143,11 @@ public class AdminDashboard extends JFrame {
             dispose();
             switch (label) {
                 case "Catalogue":
-                    new Catalogue(fullname);
+                    new Catalogue(fullname, role);
                     dispose();
                     break;
                 case "Overview":
-                    new AdminDashboard(fullname);
+                    new AdminDashboard(fullname, role);
                     dispose();
                     break;
             }
@@ -154,7 +156,7 @@ public class AdminDashboard extends JFrame {
         return btn;
     }
 
-    // Manages the logout funtionality for the logout button
+    // Manages the logout functionality for the logout button
     private void handleLogout() {
         dispose();
         new LoginForm();

@@ -284,15 +284,15 @@ public class LoginForm extends JFrame{
                 dispose();
                 switch (user.getRole()) {
                     case "administrator":
-                        AdminDashboard adminDashboard = new AdminDashboard(user.getFullName());
+                        AdminDashboard adminDashboard = new AdminDashboard(user.getFullName(), user.getRole());
                         adminDashboard.setVisible(true);
                         break;
                     case "manager":
-                        ManagerDashboard managerDashboard = new ManagerDashboard(user.getFullName());
+                        ManagerDashboard managerDashboard = new ManagerDashboard(user.getFullName(), user.getRole());
                         managerDashboard.setVisible(true);
                         break;
                     case "staff":
-                        StaffDashboard staffDashboard = new StaffDashboard(user.getFullName());
+                        StaffDashboard staffDashboard = new StaffDashboard(user.getFullName(), user.getRole());
                         staffDashboard.setVisible(true);
                         break;
                 }
