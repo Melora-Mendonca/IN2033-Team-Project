@@ -9,7 +9,11 @@
  Merchant: cannot see stock limit
  Manager: limted access (mainly reports in later weeks)*/
 
+
 package IPOS.SA.CAT;
+
+import IPOS.SA.ACC.AdminDashboard;
+import IPOS.SA.ACC.LoginForm;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -44,77 +48,179 @@ public class Catalogue extends JFrame {
     private JButton deleteButton;
     private JButton refreshButton;
     private JButton searchButton;
+    private JPanel MainPanel;
+    private JPanel NavPanel;
+    private JPanel ContentPanel;
+    private JPanel FooterPanel;
+    private JPanel HeaderPanel;
+    private JPanel CenterPanel;
+    private JLabel headerLabel;
+    private JLabel navIcon;
+    private JButton logoutBtn;
+    private JSeparator divider;
+    private String fullname;
+
 
     // Constructor that creates the catalogue window and loads the GUI
-    public Catalogue() {
-        setTitle("IPOS - Catalogue");
-        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+    public Catalogue(String fullname) {
+        this.fullname = fullname;
+        setTitle("Catalogue");
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setContentPane(MainPanel);
         setSize(1100, 650);
+        // Sets the form size to the size of the display
+        setExtendedState(JFrame.MAXIMIZED_BOTH);
+        // Sets the frame location to the center of the screen
         setLocationRelativeTo(null);
 
         initialiseSampleData();
-        initialiseGui();
+        createHeaderPanel();
+        createNavPanel();
+        createContentPanel();
+
+        //initialiseGui();
         updateTableForSelectedRole();
+
+        // Sets the frame to be visible when running
+        setVisible(true);
     }
-    // Builds the graphical interface including panels, buttons and table
-    private void initialiseGui() {
-        Color backgroundColor = new Color(43, 45, 48);
-        Color panelColor = new Color(60, 63, 65);
-        Color accentColor = new Color(75, 110, 175);
-        Color textColor = new Color(230, 230, 230);
 
-        JPanel mainPanel = new JPanel(new BorderLayout(15, 15));
-        mainPanel.setBackground(backgroundColor);
-        mainPanel.setBorder(new EmptyBorder(15, 15, 15, 15));
-        setContentPane(mainPanel);
+    private void createHeaderPanel() {
+        HeaderPanel.setLayout(new BoxLayout(HeaderPanel, BoxLayout.X_AXIS));
+        HeaderPanel.setPreferredSize(new Dimension(1000, 54));
+        HeaderPanel.setBackground(new Color(240, 252, 255));
+        HeaderPanel.setBorder(BorderFactory.createEmptyBorder(0, 24, 0, 24));
 
-        JPanel headerPanel = new JPanel(new BorderLayout());
-        headerPanel.setBackground(panelColor);
-        headerPanel.setBorder(new EmptyBorder(12, 15, 12, 15));
+        JPanel textPanel = new JPanel();
+        textPanel.setLayout(new BoxLayout(textPanel, BoxLayout.Y_AXIS));
+        textPanel.setOpaque(false);
 
-        JLabel titleLabel = new JLabel("Catalogue");
-        titleLabel.setFont(new Font("Arial", Font.BOLD, 22));
-        titleLabel.setForeground(Color.WHITE);
+        headerLabel = new JLabel("Catalogue");
+        headerLabel.setForeground(Color.BLACK);
+        headerLabel.setFont(new Font("Segoe UI", Font.BOLD, 18));
 
-        JLabel subtitleLabel = new JLabel("Week 1 prototype - sample catalogue view");
-        subtitleLabel.setFont(new Font("Arial", Font.PLAIN, 13));
-        subtitleLabel.setForeground(new Color(210, 210, 210));
+        textPanel.add(headerLabel);
+        HeaderPanel.add(textPanel);
+    }
 
-        JPanel titlePanel = new JPanel(new GridLayout(2, 1));
-        titlePanel.setBackground(panelColor);
-        titlePanel.add(titleLabel);
-        titlePanel.add(subtitleLabel);
+    // Creates the Navigation Panel
+    private void createNavPanel() {
+        NavPanel.setLayout(new BoxLayout(NavPanel, BoxLayout.Y_AXIS));
+        NavPanel.setBackground(new Color(14, 37, 48));
+        NavPanel.setBorder(BorderFactory.createEmptyBorder(20, 16, 20, 16));
 
-        headerPanel.add(titlePanel, BorderLayout.WEST);
+        // Logo icon
+        ImageIcon Icon = new ImageIcon(new ImageIcon("data/Logo.png")
+                .getImage().getScaledInstance(80, 60, Image.SCALE_SMOOTH));
+        navIcon = new JLabel(Icon);
 
-        JPanel topControlsPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 5));
-        topControlsPanel.setBackground(panelColor);
+        NavPanel.add(navIcon);
+
+        // generates Navigation buttons — Overview is active by default
+        String[] navItems = {"Overview", "Catalogue", "Orders", "Merchants", "Accounts", "Staff", "Reports", "Settings"};
+        for (String item : navItems) {
+            NavPanel.add(buildNavButton(item, item.equals("Catalogue")));
+            NavPanel.add(Box.createVerticalStrut(4));
+        }
+
+        // Creates Divider line separating the logo and label from the list of features.
+        divider = new JSeparator();
+        divider.setForeground(Color.WHITE); // Sets a colour for the divider, with a size for the divider thickness.
+        divider.setMaximumSize(new Dimension(Integer.MAX_VALUE, 1));
+
+        NavPanel.add(divider);
+        // Pushes logout to the bottom
+        NavPanel.add(Box.createVerticalGlue());
+
+        // Logout button
+        logoutBtn = new JButton("[]→ Log out");
+        logoutBtn.setFont(new Font("Segoe UI", Font.BOLD, 13));
+        logoutBtn.setForeground(new Color(200, 80, 80));
+        logoutBtn.setBackground(new Color(14, 37, 48));
+        logoutBtn.setBorderPainted(false);
+        logoutBtn.setFocusPainted(false);
+        logoutBtn.setAlignmentX(Component.LEFT_ALIGNMENT);
+        logoutBtn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 36));
+        logoutBtn.setHorizontalAlignment(SwingConstants.LEFT);
+        logoutBtn.addActionListener(e -> handleLogout());
+
+        // Adds logout button to the navigation panel
+        NavPanel.add(logoutBtn);
+    }
+
+    // Creates the button funtionality for the items in the navigation panel
+    private JButton buildNavButton(String label, boolean active) {
+        JButton btn = new JButton(label);
+        btn.setFont(new Font("Segoe UI", active ? Font.BOLD : Font.PLAIN, 13));
+        btn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 36));
+        btn.setAlignmentX(Component.LEFT_ALIGNMENT);
+        btn.setHorizontalAlignment(SwingConstants.LEFT);
+        btn.setFocusPainted(false);
+        btn.setBorderPainted(false);
+        btn.setBackground(active ? new Color(30, 70, 90) : new Color(14, 37, 48));
+        btn.setForeground(active ? Color.WHITE : new Color(160, 190, 210));
+
+        btn.addActionListener(e -> {
+            dispose();
+            switch (label) {
+                case "Catalogue":
+                    new Catalogue(fullname);
+                    dispose();
+                    break;
+                case "Overview":
+                    new AdminDashboard(fullname);
+                    dispose();
+                    break;
+            }
+        });
+
+        return btn;
+    }
+
+    // Manages the logout functionality for the logout button
+    private void handleLogout() {
+        dispose();
+        new LoginForm();
+    }
+
+    private void createContentPanel() {
+        ContentPanel.setLayout(new BorderLayout(0, 0));
+        ContentPanel.setBackground(new Color(245, 247, 250));
+
+        // Top Panel — search and role selector
+        JPanel topControlPanel = new JPanel(new BorderLayout());
+        topControlPanel.setBackground(new Color(17, 24, 39));
+        topControlPanel.setBorder(new EmptyBorder(10, 16, 10, 16));
+
+        JPanel rolePanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
+        rolePanel.setBackground(new Color(17, 24, 39));
 
         JLabel roleLabel = new JLabel("Role:");
-        roleLabel.setForeground(textColor);
+        roleLabel.setForeground(Color.WHITE);
+        roleLabel.setFont(new Font("Segoe UI", Font.PLAIN, 12));
 
         roleComboBox = new JComboBox<>(new String[]{"Admin", "Merchant", "Manager"});
+        roleComboBox.setFont(new Font("Segoe UI", Font.PLAIN, 12));
         roleComboBox.addActionListener(e -> updateTableForSelectedRole());
 
-        topControlsPanel.add(roleLabel);
-        topControlsPanel.add(roleComboBox);
-
-        headerPanel.add(topControlsPanel, BorderLayout.EAST);
-        mainPanel.add(headerPanel, BorderLayout.NORTH);
-
-        JPanel centrePanel = new JPanel(new BorderLayout(10, 10));
-        centrePanel.setBackground(backgroundColor);
-
-        JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 10));
-        searchPanel.setBackground(panelColor);
+        JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
+        searchPanel.setBackground(new Color(17, 24, 39));
 
         JLabel searchLabel = new JLabel("Search by Item ID or Keyword:");
-        searchLabel.setForeground(textColor);
+        searchLabel.setForeground(Color.WHITE);
+        searchLabel.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+
+        topControlPanel.add(searchPanel, BorderLayout.WEST);
+        topControlPanel.add(rolePanel, BorderLayout.EAST);
+
 
         searchField = new JTextField(20);
+        searchField.setFont(new Font("Segoe UI", Font.PLAIN, 12));
 
-        searchButton = new JButton("Search");
+        searchButton  = new JButton("Search");
         refreshButton = new JButton("Refresh");
+        styleButton(searchButton);
+        styleButton(refreshButton);
 
         searchButton.addActionListener(e -> searchCatalogue());
         refreshButton.addActionListener(e -> {
@@ -126,59 +232,70 @@ public class Catalogue extends JFrame {
         searchPanel.add(searchField);
         searchPanel.add(searchButton);
         searchPanel.add(refreshButton);
+        rolePanel.add(roleLabel);
+        rolePanel.add(roleComboBox);
 
-        centrePanel.add(searchPanel, BorderLayout.NORTH);
-
+        // Table
         tableModel = new DefaultTableModel();
         catalogueTable = new JTable(tableModel);
-        catalogueTable.setRowHeight(24);
+        catalogueTable.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        catalogueTable.setRowHeight(30);
+        catalogueTable.setShowGrid(false);
         catalogueTable.setFillsViewportHeight(true);
         catalogueTable.getTableHeader().setReorderingAllowed(false);
+        catalogueTable.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 12));
+        catalogueTable.getTableHeader().setBackground(new Color(17, 24, 39));
+        catalogueTable.getTableHeader().setForeground(Color.WHITE);
 
         JScrollPane scrollPane = new JScrollPane(catalogueTable);
-        centrePanel.add(scrollPane, BorderLayout.CENTER);
+        scrollPane.setBorder(BorderFactory.createEmptyBorder());
 
-        mainPanel.add(centrePanel, BorderLayout.CENTER);
-
+        // Bottom buttons
         JPanel bottomPanel = new JPanel(new BorderLayout());
-        bottomPanel.setBackground(panelColor);
+        bottomPanel.setBackground(new Color(17, 24, 39));
         bottomPanel.setBorder(new EmptyBorder(10, 12, 10, 12));
 
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
-        buttonPanel.setBackground(panelColor);
+        buttonPanel.setBackground(new Color(17, 24, 39));
 
         addButton = new JButton("Add Item");
         updateButton = new JButton("Update Item");
         deleteButton = new JButton("Delete Item");
 
-        addButton.addActionListener(e -> showSimpleMessage("Add item will be completed in Week 2."));
-        updateButton.addActionListener(e -> showSimpleMessage("Update item will be completed in Week 2."));
-        deleteButton.addActionListener(e -> showSimpleMessage("Delete item will be completed in Week 2."));
+        styleButton(addButton);
+        styleButton(updateButton);
+        styleButton(deleteButton);
+
+//        addButton.addActionListener(e    -> showSimpleMessage("Add item — coming soon."));
+//        updateButton.addActionListener(e -> showSimpleMessage("Update item — coming soon."));
+//        deleteButton.addActionListener(e -> showSimpleMessage("Delete item — coming soon."));
 
         buttonPanel.add(addButton);
         buttonPanel.add(updateButton);
         buttonPanel.add(deleteButton);
 
         statusLabel = new JLabel("Ready");
-        statusLabel.setForeground(textColor);
+        statusLabel.setFont(new Font("Segoe UI", Font.PLAIN, 11));
+        statusLabel.setForeground(Color.WHITE);
 
         bottomPanel.add(buttonPanel, BorderLayout.WEST);
         bottomPanel.add(statusLabel, BorderLayout.EAST);
 
-        mainPanel.add(bottomPanel, BorderLayout.SOUTH);
+        ContentPanel.add(topControlPanel, BorderLayout.NORTH);
+        ContentPanel.add(scrollPane, BorderLayout.CENTER);
+        ContentPanel.add(bottomPanel, BorderLayout.SOUTH);
 
-        styleButtons(accentColor);
+        updateTableForSelectedRole();
     }
 
-    private void styleButtons(Color accentColor) {
-        JButton[] buttons = {searchButton, refreshButton, addButton, updateButton, deleteButton};
-
-        for (JButton button : buttons) {
-            button.setBackground(accentColor);
-            button.setForeground(Color.WHITE);
-            button.setFocusPainted(false);
-        }
+    private void styleButton(JButton btn) {
+        btn.setBackground(new Color(30, 70, 90));
+        btn.setForeground(Color.WHITE);
+        btn.setFocusPainted(false);
+        btn.setBorderPainted(false);
+        btn.setFont(new Font("Segoe UI", Font.PLAIN, 12));
     }
+
 
     // For Week 1 the catalogue data is added manually.
 // In a full system this could be loaded from a database or file.
@@ -294,7 +411,7 @@ public class Catalogue extends JFrame {
         String searchText = searchField.getText().trim().toLowerCase();
 
         if (role.equals("Manager")) {
-            showSimpleMessage("Manager role does not search catalogue in this prototype.");
+            System.out.println("Manager role does not search catalogue in this prototype.");
             return;
         }
 
@@ -327,16 +444,5 @@ public class Catalogue extends JFrame {
         }
 
         statusLabel.setText(filteredItems.size() + " item(s) found");
-    }
-
-    private void showSimpleMessage(String message) {
-        JOptionPane.showMessageDialog(this, message);
-    }
-    // Main method obviously used to launch the catalogue window for testing
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> {
-            Catalogue catalogue = new Catalogue();
-            catalogue.setVisible(true);
-        });
     }
 }

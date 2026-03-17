@@ -1,5 +1,7 @@
 package IPOS.SA.ACC;
 
+import IPOS.SA.CAT.Catalogue;
+
 import javax.swing.*;
 import java.awt.*;
 
@@ -134,6 +136,21 @@ public class AdminDashboard extends JFrame {
         btn.setBorderPainted(false);
         btn.setBackground(active ? new Color(30, 70, 90) : new Color(14, 37, 48));
         btn.setForeground(active ? Color.WHITE : new Color(160, 190, 210));
+
+        btn.addActionListener(e -> {
+            dispose();
+            switch (label) {
+                case "Catalogue":
+                    new Catalogue(fullname);
+                    dispose();
+                    break;
+                case "Overview":
+                    new AdminDashboard(fullname);
+                    dispose();
+                    break;
+            }
+        });
+
         return btn;
     }
 
