@@ -1,6 +1,7 @@
-package IPOS.SA.ACC;
+package IPOS.SA.DB;
 
-import IPOS.SA.DB.DBConnection;
+import IPOS.SA.ACC.User;
+
 import java.security.*;
 import java.sql.*;
 

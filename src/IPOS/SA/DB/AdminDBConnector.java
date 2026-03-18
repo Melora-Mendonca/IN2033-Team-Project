@@ -1,5 +1,4 @@
-package IPOS.SA.ACC;
-import IPOS.SA.DB.DBConnection;
+package IPOS.SA.DB;
 
 public class AdminDBConnector {
     public AdminDBConnector() {

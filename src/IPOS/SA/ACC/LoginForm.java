@@ -2,9 +2,8 @@ package IPOS.SA.ACC;
 
 import javax.swing.*;
 import java.awt.*;
-import IPOS.SA.ACC.AdminDashboard;
-import IPOS.SA.ACC.LoginDBConnector;
-import IPOS.SA.ACC.User;
+
+import IPOS.SA.DB.LoginDBConnector;
 
 // A public class that builds and manages the GUI for the login form - setting the buttons, logos and labels associated with the form.
 public class LoginForm extends JFrame{
@@ -285,15 +284,15 @@ public class LoginForm extends JFrame{
                 dispose();
                 switch (user.getRole()) {
                     case "administrator":
-                        AdminDashboard adminDashboard = new AdminDashboard(user.getFullName());
+                        AdminDashboard adminDashboard = new AdminDashboard(user.getFullName(), user.getRole());
                         adminDashboard.setVisible(true);
                         break;
                     case "manager":
-                        ManagerDashboard managerDashboard = new ManagerDashboard(user.getFullName());
+                        ManagerDashboard managerDashboard = new ManagerDashboard(user.getFullName(), user.getRole());
                         managerDashboard.setVisible(true);
                         break;
                     case "staff":
-                        StaffDashboard staffDashboard = new StaffDashboard(user.getFullName());
+                        StaffDashboard staffDashboard = new StaffDashboard(user.getFullName(), user.getRole());
                         staffDashboard.setVisible(true);
                         break;
                 }

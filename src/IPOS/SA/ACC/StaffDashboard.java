@@ -5,6 +5,7 @@ import java.awt.*;
 
 public class StaffDashboard extends JFrame {
     private String fullname;
+    private String role;
     private JPanel MainPanel;
     private JPanel ContentPanel;
     private JPanel HeaderPanel;
@@ -18,8 +19,9 @@ public class StaffDashboard extends JFrame {
     private JSeparator divider;
     private JPanel tableWrapper;
 
-    public StaffDashboard(String fullname) {
+    public StaffDashboard(String fullname, String role) {
         this.fullname = fullname;
+        this.role = role;
         setTitle("Staff Dashboard");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setContentPane(MainPanel);
@@ -109,7 +111,7 @@ public class StaffDashboard extends JFrame {
         NavPanel.add(logoutBtn);
     }
 
-    // Creates the button funtionality for the items in the navigation panel
+    // Creates the button functionality for the items in the navigation panel
     private JButton buildNavButton(String label, boolean active) {
         JButton btn = new JButton(label);
         btn.setFont(new Font("Segoe UI", active ? Font.BOLD : Font.PLAIN, 13));
@@ -123,7 +125,7 @@ public class StaffDashboard extends JFrame {
         return btn;
     }
 
-    // Manages the logout funtionality for the logout button
+    // Manages the logout functionality for the logout button
     private void handleLogout() {
         dispose();
         new LoginForm();

@@ -2,6 +2,8 @@ package IPOS.SA.ACC;
 
 import java.time.LocalDate;
 
+import IPOS.SA.ORD.Order;
+
 public class InvoiceService {
 
     public Invoice generateInvoice(Order order, MerchantAccount account) {

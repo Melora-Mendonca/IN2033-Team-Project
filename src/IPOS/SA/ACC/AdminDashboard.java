@@ -1,10 +1,13 @@
 package IPOS.SA.ACC;
 
+import IPOS.SA.CAT.Catalogue;
+
 import javax.swing.*;
 import java.awt.*;
 
 public class AdminDashboard extends JFrame {
     private String fullname;
+    private String role;
     private JPanel MainPanel;
     private JPanel ContentPanel;
     private JPanel HeaderPanel;
@@ -28,8 +31,9 @@ public class AdminDashboard extends JFrame {
     private JSeparator divider;
 
 
-    public AdminDashboard(String fullname) {
+    public AdminDashboard(String fullname, String role) {
         this.fullname = fullname;
+        this.role = role;
         setTitle("Admin Dashboard");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setContentPane(MainPanel);
@@ -134,10 +138,25 @@ public class AdminDashboard extends JFrame {
         btn.setBorderPainted(false);
         btn.setBackground(active ? new Color(30, 70, 90) : new Color(14, 37, 48));
         btn.setForeground(active ? Color.WHITE : new Color(160, 190, 210));
+
+        btn.addActionListener(e -> {
+            dispose();
+            switch (label) {
+                case "Catalogue":
+                    new Catalogue(fullname, role);
+                    dispose();
+                    break;
+                case "Overview":
+                    new AdminDashboard(fullname, role);
+                    dispose();
+                    break;
+            }
+        });
+
         return btn;
     }
 
-    // Manages the logout funtionality for the logout button
+    // Manages the logout functionality for the logout button
     private void handleLogout() {
         dispose();
         new LoginForm();

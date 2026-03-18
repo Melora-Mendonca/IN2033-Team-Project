@@ -1,10 +1,13 @@
 package IPOS.SA.ACC;
 
+import IPOS.SA.CAT.Catalogue;
+
 import javax.swing.*;
 import java.awt.*;
 
 public class ManagerDashboard extends JFrame {
     private String fullname;
+    private String role;
     private JPanel MainPanel;
     private JPanel ContentPanel;
     private JPanel HeaderPanel;
@@ -23,8 +26,9 @@ public class ManagerDashboard extends JFrame {
     private JLabel stockTitle;
     private JScrollPane stockScroll ;
 
-    public ManagerDashboard(String fullname) {
+    public ManagerDashboard(String fullname, String role) {
         this.fullname = fullname;
+        this.role = role;
         setTitle("Manager Dashboard");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setContentPane(MainPanel);
@@ -116,7 +120,7 @@ public class ManagerDashboard extends JFrame {
         NavPanel.add(logoutBtn);
     }
 
-    // Creates the button funtionality for the items in the navigation panel
+    // Creates the button functionality for the items in the navigation panel
     private JButton buildNavButton(String label, boolean active) {
         JButton btn = new JButton(label);
         btn.setFont(new Font("Segoe UI", active ? Font.BOLD : Font.PLAIN, 13));
@@ -127,10 +131,25 @@ public class ManagerDashboard extends JFrame {
         btn.setBorderPainted(false);
         btn.setBackground(active ? new Color(30, 70, 90) : new Color(14, 37, 48));
         btn.setForeground(active ? Color.WHITE : new Color(160, 190, 210));
+
+        btn.addActionListener(e -> {
+            dispose();
+            switch (label) {
+                case "Catalogue":
+                    new Catalogue(fullname, role);
+                    dispose();
+                    break;
+                case "Overview":
+                    new AdminDashboard(fullname, role);
+                    dispose();
+                    break;
+            }
+        });
+
         return btn;
     }
 
-    // Manages the logout funtionality for the logout button
+    // Manages the logout functionality for the logout button
     private void handleLogout() {
         dispose();
         new LoginForm();

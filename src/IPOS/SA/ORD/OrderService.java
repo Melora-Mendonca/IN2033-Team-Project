@@ -1,4 +1,6 @@
-package IPOS.SA.ACC;
+package IPOS.SA.ORD;
+
+import IPOS.SA.ACC.*;
 
 public class OrderService {
 
