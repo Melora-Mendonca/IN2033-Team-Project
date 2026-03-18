@@ -1,6 +1,23 @@
 package IPOS.SA.ACC;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class AccountService {
+
+    private final Map<String, MerchantAccount> accounts = new HashMap<>();
+
+    public void addAccount(MerchantAccount account) {
+        accounts.put(account.getMerchantId(), account);
+    }
+
+    public MerchantAccount getAccount(String merchantId) {
+        return accounts.get(merchantId);
+    }
+
+    public boolean accountExists(String merchantId) {
+        return accounts.containsKey(merchantId);
+    }
 
     public boolean hasRequiredActivationData(MerchantAccount account) {
         return account.getEmail() != null && !account.getEmail().isBlank()
@@ -33,7 +50,7 @@ public class AccountService {
     public void recordPayment(MerchantAccount account, double paymentAmount) {
         account.recordPayment(paymentAmount);
         if (account.getOutstandingBalance() == 0
-            && account.getStatus() == AccountStatus.SUSPENDED) {
+                && account.getStatus() == AccountStatus.SUSPENDED) {
             account.setStatus(AccountStatus.NORMAL);
         }
     }

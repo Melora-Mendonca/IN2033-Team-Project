@@ -12,12 +12,5 @@ public abstract class DiscountPlan {
         return planName;
     }
 
-    /**
-     * Calculates discount amount for a given order value.
-     *
-     * @param orderAmount total order value
-     * @return discount amount
-     */
-
     public abstract double calculateDiscount(double orderAmount);
 }

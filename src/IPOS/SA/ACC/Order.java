@@ -2,9 +2,6 @@ package IPOS.SA.ACC;
 import java.time.LocalDate;
 import java.util.List;
 
-/**
- * Represents a merchant order.
- */
 public class Order {
 
     private final String orderId;
