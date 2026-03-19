@@ -1,17 +1,17 @@
-package IPOS.SA.ACC;
+package IPOS.SA;
+
+import IPOS.SA.ACC.LoginForm;
 
 import javax.swing.SwingUtilities;
 
 public class Main {
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> {
-            AccountService accountService = new AccountService();
-
-            AccountCreationFrame creationFrame = new AccountCreationFrame(accountService);
-            creationFrame.setVisible(true);
-
-            AccountManagementFrame managementFrame = new AccountManagementFrame(accountService);
-            managementFrame.setVisible(true);
+    public static void main(String[] a) {
+        // Launch the login form
+        SwingUtilities.invokeLater(new Runnable() {
+            public void run() {
+                LoginForm loginForm = new LoginForm();
+                loginForm.setVisible(true);
+            }
         });
     }
 }

@@ -1,6 +1,7 @@
 package IPOS.SA.ACC;
 
 import IPOS.SA.CAT.Catalogue;
+import IPOS.SA.ACC.AccountService;
 
 import javax.swing.*;
 import java.awt.*;
@@ -148,6 +149,11 @@ public class AdminDashboard extends JFrame {
                     break;
                 case "Overview":
                     new AdminDashboard(fullname, role);
+                    dispose();
+                    break;
+                case "Accounts":
+                    AccountService accountService = new AccountService();
+                    new AccountManagement(fullname, role, accountService);
                     dispose();
                     break;
             }

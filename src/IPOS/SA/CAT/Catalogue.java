@@ -12,6 +12,8 @@
 
 package IPOS.SA.CAT;
 
+import IPOS.SA.ACC.AccountManagement;
+import IPOS.SA.ACC.AccountService;
 import IPOS.SA.ACC.AdminDashboard;
 import IPOS.SA.ACC.LoginForm;
 
@@ -172,6 +174,10 @@ public class Catalogue extends JFrame {
                 case "Overview":
                     new AdminDashboard(fullname, role);
                     dispose();
+                    break;
+                case "Accounts":
+                    AccountService accountService = new AccountService();
+                    new AccountManagement(fullname, role, accountService);
                     break;
             }
         });
