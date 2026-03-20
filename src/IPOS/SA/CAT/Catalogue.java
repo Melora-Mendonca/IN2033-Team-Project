@@ -16,6 +16,7 @@ import IPOS.SA.ACC.AccountManagement;
 import IPOS.SA.ACC.AccountService;
 import IPOS.SA.ACC.AdminDashboard;
 import IPOS.SA.ACC.LoginForm;
+import IPOS.SA.DB.DBConnection;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -23,6 +24,7 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.sql.*;
 
 // Main window that displays the catalogue GUI
 public class Catalogue extends JFrame {
@@ -77,11 +79,11 @@ public class Catalogue extends JFrame {
         // Sets the frame location to the center of the screen
         setLocationRelativeTo(null);
 
-        initialiseSampleData();
+        //initialiseSampleData();
         createHeaderPanel();
         createNavPanel();
         createContentPanel();
-
+        loadData();
         //initialiseGui();
         updateTableForSelectedRole();
 
@@ -118,26 +120,49 @@ public class Catalogue extends JFrame {
                 .getImage().getScaledInstance(80, 60, Image.SCALE_SMOOTH));
         navIcon = new JLabel(Icon);
 
+        // Adds the logo to the navigation panel
         NavPanel.add(navIcon);
+        NavPanel.add(Box.createVerticalStrut(16));
 
-        // generates Navigation buttons — Overview is active by default
-        String[] navItems = {"Overview", "Catalogue", "Orders", "Merchants", "Accounts", "Staff", "Reports", "Settings"};
-        for (String item : navItems) {
-            NavPanel.add(buildNavButton(item, item.equals("Catalogue")));
-            NavPanel.add(Box.createVerticalStrut(4));
-        }
+        // Adds nav buttons to the navigation panel
+        NavPanel.add(buildNavButton("Overview",  false));
+        NavPanel.add(Box.createVerticalStrut(4));
+        NavPanel.add(buildNavButton("Catalogue", false));
+        NavPanel.add(Box.createVerticalStrut(4));
+        NavPanel.add(buildNavButton("Orders",    false));
+        NavPanel.add(Box.createVerticalStrut(4));
 
-        // Creates Divider line separating the logo and label from the list of features.
+        // Expandable sections for certain navigation options
+        addExpandableNavItem(NavPanel, "Merchants", new String[]{
+                "View Merchant Orders",
+                "View Merchant Invoices"
+        });
+
+        addExpandableNavItem(NavPanel, "Accounts", new String[]{
+                "Create Merchant Account",
+                "Manage Merchant Accounts",
+                "Commercial Applications"
+        });
+
+        addExpandableNavItem(NavPanel, "Staff", new String[]{
+                "View All Staff",
+                "Create Staff Account",
+                "Manage Staff Account",
+        });
+
+        // Adds remaining option to the navigation panel
+        NavPanel.add(buildNavButton("Reports",  false));  NavPanel.add(Box.createVerticalStrut(4));
+        NavPanel.add(buildNavButton("Settings", false));  NavPanel.add(Box.createVerticalStrut(4));
+
+        // Creates a divider to separate and format the navigation options
         divider = new JSeparator();
-        divider.setForeground(Color.WHITE); // Sets a colour for the divider, with a size for the divider thickness.
+        divider.setForeground(Color.WHITE);
         divider.setMaximumSize(new Dimension(Integer.MAX_VALUE, 1));
-
         NavPanel.add(divider);
-        // Pushes logout to the bottom
         NavPanel.add(Box.createVerticalGlue());
 
-        // Logout button
-        logoutBtn = new JButton("[]→ Log out");
+        // creates a log Out button at the base of the navigation panel
+        logoutBtn = new JButton("→  Log out");
         logoutBtn.setFont(new Font("Segoe UI", Font.BOLD, 13));
         logoutBtn.setForeground(new Color(200, 80, 80));
         logoutBtn.setBackground(new Color(14, 37, 48));
@@ -147,9 +172,96 @@ public class Catalogue extends JFrame {
         logoutBtn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 36));
         logoutBtn.setHorizontalAlignment(SwingConstants.LEFT);
         logoutBtn.addActionListener(e -> handleLogout());
-
-        // Adds logout button to the navigation panel
+        // Adds the button to the panel
         NavPanel.add(logoutBtn);
+    }
+
+    private void addExpandableNavItem(JPanel nav, String label, String[] subItems) {
+        JButton mainBtn = new JButton(label);
+        mainBtn.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        mainBtn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 36));
+        mainBtn.setAlignmentX(Component.LEFT_ALIGNMENT);
+        mainBtn.setHorizontalAlignment(SwingConstants.LEFT);
+        mainBtn.setFocusPainted(false);
+        mainBtn.setBorderPainted(false);
+        mainBtn.setBackground(new Color(14, 37, 48));
+        mainBtn.setForeground(new Color(160, 190, 210));
+
+        // Sub-items panel — hidden by default
+        JPanel subPanel = new JPanel();
+        subPanel.setLayout(new BoxLayout(subPanel, BoxLayout.Y_AXIS));
+        subPanel.setBackground(new Color(10, 28, 38));
+        subPanel.setVisible(false);
+
+        for (String sub : subItems) {
+            JButton subBtn = new JButton("    › " + sub);
+            subBtn.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+            subBtn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 30));
+            subBtn.setAlignmentX(Component.LEFT_ALIGNMENT);
+            subBtn.setHorizontalAlignment(SwingConstants.LEFT);
+            subBtn.setFocusPainted(false);
+            subBtn.setBorderPainted(false);
+            subBtn.setBackground(new Color(10, 28, 38));
+            subBtn.setForeground(new Color(120, 160, 185));
+
+            subBtn.addMouseListener(new java.awt.event.MouseAdapter() {
+                public void mouseEntered(java.awt.event.MouseEvent e) {
+                    subBtn.setForeground(Color.WHITE);
+                    subBtn.setBackground(new Color(20, 50, 65));
+                }
+                public void mouseExited(java.awt.event.MouseEvent e) {
+                    subBtn.setForeground(new Color(120, 160, 185));
+                    subBtn.setBackground(new Color(10, 28, 38));
+                }
+            });
+
+            subBtn.addActionListener(e -> handleSubNavClick(sub));
+            subPanel.add(subBtn);
+            subPanel.add(Box.createVerticalStrut(2));
+        }
+
+        // Toggle sub-panel on click
+        mainBtn.addActionListener(e -> {
+            boolean showing = subPanel.isVisible();
+            subPanel.setVisible(!showing);
+            mainBtn.setForeground(showing ? new Color(160, 190, 210) : Color.WHITE);
+            mainBtn.setBackground(showing ? new Color(14, 37, 48) : new Color(20, 45, 60));
+            nav.revalidate();
+            nav.repaint();
+        });
+
+        nav.add(mainBtn);
+        nav.add(subPanel);
+        nav.add(Box.createVerticalStrut(4));
+    }
+
+    private void handleSubNavClick(String label) {
+        switch (label) {
+            case "Manage Merchant Accounts":
+                dispose();
+                new AccountManagement(fullname, role, new AccountService());
+            case "Create Merchant Account":
+                dispose();
+                new AccountManagement(fullname, role, new AccountService());
+                break;
+            case "Commercial Applications":
+                JOptionPane.showMessageDialog(this, "Commercial Applications — coming soon.");
+                break;
+            case "View All Staff":
+            case "Create Staff Account":
+                dispose();
+                //new StaffManagement(fullname, role);
+            case "Manage Staff Account":
+                dispose();
+                //new StaffManagement(fullname, role);
+
+                break;
+            case "View Merchant Orders":
+            case "View Merchant Invoices":
+            default:
+                JOptionPane.showMessageDialog(this, label + " — coming soon.");
+                break;
+        }
     }
 
     // Creates the button functionality for the items in the navigation panel
@@ -178,6 +290,7 @@ public class Catalogue extends JFrame {
                 case "Accounts":
                     AccountService accountService = new AccountService();
                     new AccountManagement(fullname, role, accountService);
+                    dispose();
                     break;
             }
         });
@@ -282,11 +395,11 @@ public class Catalogue extends JFrame {
         styleButton(updateButton);
         styleButton(deleteButton);
 
-//        addButton.addActionListener(e    -> showSimpleMessage("Add item — coming soon."));
+        buttonPanel.add(addButton);
+        addButton.addActionListener(e    -> JOptionPane.showMessageDialog(this, "coming soon."));
 //        updateButton.addActionListener(e -> showSimpleMessage("Update item — coming soon."));
 //        deleteButton.addActionListener(e -> showSimpleMessage("Delete item — coming soon."));
 
-        buttonPanel.add(addButton);
         buttonPanel.add(updateButton);
         buttonPanel.add(deleteButton);
 
@@ -316,21 +429,45 @@ public class Catalogue extends JFrame {
     // For Week 1 the catalogue data is added manually.
 // In a full system this could be loaded from a database or file.
 
-    private void initialiseSampleData() {
-        Items.add(new CatalogueItem("100 00001", "Paracetamol", "box", "Caps", 20, 0.10, 10345, 300));
-        Items.add(new CatalogueItem("100 00002", "Aspirin", "box", "Caps", 20, 0.50, 12453, 500));
-        Items.add(new CatalogueItem("100 00003", "Analgin", "box", "Caps", 10, 1.20, 4235, 200));
-        Items.add(new CatalogueItem("100 00004", "Celebrex, caps 100 mg", "box", "Caps", 10, 10.00, 3420, 200));
-        Items.add(new CatalogueItem("100 00005", "Celebrex, caps 200 mg", "box", "Caps", 10, 18.50, 1450, 150));
-        Items.add(new CatalogueItem("100 00006", "Retin-A Tretin, 30 g", "box", "Caps", 20, 25.00, 2013, 200));
-        Items.add(new CatalogueItem("100 00007", "Lipitor TB, 20 mg", "box", "Caps", 30, 15.50, 1562, 200));
-        Items.add(new CatalogueItem("100 00008", "Claritin CR, 60g", "box", "Caps", 20, 19.50, 2540, 200));
-        Items.add(new CatalogueItem("200 00004", "Iodine tincture", "bottle", "ml", 100, 0.30, 22134, 200));
-        Items.add(new CatalogueItem("200 00005", "Rhynol", "bottle", "ml", 200, 2.50, 1908, 300));
-        Items.add(new CatalogueItem("300 00001", "Ospen", "box", "Caps", 20, 10.50, 809, 200));
-        Items.add(new CatalogueItem("300 00002", "Amopen", "box", "Caps", 30, 15.00, 1340, 300));
-        Items.add(new CatalogueItem("400 00001", "Vitamin C", "box", "Caps", 30, 1.20, 3258, 300));
-        Items.add(new CatalogueItem("400 00002", "Vitamin B12", "box", "Caps", 30, 1.30, 2673, 300));
+//    private void initialiseSampleData() {
+//        Items.add(new CatalogueItem("100 00001", "Paracetamol", "box", "Caps", 20, 0.10, 10345, 300));
+//        Items.add(new CatalogueItem("100 00002", "Aspirin", "box", "Caps", 20, 0.50, 12453, 500));
+//        Items.add(new CatalogueItem("100 00003", "Analgin", "box", "Caps", 10, 1.20, 4235, 200));
+//        Items.add(new CatalogueItem("100 00004", "Celebrex, caps 100 mg", "box", "Caps", 10, 10.00, 3420, 200));
+//        Items.add(new CatalogueItem("100 00005", "Celebrex, caps 200 mg", "box", "Caps", 10, 18.50, 1450, 150));
+//        Items.add(new CatalogueItem("100 00006", "Retin-A Tretin, 30 g", "box", "Caps", 20, 25.00, 2013, 200));
+//        Items.add(new CatalogueItem("100 00007", "Lipitor TB, 20 mg", "box", "Caps", 30, 15.50, 1562, 200));
+//        Items.add(new CatalogueItem("100 00008", "Claritin CR, 60g", "box", "Caps", 20, 19.50, 2540, 200));
+//        Items.add(new CatalogueItem("200 00004", "Iodine tincture", "bottle", "ml", 100, 0.30, 22134, 200));
+//        Items.add(new CatalogueItem("200 00005", "Rhynol", "bottle", "ml", 200, 2.50, 1908, 300));
+//        Items.add(new CatalogueItem("300 00001", "Ospen", "box", "Caps", 20, 10.50, 809, 200));
+//        Items.add(new CatalogueItem("300 00002", "Amopen", "box", "Caps", 30, 15.00, 1340, 300));
+//        Items.add(new CatalogueItem("400 00001", "Vitamin C", "box", "Caps", 30, 1.20, 3258, 300));
+//        Items.add(new CatalogueItem("400 00002", "Vitamin B12", "box", "Caps", 30, 1.30, 2673, 300));
+//    }
+
+    private void loadData() {
+        Items.clear();
+        try {
+            DBConnection db = new DBConnection();
+            ResultSet rs = db.query("SELECT * FROM Catalogue WHERE is_active = 1 ORDER BY item_id");
+            while (rs.next()) {
+                Items.add(new CatalogueItem(
+                        rs.getString("item_id"),
+                        rs.getString("description"),
+                        rs.getString("package_type"),
+                        rs.getString("unit"),
+                        rs.getInt("units_per_pack"),
+                        rs.getDouble("package_cost"),
+                        rs.getInt("availability"),
+                        rs.getInt("stock_limit")
+                ));
+            }
+            statusLabel.setText(Items.size() + " items loaded");
+        } catch (Exception e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Error loading catalogue: " + e.getMessage());
+        }
     }
 
     // Updates the catalogue table depending on which role is selected
