@@ -9,7 +9,7 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 
-public class AddItem extends JFrame {
+public class ManageItem extends JFrame {
     private final String fullname;
     private final String role;
     private JLabel itemIdLabel;
@@ -40,12 +40,23 @@ public class AddItem extends JFrame {
     private JButton logoutBtn;
     private JSeparator divider;
     private JLabel messageLabel;
-    public AddItem(String fullname, String role) {
+
+    public ManageItem(String fullname, String role) {
         this.fullname = fullname;
         this.role = role;
 
+        setTitle("Manage Catalogue Items");
+        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        setContentPane(MainPanel);
+        setExtendedState(JFrame.MAXIMIZED_BOTH);
+        setLocationRelativeTo(null);
+
         createHeaderPanel();
         createNavPanel();
+        createCenterPanel();
+        createActionsPanel();
+
+        setVisible(true);
     }
     private void createHeaderPanel() {
         HeaderPanel.setLayout(new BoxLayout(HeaderPanel, BoxLayout.X_AXIS));
@@ -391,7 +402,7 @@ public class AddItem extends JFrame {
         row1.add(fieldWrapper("DESCRIPTION", descriptionField));
 
         // Row 2 — address full width
-        JPanel row2 = new JPanel(new GridLayout(1, 1));
+        JPanel row2 = new JPanel(new GridLayout(1, 2, 12, 0));
         row2.setBackground(Color.WHITE);
         row2.setMaximumSize(new Dimension(Integer.MAX_VALUE, 60));
         row2.add(fieldWrapper("PACKAGE TYPE", packageField ));
@@ -444,4 +455,100 @@ public class AddItem extends JFrame {
         wrapper.add(lbl, BorderLayout.NORTH);
         wrapper.add(field, BorderLayout.CENTER);
         return wrapper;
-    }}
+    }
+    private void createActionsPanel() {
+        JPanel actionsPanel = new JPanel();
+        actionsPanel.setLayout(new BoxLayout(actionsPanel, BoxLayout.Y_AXIS));
+        actionsPanel.setBackground(new Color(245, 247, 250));
+        actionsPanel.setPreferredSize(new Dimension(200, 0));
+        actionsPanel.setBorder(BorderFactory.createEmptyBorder(20, 16, 20, 16));
+
+        JLabel actionsTitle = new JLabel("ACTIONS");
+        actionsTitle.setFont(new Font("Segoe UI", Font.BOLD, 11));
+        actionsTitle.setForeground(new Color(107, 114, 128));
+        actionsTitle.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        JButton saveBtn  = actionButton("Save Item",  new Color(30, 70, 90));
+        JButton clearBtn = actionButton("Clear Form", new Color(107, 114, 128));
+        JButton backBtn  = actionButton("← Back to Catalogue", new Color(17, 24, 39));
+
+        saveBtn.addActionListener(e  -> saveItem());
+        clearBtn.addActionListener(e -> clearForm());
+        backBtn.addActionListener(e  -> {
+            dispose();
+            new Catalogue(fullname, role);
+        });
+
+        actionsPanel.add(actionsTitle);
+        actionsPanel.add(Box.createVerticalStrut(12));
+        actionsPanel.add(saveBtn);
+        actionsPanel.add(Box.createVerticalStrut(8));
+        actionsPanel.add(clearBtn);
+        actionsPanel.add(Box.createVerticalStrut(8));
+        actionsPanel.add(backBtn);
+        actionsPanel.add(Box.createVerticalStrut(12));
+        actionsPanel.add(messageLabel == null ? new JLabel(" ") : messageLabel);
+
+        ContentPanel.setLayout(new BorderLayout());
+        ContentPanel.add(CenterPanel,   BorderLayout.CENTER);
+        ContentPanel.add(actionsPanel,  BorderLayout.EAST);
+    }
+
+    private void saveItem() {
+        try {
+            if (itemIdField.getText().trim().isEmpty() || descriptionField.getText().trim().isEmpty()) {
+                setMessage("Item ID and Description are required.", false);
+                return;
+            }
+
+            IPOS.SA.DB.DBConnection db = new IPOS.SA.DB.DBConnection();
+            db.update(
+                    "INSERT INTO Catalogue (item_id, description, package_type, unit, units_per_pack, package_cost, availability, stock_limit, is_active) VALUES (?,?,?,?,?,?,?,?,1)",
+                    itemIdField.getText().trim(),
+                    descriptionField.getText().trim(),
+                    packageField.getText().trim(),
+                    unitField.getText().trim(),
+                    Integer.parseInt(units_per_packField.getText().trim()),
+                    Double.parseDouble(costField.getText().trim()),
+                    Integer.parseInt(availabilityField.getText().trim()),
+                    Integer.parseInt(stock_limitField.getText().trim())
+            );
+
+            setMessage("Item added successfully.", true);
+            clearForm();
+
+        } catch (NumberFormatException ex) {
+            setMessage("Please enter valid numbers for Units, Cost and Stock fields.", false);
+        } catch (Exception ex) {
+            setMessage("Error: " + ex.getMessage(), false);
+        }
+    }
+
+    private void clearForm() {
+        itemIdField.setText("");
+        descriptionField.setText("");
+        packageField.setText("");
+        unitField.setText("");
+        units_per_packField.setText("");
+        costField.setText("");
+        availabilityField.setText("");
+        stock_limitField.setText("");
+    }
+
+    private void setMessage(String text, boolean success) {
+        messageLabel.setText(text);
+        messageLabel.setForeground(success ? new Color(0, 97, 0) : new Color(200, 80, 80));
+    }
+
+    private JButton actionButton(String label, Color bg) {
+        JButton btn = new JButton(label);
+        btn.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        btn.setBackground(bg);
+        btn.setForeground(Color.WHITE);
+        btn.setFocusPainted(false);
+        btn.setBorderPainted(false);
+        btn.setAlignmentX(Component.LEFT_ALIGNMENT);
+        btn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 34));
+        return btn;
+    }
+}

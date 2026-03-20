@@ -2,11 +2,13 @@ package IPOS.SA.ACC;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.List;
+import java.util.ArrayList;
 
 import IPOS.SA.DB.LoginDBConnector;
 
 // A public class that builds and manages the GUI for the login form - setting the buttons, logos and labels associated with the form.
-public class LoginForm extends JFrame{
+public class LoginForm extends JFrame {
     private JPanel MainPanel;
     private JPanel HeaderPanel;
     private JLabel headerIcon;
@@ -53,7 +55,7 @@ public class LoginForm extends JFrame{
         setVisible(true);
     }
 
-    private void createHeader(){
+    private void createHeader() {
         // Sets the layout and size of the header panel, so other components within the panel can be correctly aligned
         HeaderPanel.setLayout(new FlowLayout(FlowLayout.LEFT, 24, 0));
         HeaderPanel.setPreferredSize(new Dimension(1000, 54));
@@ -79,7 +81,7 @@ public class LoginForm extends JFrame{
         HeaderPanel.add(headerLabel);
     }
 
-    private void createLogoPanel(){
+    private void createLogoPanel() {
         // Creates Divider line separating the logo and label from the list of features.
         divider = new JSeparator();
         divider.setForeground(Color.WHITE); // Sets a colour for the divider, with a size for the divider thickness.
@@ -121,7 +123,7 @@ public class LoginForm extends JFrame{
         createFeatureList();
     }
 
-    private void createFeatureList(){
+    private void createFeatureList() {
         // Creates Divider line separating the logo and label from the list of features.
         divider = new JSeparator();
         divider.setForeground(Color.WHITE); // Sets a colour for the divider, with a size for the divider thickness.
@@ -147,7 +149,7 @@ public class LoginForm extends JFrame{
         }
     }
 
-    private void createLoginPanel(){
+    private void createLoginPanel() {
         // Sets the layout and background of the login panel, so other components within the panel can be correctly aligned
         LoginPanel.setLayout(new BoxLayout(LoginPanel, BoxLayout.Y_AXIS));
         LoginPanel.setBackground(new Color(245, 247, 250));
@@ -254,8 +256,7 @@ public class LoginForm extends JFrame{
         LoginPanel.add(statusLbl);
     }
 
-    private void loginUser(){
-        // Creates a Login button that directs the user to the appropriate landing page upon logging in
+    private void loginUser() {
         loginBtn = new JButton("Sign In");
         loginBtn.setFont(new Font("Segoe UI", Font.BOLD, 13));
         loginBtn.setBackground(new Color(17, 24, 39));
@@ -269,36 +270,57 @@ public class LoginForm extends JFrame{
             String username = userField.getText();
             String password = new String(passField.getPassword());
 
-            if (username.isEmpty() || password.isEmpty()){
+            if (username.isEmpty() || password.isEmpty()) {
                 statusLbl.setText("Sign In Failed, please enter your username and password.");
                 return;
             }
 
             LoginDBConnector connector = new LoginDBConnector();
-            System.out.println("Selected role: " + selectedRole);
-            System.out.println("Username: " + username);
-            System.out.println("Password: " + password);
             User user = connector.authenticate(username, password, selectedRole);
 
             if (user != null) {
                 dispose();
+
+                List<String> warnings = new ArrayList<>();
+                if (user.getRole().equals("administrator") || user.getRole().equals("manager")) {
+                    warnings = connector.getStockWarnings();
+                }
+
                 switch (user.getRole()) {
-                    case "administrator":
-                        AdminDashboard adminDashboard = new AdminDashboard(user.getFullName(), user.getRole());
-                        adminDashboard.setVisible(true);
+                    case "administrator": {
+                        AdminDashboard dashboard = new AdminDashboard(user.getFullName(), user.getRole());
+                        if (!warnings.isEmpty()) showStockWarning(dashboard, warnings);
                         break;
-                    case "manager":
-                        ManagerDashboard managerDashboard = new ManagerDashboard(user.getFullName(), user.getRole());
-                        managerDashboard.setVisible(true);
+                    }
+                    case "manager": {
+                        ManagerDashboard dashboard = new ManagerDashboard(user.getFullName(), user.getRole());
+                        if (!warnings.isEmpty()) showStockWarning(dashboard, warnings);
                         break;
-                    case "staff":
-                        StaffDashboard staffDashboard = new StaffDashboard(user.getFullName(), user.getRole());
-                        staffDashboard.setVisible(true);
+                    }
+                    case "staff": {
+                        new StaffDashboard(user.getFullName(), user.getRole());
                         break;
+                    }
                 }
             } else {
                 statusLbl.setText("Invalid username, password or role.");
             }
         });
+    }
+
+    private void showStockWarning(JFrame parent, List<String> warnings) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("The following items are below minimum stock level:\n\n");
+        for (String w : warnings) {
+            sb.append("  •  ").append(w).append("\n");
+        }
+        sb.append("\nPlease arrange stock deliveries.");
+
+        JOptionPane.showMessageDialog(
+                parent,
+                sb.toString(),
+                "⚠  Low Stock Warning",
+                JOptionPane.WARNING_MESSAGE
+        );
     }
 }

@@ -396,7 +396,10 @@ public class Catalogue extends JFrame {
         styleButton(deleteButton);
 
         buttonPanel.add(addButton);
-        addButton.addActionListener(e    -> JOptionPane.showMessageDialog(this, "coming soon."));
+        addButton.addActionListener(e    -> {
+                    dispose();
+                    new ManageItem(fullname, role);
+                });
 //        updateButton.addActionListener(e -> showSimpleMessage("Update item — coming soon."));
 //        deleteButton.addActionListener(e -> showSimpleMessage("Delete item — coming soon."));
 
@@ -559,7 +562,7 @@ public class Catalogue extends JFrame {
                 });
             }
         }
-// TODO: implement add/update/delete catalogue items in later weeks
+
         addButton.setEnabled(canAdd);
         updateButton.setEnabled(canUpdate);
         deleteButton.setEnabled(canDelete);
@@ -604,4 +607,6 @@ public class Catalogue extends JFrame {
 
         statusLabel.setText(filteredItems.size() + " item(s) found");
     }
+
+
 }

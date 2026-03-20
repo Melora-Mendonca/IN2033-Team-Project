@@ -4,6 +4,8 @@ import IPOS.SA.ACC.User;
 
 import java.security.*;
 import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class LoginDBConnector {
 
@@ -40,5 +42,26 @@ public class LoginDBConnector {
             e.printStackTrace();
             return null;
         }
+    }
+
+    public List<String> getStockWarnings(){
+        List<String> warnings = new ArrayList<>();
+        try{
+            Connection conn = new DBConnection().getConn();
+            String sql = "SELECT item_id, description, availability, stock_limit FROM Catalogue WHERE is_active = 1 AND availability < stock_limit ORDER BY availability ASC";
+            PreparedStatement stmt = conn.prepareStatement(sql);
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
+                warnings.add(
+                        rs.getString("item_id") + " — " +
+                                rs.getString("description") +
+                                " (Stock: " + rs.getInt("availability") +
+                                " / Min: " + rs.getInt("stock_limit") + ")"
+                );
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return warnings;
     }
 }
