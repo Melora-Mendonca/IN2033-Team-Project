@@ -1,51 +1,48 @@
 package IPOS.SA.CAT;
 
-import IPOS.SA.ACC.AccountManagement;
-import IPOS.SA.ACC.AccountService;
 import IPOS.SA.ACC.AdminDashboard;
 import IPOS.SA.ACC.LoginForm;
+import IPOS.SA.DB.DBConnection;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
+import java.sql.ResultSet;
 
 public class ManageItem extends JFrame {
     private final String fullname;
     private final String role;
-    private JLabel itemIdLabel;
+    private final String mode;
+
     private JTextField itemIdField;
-    private JLabel descriptionLabel;
     private JTextField descriptionField;
-    private JLabel unitLabel;
     private JTextField unitField;
-    private JLabel costLabel;
     private JTextField costField;
-    private JLabel packageLabel;
     private JTextField packageField;
-    private JLabel units_per_packLabel;
     private JTextField units_per_packField;
-    private JLabel availabilityLabel;
     private JTextField availabilityField;
-    private JLabel stock_limitLabel;
     private JTextField stock_limitField;
+    private JTextField quantityField;
+
     private JPanel MainPanel;
     private JPanel NavPanel;
     private JPanel ContentPanel;
-    private JPanel FooterPanel;
     private JPanel HeaderPanel;
     private JPanel CenterPanel;
     private JPanel FormPanel;
+    private JPanel FooterPanel;
     private JLabel headerLabel;
     private JLabel navIcon;
     private JButton logoutBtn;
     private JSeparator divider;
     private JLabel messageLabel;
 
-    public ManageItem(String fullname, String role) {
+    public ManageItem(String fullname, String role, String mode) {
         this.fullname = fullname;
         this.role = role;
+        this.mode = mode;
 
-        setTitle("Manage Catalogue Items");
+        setTitle(getTitleForMode());
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setContentPane(MainPanel);
         setExtendedState(JFrame.MAXIMIZED_BOTH);
@@ -58,6 +55,35 @@ public class ManageItem extends JFrame {
 
         setVisible(true);
     }
+
+    // Returns the appropriate title based on mode
+    private String getTitleForMode() {
+        switch (mode) {
+            case "ADD":
+                return "Add New Catalogue Item";
+            case "EDIT":
+                return "Update Catalogue Item";
+            case "DELETE":
+                return "Deactivate Catalogue Item";
+            default:
+                return "Manage Catalogue Item";
+        }
+    }
+
+    // Returns the form section title based on mode
+    private String getFormTitleForMode() {
+        switch (mode) {
+            case "ADD":
+                return "NEW ITEM DETAILS";
+            case "EDIT":
+                return "EDIT ITEM DETAILS";
+            case "DELETE":
+                return "DEACTIVATE ITEM";
+            default:
+                return "ITEM DETAILS";
+        }
+    }
+
     private void createHeaderPanel() {
         HeaderPanel.setLayout(new BoxLayout(HeaderPanel, BoxLayout.X_AXIS));
         HeaderPanel.setPreferredSize(new Dimension(1000, 54));
@@ -68,7 +94,7 @@ public class ManageItem extends JFrame {
         textPanel.setLayout(new BoxLayout(textPanel, BoxLayout.Y_AXIS));
         textPanel.setOpaque(false);
 
-        headerLabel = new JLabel("Catalogue");
+        headerLabel = new JLabel(getTitleForMode());
         headerLabel.setForeground(Color.BLACK);
         headerLabel.setFont(new Font("Segoe UI", Font.BOLD, 18));
 
@@ -76,59 +102,39 @@ public class ManageItem extends JFrame {
         HeaderPanel.add(textPanel);
     }
 
-    // Creates the Navigation Panel
     private void createNavPanel() {
         NavPanel.setLayout(new BoxLayout(NavPanel, BoxLayout.Y_AXIS));
         NavPanel.setBackground(new Color(14, 37, 48));
         NavPanel.setBorder(BorderFactory.createEmptyBorder(20, 16, 20, 16));
 
-        // Logo icon
         ImageIcon Icon = new ImageIcon(new ImageIcon("data/Logo.png")
                 .getImage().getScaledInstance(80, 60, Image.SCALE_SMOOTH));
         navIcon = new JLabel(Icon);
-
-        // Adds the logo to the navigation panel
         NavPanel.add(navIcon);
         NavPanel.add(Box.createVerticalStrut(16));
 
-        // Adds nav buttons to the navigation panel
         NavPanel.add(buildNavButton("Overview",  false));
         NavPanel.add(Box.createVerticalStrut(4));
-        NavPanel.add(buildNavButton("Catalogue", false));
+        NavPanel.add(buildNavButton("Catalogue", true));
         NavPanel.add(Box.createVerticalStrut(4));
         NavPanel.add(buildNavButton("Orders",    false));
         NavPanel.add(Box.createVerticalStrut(4));
 
-        // Expandable sections for certain navigation options
-        addExpandableNavItem(NavPanel, "Merchants", new String[]{
-                "View Merchant Orders",
-                "View Merchant Invoices"
-        });
+        addExpandableNavItem(NavPanel, "Merchants", new String[]{"View Merchant Orders", "View Merchant Invoices"});
+        addExpandableNavItem(NavPanel, "Accounts",  new String[]{"Create Merchant Account", "Manage Merchant Accounts", "Commercial Applications"});
+        addExpandableNavItem(NavPanel, "Staff",     new String[]{"View All Staff", "Create Staff Account", "Manage Staff Account"});
 
-        addExpandableNavItem(NavPanel, "Accounts", new String[]{
-                "Create Merchant Account",
-                "Manage Merchant Accounts",
-                "Commercial Applications"
-        });
+        NavPanel.add(buildNavButton("Reports",  false));
+        NavPanel.add(Box.createVerticalStrut(4));
+        NavPanel.add(buildNavButton("Settings", false));
+        NavPanel.add(Box.createVerticalStrut(4));
 
-        addExpandableNavItem(NavPanel, "Staff", new String[]{
-                "View All Staff",
-                "Create Staff Account",
-                "Manage Staff Account",
-        });
-
-        // Adds remaining option to the navigation panel
-        NavPanel.add(buildNavButton("Reports",  false));  NavPanel.add(Box.createVerticalStrut(4));
-        NavPanel.add(buildNavButton("Settings", false));  NavPanel.add(Box.createVerticalStrut(4));
-
-        // Creates a divider to separate and format the navigation options
         divider = new JSeparator();
         divider.setForeground(Color.WHITE);
         divider.setMaximumSize(new Dimension(Integer.MAX_VALUE, 1));
         NavPanel.add(divider);
         NavPanel.add(Box.createVerticalGlue());
 
-        // creates a log Out button at the base of the navigation panel
         logoutBtn = new JButton("→  Log out");
         logoutBtn.setFont(new Font("Segoe UI", Font.BOLD, 13));
         logoutBtn.setForeground(new Color(200, 80, 80));
@@ -139,136 +145,7 @@ public class ManageItem extends JFrame {
         logoutBtn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 36));
         logoutBtn.setHorizontalAlignment(SwingConstants.LEFT);
         logoutBtn.addActionListener(e -> handleLogout());
-        // Adds the button to the panel
         NavPanel.add(logoutBtn);
-    }
-
-    private void addExpandableNavItem(JPanel nav, String label, String[] subItems) {
-        JButton mainBtn = new JButton(label);
-        mainBtn.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-        mainBtn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 36));
-        mainBtn.setAlignmentX(Component.LEFT_ALIGNMENT);
-        mainBtn.setHorizontalAlignment(SwingConstants.LEFT);
-        mainBtn.setFocusPainted(false);
-        mainBtn.setBorderPainted(false);
-        mainBtn.setBackground(new Color(14, 37, 48));
-        mainBtn.setForeground(new Color(160, 190, 210));
-
-        // Sub-items panel — hidden by default
-        JPanel subPanel = new JPanel();
-        subPanel.setLayout(new BoxLayout(subPanel, BoxLayout.Y_AXIS));
-        subPanel.setBackground(new Color(10, 28, 38));
-        subPanel.setVisible(false);
-
-        for (String sub : subItems) {
-            JButton subBtn = new JButton("    › " + sub);
-            subBtn.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-            subBtn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 30));
-            subBtn.setAlignmentX(Component.LEFT_ALIGNMENT);
-            subBtn.setHorizontalAlignment(SwingConstants.LEFT);
-            subBtn.setFocusPainted(false);
-            subBtn.setBorderPainted(false);
-            subBtn.setBackground(new Color(10, 28, 38));
-            subBtn.setForeground(new Color(120, 160, 185));
-
-            subBtn.addMouseListener(new java.awt.event.MouseAdapter() {
-                public void mouseEntered(java.awt.event.MouseEvent e) {
-                    subBtn.setForeground(Color.WHITE);
-                    subBtn.setBackground(new Color(20, 50, 65));
-                }
-                public void mouseExited(java.awt.event.MouseEvent e) {
-                    subBtn.setForeground(new Color(120, 160, 185));
-                    subBtn.setBackground(new Color(10, 28, 38));
-                }
-            });
-
-            subBtn.addActionListener(e -> handleSubNavClick(sub));
-            subPanel.add(subBtn);
-            subPanel.add(Box.createVerticalStrut(2));
-        }
-
-        // Toggle sub-panel on click
-        mainBtn.addActionListener(e -> {
-            boolean showing = subPanel.isVisible();
-            subPanel.setVisible(!showing);
-            mainBtn.setForeground(showing ? new Color(160, 190, 210) : Color.WHITE);
-            mainBtn.setBackground(showing ? new Color(14, 37, 48) : new Color(20, 45, 60));
-            nav.revalidate();
-            nav.repaint();
-        });
-
-        nav.add(mainBtn);
-        nav.add(subPanel);
-        nav.add(Box.createVerticalStrut(4));
-    }
-
-    private void handleSubNavClick(String label) {
-        switch (label) {
-            case "Manage Merchant Accounts":
-                dispose();
-                new AccountManagement(fullname, role, new AccountService());
-            case "Create Merchant Account":
-                dispose();
-                new AccountManagement(fullname, role, new AccountService());
-                break;
-            case "Commercial Applications":
-                JOptionPane.showMessageDialog(this, "Commercial Applications — coming soon.");
-                break;
-            case "View All Staff":
-            case "Create Staff Account":
-                dispose();
-                //new StaffManagement(fullname, role);
-            case "Manage Staff Account":
-                dispose();
-                //new StaffManagement(fullname, role);
-
-                break;
-            case "View Merchant Orders":
-            case "View Merchant Invoices":
-            default:
-                JOptionPane.showMessageDialog(this, label + " — coming soon.");
-                break;
-        }
-    }
-
-    // Creates the button functionality for the items in the navigation panel
-    private JButton buildNavButton(String label, boolean active) {
-        JButton btn = new JButton(label);
-        btn.setFont(new Font("Segoe UI", active ? Font.BOLD : Font.PLAIN, 13));
-        btn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 36));
-        btn.setAlignmentX(Component.LEFT_ALIGNMENT);
-        btn.setHorizontalAlignment(SwingConstants.LEFT);
-        btn.setFocusPainted(false);
-        btn.setBorderPainted(false);
-        btn.setBackground(active ? new Color(30, 70, 90) : new Color(14, 37, 48));
-        btn.setForeground(active ? Color.WHITE : new Color(160, 190, 210));
-
-        btn.addActionListener(e -> {
-            dispose();
-            switch (label) {
-                case "Catalogue":
-                    new Catalogue(fullname, role);
-                    dispose();
-                    break;
-                case "Overview":
-                    new AdminDashboard(fullname, role);
-                    dispose();
-                    break;
-                case "Accounts":
-                    AccountService accountService = new AccountService();
-                    new AccountManagement(fullname, role, accountService);
-                    dispose();
-                    break;
-            }
-        });
-
-        return btn;
-    }
-
-    // Manages the logout functionality for the logout button
-    private void handleLogout() {
-        dispose();
-        new LoginForm();
     }
 
     private void createCenterPanel() {
@@ -281,7 +158,7 @@ public class ManageItem extends JFrame {
                 BorderFactory.createLineBorder(new Color(221, 225, 231), 1),
                 new EmptyBorder(20, 20, 20, 20)));
 
-        JLabel formTitle = new JLabel("ACCOUNT DETAILS");
+        JLabel formTitle = new JLabel(getFormTitleForMode());
         formTitle.setFont(new Font("Segoe UI", Font.BOLD, 14));
         formTitle.setForeground(Color.BLACK);
         formTitle.setBorder(new EmptyBorder(0, 0, 12, 0));
@@ -290,144 +167,72 @@ public class ManageItem extends JFrame {
         grid.setLayout(new BoxLayout(grid, BoxLayout.Y_AXIS));
         grid.setBackground(Color.WHITE);
 
-        // Sets the label and the corresponding text entry field
-        itemIdLabel = new JLabel("ITEM ID");
-        itemIdLabel.setFont(new Font("Segoe UI", Font.BOLD, 10));
-        itemIdLabel.setForeground(new Color(55, 65, 81));
-        itemIdLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        // Item ID is always shown
+        itemIdField        = createField();
+        descriptionField   = createField();
+        packageField       = createField();
+        unitField          = createField();
+        units_per_packField = createField();
+        costField          = createField();
+        availabilityField  = createField();
+        stock_limitField   = createField();
+        quantityField      = createField();
 
-        itemIdField = new JTextField();
-        itemIdField.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-        itemIdField.setMaximumSize(new Dimension(Integer.MAX_VALUE, 38));
-        itemIdField.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(221, 225, 231)),
-                BorderFactory.createEmptyBorder(0, 12, 0, 12)
-        ));
-
-        descriptionLabel = new JLabel("DESCRIPTION");
-        descriptionLabel.setFont(new Font("Segoe UI", Font.BOLD, 10));
-        descriptionLabel.setForeground(new Color(55, 65, 81));
-        descriptionLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
-
-        descriptionField = new JTextField();
-        descriptionField.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-        descriptionField.setMaximumSize(new Dimension(Integer.MAX_VALUE, 38));
-        descriptionField.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(221, 225, 231)),
-                BorderFactory.createEmptyBorder(0, 12, 0, 12)
-        ));
-
-        packageLabel = new JLabel("PACKAGE TYPE");
-        packageLabel.setFont(new Font("Segoe UI", Font.BOLD, 10));
-        packageLabel.setForeground(new Color(55, 65, 81));
-        packageLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
-
-        packageField = new JTextField();
-        packageField.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-        packageField.setMaximumSize(new Dimension(Integer.MAX_VALUE, 38));
-        packageField.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(221, 225, 231)),
-                BorderFactory.createEmptyBorder(0, 12, 0, 12)
-        ));
-
-        unitLabel = new JLabel("UNIT");
-        unitLabel.setFont(new Font("Segoe UI", Font.BOLD, 10));
-        unitLabel.setForeground(new Color(55, 65, 81));
-        unitLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
-
-        unitField = new JTextField();
-        unitField.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-        unitField.setMaximumSize(new Dimension(Integer.MAX_VALUE, 38));
-        unitField.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(221, 225, 231)),
-                BorderFactory.createEmptyBorder(0, 12, 0, 12)
-        ));
-
-        units_per_packLabel = new JLabel("UNITS PER PACK");
-        units_per_packLabel.setFont(new Font("Segoe UI", Font.BOLD, 10));
-        units_per_packLabel.setForeground(new Color(55, 65, 81));
-        units_per_packLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
-
-        units_per_packField = new JTextField();
-        units_per_packField.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-        units_per_packField.setMaximumSize(new Dimension(Integer.MAX_VALUE, 38));
-        units_per_packField.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(221, 225, 231)),
-                BorderFactory.createEmptyBorder(0, 12, 0, 12)
-        ));
-
-        costLabel = new JLabel("PACKAGE COST");
-        costLabel.setFont(new Font("Segoe UI", Font.BOLD, 10));
-        costLabel.setForeground(new Color(55, 65, 81));
-        costLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
-
-        costField = new JTextField();
-        costField.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-        costField.setMaximumSize(new Dimension(Integer.MAX_VALUE, 38));
-        costField.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(221, 225, 231)),
-                BorderFactory.createEmptyBorder(0, 12, 0, 12)
-        ));
-
-        availabilityLabel = new JLabel("AVAILABILITY");
-        availabilityLabel.setFont(new Font("Segoe UI", Font.BOLD, 10));
-        availabilityLabel.setForeground(new Color(55, 65, 81));
-        availabilityLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
-
-        availabilityField = new JTextField();
-        availabilityField.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-        availabilityField.setMaximumSize(new Dimension(Integer.MAX_VALUE, 38));
-        availabilityField.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(221, 225, 231)),
-                BorderFactory.createEmptyBorder(0, 12, 0, 12)
-        ));
-
-        stock_limitLabel = new JLabel("STOCK LIMIT");
-        stock_limitLabel.setFont(new Font("Segoe UI", Font.BOLD, 10));
-        stock_limitLabel.setForeground(new Color(55, 65, 81));
-        stock_limitLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
-
-        stock_limitField = new JTextField();
-        stock_limitField.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-        stock_limitField.setMaximumSize(new Dimension(Integer.MAX_VALUE, 38));
-        stock_limitField.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(221, 225, 231)),
-                BorderFactory.createEmptyBorder(0, 12, 0, 12)
-        ));
-
-        JPanel row1 = new JPanel(new GridLayout(1, 2, 12, 0));
-        row1.setBackground(Color.WHITE);
-        row1.setMaximumSize(new Dimension(Integer.MAX_VALUE, 60));
-        row1.add(fieldWrapper("ITEM ID", itemIdField));
-        row1.add(fieldWrapper("DESCRIPTION", descriptionField));
-
-        // Row 2 — address full width
-        JPanel row2 = new JPanel(new GridLayout(1, 2, 12, 0));
-        row2.setBackground(Color.WHITE);
-        row2.setMaximumSize(new Dimension(Integer.MAX_VALUE, 60));
-        row2.add(fieldWrapper("PACKAGE TYPE", packageField ));
-        row2.add(fieldWrapper("UNIT", unitField));
-
-        JPanel row3 = new JPanel(new GridLayout(1, 2, 12, 0));
-        row3.setBackground(Color.WHITE);
-        row3.setMaximumSize(new Dimension(Integer.MAX_VALUE, 60));
-        row3.add(fieldWrapper("UNIT PER PACK", units_per_packField));
-        row3.add(fieldWrapper("PACKAGE COST", costField));
-
-        // Row 3
-        JPanel row4 = new JPanel(new GridLayout(1, 2, 12, 0));
-        row4.setBackground(Color.WHITE);
-        row4.setMaximumSize(new Dimension(Integer.MAX_VALUE, 60));
-        row4.add(fieldWrapper("AVAILABILITY", availabilityField));
-        row4.add(fieldWrapper("STOCK LIMIT", stock_limitField));
-
-        grid.add(row1);
+        // Row 1 — Item ID always visible
+        JPanel row0 = new JPanel(new GridLayout(1, 1));
+        row0.setBackground(Color.WHITE);
+        row0.setMaximumSize(new Dimension(Integer.MAX_VALUE, 60));
+        row0.add(fieldWrapper("ITEM ID", itemIdField));
+        grid.add(row0);
         grid.add(Box.createVerticalStrut(12));
-        grid.add(row2);
-        grid.add(Box.createVerticalStrut(12));
-        grid.add(row3);
-        grid.add(Box.createVerticalStrut(12));
-        grid.add(row4);
+
+        // Show different fields based on mode
+        switch (mode) {
+            case "ADD":
+            case "UPDATE": {
+                JPanel row1 = new JPanel(new GridLayout(1, 2, 12, 0));
+                row1.setBackground(Color.WHITE);
+                row1.setMaximumSize(new Dimension(Integer.MAX_VALUE, 60));
+                row1.setPreferredSize(new Dimension(0, 60));
+                row1.add(fieldWrapper("DESCRIPTION", descriptionField));
+                row1.add(fieldWrapper("PACKAGE TYPE", packageField));
+
+                JPanel row2 = new JPanel(new GridLayout(1, 2, 12, 0));
+                row2.setBackground(Color.WHITE);
+                row2.setMaximumSize(new Dimension(Integer.MAX_VALUE, 60));
+                row2.setPreferredSize(new Dimension(0, 60));
+                row2.add(fieldWrapper("UNIT", unitField));
+                row2.add(fieldWrapper("UNITS PER PACK", units_per_packField));
+
+                JPanel row3 = new JPanel(new GridLayout(1, 2, 12, 0));
+                row3.setBackground(Color.WHITE);
+                row3.setMaximumSize(new Dimension(Integer.MAX_VALUE, 60));
+                row3.setPreferredSize(new Dimension(0, 60));
+                row3.add(fieldWrapper("PACKAGE COST (£)", costField));
+                row3.add(fieldWrapper("AVAILABILITY", availabilityField));
+
+                JPanel row4 = new JPanel(new GridLayout(1, 1));
+                row4.setBackground(Color.WHITE);
+                row4.setMaximumSize(new Dimension(Integer.MAX_VALUE, 60));
+                row4.setPreferredSize(new Dimension(0, 60));
+                row4.add(fieldWrapper("STOCK LIMIT", stock_limitField));
+
+                grid.add(row1); grid.add(Box.createVerticalStrut(12));
+                grid.add(row2); grid.add(Box.createVerticalStrut(12));
+                grid.add(row3); grid.add(Box.createVerticalStrut(12));
+                grid.add(row4);
+                break;
+            }
+            case "DELETE": {
+                // Only item ID needed — show a warning label
+                JLabel warning = new JLabel("Warning! This will deactivate the item from the catalogue.");
+                warning.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+                warning.setForeground(new Color(180, 30, 30));
+                warning.setAlignmentX(Component.LEFT_ALIGNMENT);
+                grid.add(warning);
+                break;
+            }
+        }
 
         messageLabel = new JLabel(" ");
         messageLabel.setFont(new Font("Segoe UI", Font.PLAIN, 11));
@@ -443,24 +248,12 @@ public class ManageItem extends JFrame {
 
         CenterPanel.add(northWrapper, BorderLayout.CENTER);
     }
-    // Helper to create a labelled field wrapper
-    private JPanel fieldWrapper(String label, JTextField field) {
-        JPanel wrapper = new JPanel(new BorderLayout(0, 4));
-        wrapper.setBackground(Color.WHITE);
 
-        JLabel lbl = new JLabel(label);
-        lbl.setFont(new Font("Segoe UI", Font.BOLD, 10));
-        lbl.setForeground(new Color(107, 114, 128));
-
-        wrapper.add(lbl, BorderLayout.NORTH);
-        wrapper.add(field, BorderLayout.CENTER);
-        return wrapper;
-    }
     private void createActionsPanel() {
         JPanel actionsPanel = new JPanel();
         actionsPanel.setLayout(new BoxLayout(actionsPanel, BoxLayout.Y_AXIS));
         actionsPanel.setBackground(new Color(245, 247, 250));
-        actionsPanel.setPreferredSize(new Dimension(200, 0));
+        actionsPanel.setPreferredSize(new Dimension(210, 0));
         actionsPanel.setBorder(BorderFactory.createEmptyBorder(20, 16, 20, 16));
 
         JLabel actionsTitle = new JLabel("ACTIONS");
@@ -468,30 +261,89 @@ public class ManageItem extends JFrame {
         actionsTitle.setForeground(new Color(107, 114, 128));
         actionsTitle.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        JButton saveBtn  = actionButton("Save Item",  new Color(30, 70, 90));
-        JButton clearBtn = actionButton("Clear Form", new Color(107, 114, 128));
-        JButton backBtn  = actionButton("← Back to Catalogue", new Color(17, 24, 39));
+        actionsPanel.add(actionsTitle);
+        actionsPanel.add(Box.createVerticalStrut(10));
 
-        saveBtn.addActionListener(e  -> saveItem());
-        clearBtn.addActionListener(e -> clearForm());
-        backBtn.addActionListener(e  -> {
+        System.out.println("Mode is: " + mode); // ← add this
+
+        switch (mode) {
+            case "ADD": {
+                JButton addBtn   = actionButton("Add Item",  new Color(30, 70, 90));
+                JButton clearBtn = actionButton("Clear", new Color(107, 114, 128));
+                addBtn.addActionListener(e   -> saveItem());
+                clearBtn.addActionListener(e -> clearForm());
+                actionsPanel.add(addBtn);
+                actionsPanel.add(Box.createVerticalStrut(8));
+                actionsPanel.add(clearBtn);
+                break;
+            }
+            case "UPDATE": {
+                JButton loadBtn   = actionButton("Load Item", new Color(17, 24, 39));
+                JButton updateBtn = actionButton("Update Item", new Color(30, 70, 90));
+                JButton clearBtn  = actionButton("Clear", new Color(107, 114, 128));
+                loadBtn.addActionListener(e   -> loadItem());
+                updateBtn.addActionListener(e -> updateItem());
+                clearBtn.addActionListener(e  -> clearForm());
+                actionsPanel.add(loadBtn);
+                actionsPanel.add(Box.createVerticalStrut(8));
+                actionsPanel.add(updateBtn);
+                actionsPanel.add(Box.createVerticalStrut(8));
+                actionsPanel.add(clearBtn);
+                break;
+            }
+            case "DELETE": {
+                JButton loadBtn = actionButton("Load Item", new Color(17, 24, 39));
+                JButton deactivateBtn = actionButton("Deactivate Item", new Color(127, 29, 29));
+                JButton clearBtn = actionButton("Clear", new Color(107, 114, 128));
+                loadBtn.addActionListener(e       -> loadItem());
+                deactivateBtn.addActionListener(e -> deactivateItem());
+                clearBtn.addActionListener(e      -> clearForm());
+                actionsPanel.add(loadBtn);
+                actionsPanel.add(Box.createVerticalStrut(8));
+                actionsPanel.add(deactivateBtn);
+                actionsPanel.add(Box.createVerticalStrut(8));
+                actionsPanel.add(clearBtn);
+                break;
+            }
+        }
+
+        actionsPanel.add(Box.createVerticalStrut(8));
+        JButton backBtn = actionButton("← Back to Catalogue", new Color(17, 24, 39));
+        backBtn.addActionListener(e -> {
             dispose();
             new Catalogue(fullname, role);
         });
-
-        actionsPanel.add(actionsTitle);
-        actionsPanel.add(Box.createVerticalStrut(12));
-        actionsPanel.add(saveBtn);
-        actionsPanel.add(Box.createVerticalStrut(8));
-        actionsPanel.add(clearBtn);
-        actionsPanel.add(Box.createVerticalStrut(8));
         actionsPanel.add(backBtn);
-        actionsPanel.add(Box.createVerticalStrut(12));
-        actionsPanel.add(messageLabel == null ? new JLabel(" ") : messageLabel);
 
         ContentPanel.setLayout(new BorderLayout());
-        ContentPanel.add(CenterPanel,   BorderLayout.CENTER);
-        ContentPanel.add(actionsPanel,  BorderLayout.EAST);
+        ContentPanel.add(CenterPanel, BorderLayout.CENTER);
+        ContentPanel.add(actionsPanel, BorderLayout.EAST);
+    }
+
+    private void loadItem() {
+        String id = itemIdField.getText().trim();
+        if (id.isEmpty()) {
+            setMessage("Enter an Item ID to load.", false);
+            return;
+        }
+        try {
+            DBConnection db = new DBConnection();
+            ResultSet rs = db.query("SELECT * FROM Catalogue WHERE item_id = ?", id);
+            if (rs.next()) {
+                descriptionField.setText(rs.getString("description"));
+                packageField.setText(rs.getString("package_type"));
+                unitField.setText(rs.getString("unit"));
+                units_per_packField.setText(String.valueOf(rs.getInt("units_per_pack")));
+                costField.setText(String.valueOf(rs.getDouble("package_cost")));
+                availabilityField.setText(String.valueOf(rs.getInt("availability")));
+                stock_limitField.setText(String.valueOf(rs.getInt("stock_limit")));
+                setMessage("Item loaded successfully.", true);
+            } else {
+                setMessage("Item ID not found.", false);
+            }
+        } catch (Exception ex) {
+            setMessage("Error: " + ex.getMessage(), false);
+        }
     }
 
     private void saveItem() {
@@ -500,8 +352,7 @@ public class ManageItem extends JFrame {
                 setMessage("Item ID and Description are required.", false);
                 return;
             }
-
-            IPOS.SA.DB.DBConnection db = new IPOS.SA.DB.DBConnection();
+            DBConnection db = new DBConnection();
             db.update(
                     "INSERT INTO Catalogue (item_id, description, package_type, unit, units_per_pack, package_cost, availability, stock_limit, is_active) VALUES (?,?,?,?,?,?,?,?,1)",
                     itemIdField.getText().trim(),
@@ -513,14 +364,54 @@ public class ManageItem extends JFrame {
                     Integer.parseInt(availabilityField.getText().trim()),
                     Integer.parseInt(stock_limitField.getText().trim())
             );
-
             setMessage("Item added successfully.", true);
             clearForm();
-
         } catch (NumberFormatException ex) {
-            setMessage("Please enter valid numbers for Units, Cost and Stock fields.", false);
+            setMessage("Please enter valid numbers for numeric fields.", false);
         } catch (Exception ex) {
             setMessage("Error: " + ex.getMessage(), false);
+        }
+    }
+
+    private void updateItem() {
+        String id = itemIdField.getText().trim();
+        if (id.isEmpty()) { setMessage("Load an item first.", false); return; }
+        try {
+            DBConnection db = new DBConnection();
+            db.update(
+                    "UPDATE Catalogue SET description=?, package_type=?, unit=?, units_per_pack=?, package_cost=?, availability=?, stock_limit=? WHERE item_id=?",
+                    descriptionField.getText().trim(),
+                    packageField.getText().trim(),
+                    unitField.getText().trim(),
+                    Integer.parseInt(units_per_packField.getText().trim()),
+                    Double.parseDouble(costField.getText().trim()),
+                    Integer.parseInt(availabilityField.getText().trim()),
+                    Integer.parseInt(stock_limitField.getText().trim()),
+                    id
+            );
+            setMessage("Item updated successfully.", true);
+        } catch (NumberFormatException ex) {
+            setMessage("Please enter valid numbers for numeric fields.", false);
+        } catch (Exception ex) {
+            setMessage("Error: " + ex.getMessage(), false);
+        }
+    }
+
+    private void deactivateItem() {
+        String id = itemIdField.getText().trim();
+        if (id.isEmpty()) { setMessage("Load an item first.", false); return; }
+        int confirm = JOptionPane.showConfirmDialog(this,
+                "Are you sure you want to deactivate item " + id + "?",
+                "Confirm Deactivation", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+        if (confirm == JOptionPane.YES_OPTION) {
+            try {
+                DBConnection db = new DBConnection();
+                db.update("UPDATE Catalogue SET is_active = 0 WHERE item_id = ?", id);
+                setMessage("Item deactivated successfully.", true);
+                clearForm();
+            } catch (Exception ex) {
+                setMessage("Error: " + ex.getMessage(), false);
+            }
         }
     }
 
@@ -533,11 +424,34 @@ public class ManageItem extends JFrame {
         costField.setText("");
         availabilityField.setText("");
         stock_limitField.setText("");
+        quantityField.setText("");
+        messageLabel.setText(" ");
     }
 
     private void setMessage(String text, boolean success) {
         messageLabel.setText(text);
         messageLabel.setForeground(success ? new Color(0, 97, 0) : new Color(200, 80, 80));
+    }
+
+    private JTextField createField() {
+        JTextField field = new JTextField();
+        field.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        field.setMaximumSize(new Dimension(Integer.MAX_VALUE, 38));
+        field.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(221, 225, 231)),
+                BorderFactory.createEmptyBorder(0, 12, 0, 12)));
+        return field;
+    }
+
+    private JPanel fieldWrapper(String label, JTextField field) {
+        JPanel wrapper = new JPanel(new BorderLayout(0, 4));
+        wrapper.setBackground(Color.WHITE);
+        JLabel lbl = new JLabel(label);
+        lbl.setFont(new Font("Segoe UI", Font.BOLD, 10));
+        lbl.setForeground(new Color(107, 114, 128));
+        wrapper.add(lbl, BorderLayout.NORTH);
+        wrapper.add(field, BorderLayout.CENTER);
+        return wrapper;
     }
 
     private JButton actionButton(String label, Color bg) {
@@ -550,5 +464,83 @@ public class ManageItem extends JFrame {
         btn.setAlignmentX(Component.LEFT_ALIGNMENT);
         btn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 34));
         return btn;
+    }
+
+    private JButton buildNavButton(String label, boolean active) {
+        JButton btn = new JButton(label);
+        btn.setFont(new Font("Segoe UI", active ? Font.BOLD : Font.PLAIN, 13));
+        btn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 36));
+        btn.setAlignmentX(Component.LEFT_ALIGNMENT);
+        btn.setHorizontalAlignment(SwingConstants.LEFT);
+        btn.setFocusPainted(false);
+        btn.setBorderPainted(false);
+        btn.setBackground(active ? new Color(30, 70, 90) : new Color(14, 37, 48));
+        btn.setForeground(active ? Color.WHITE : new Color(160, 190, 210));
+        btn.addActionListener(e -> {
+            switch (label) {
+                case "Overview":
+                    dispose();
+                    new AdminDashboard(fullname, role);
+                    break;
+                case "Catalogue":
+                    dispose();
+                    new Catalogue(fullname, role);
+                    break;
+                default:
+                    JOptionPane.showMessageDialog(this, label + " — coming soon.");
+                    break;
+            }
+        });
+        return btn;
+    }
+
+    private void addExpandableNavItem(JPanel nav, String label, String[] subItems) {
+        JButton mainBtn = new JButton(label);
+        mainBtn.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        mainBtn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 36));
+        mainBtn.setAlignmentX(Component.LEFT_ALIGNMENT);
+        mainBtn.setHorizontalAlignment(SwingConstants.LEFT);
+        mainBtn.setFocusPainted(false);
+        mainBtn.setBorderPainted(false);
+        mainBtn.setBackground(new Color(14, 37, 48));
+        mainBtn.setForeground(new Color(160, 190, 210));
+
+        JPanel subPanel = new JPanel();
+        subPanel.setLayout(new BoxLayout(subPanel, BoxLayout.Y_AXIS));
+        subPanel.setBackground(new Color(10, 28, 38));
+        subPanel.setVisible(false);
+
+        for (String sub : subItems) {
+            JButton subBtn = new JButton("    › " + sub);
+            subBtn.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+            subBtn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 30));
+            subBtn.setAlignmentX(Component.LEFT_ALIGNMENT);
+            subBtn.setHorizontalAlignment(SwingConstants.LEFT);
+            subBtn.setFocusPainted(false);
+            subBtn.setBorderPainted(false);
+            subBtn.setBackground(new Color(10, 28, 38));
+            subBtn.setForeground(new Color(120, 160, 185));
+            subBtn.addActionListener(e -> JOptionPane.showMessageDialog(this, sub + " — coming soon."));
+            subPanel.add(subBtn);
+            subPanel.add(Box.createVerticalStrut(2));
+        }
+
+        mainBtn.addActionListener(e -> {
+            boolean showing = subPanel.isVisible();
+            subPanel.setVisible(!showing);
+            mainBtn.setForeground(showing ? new Color(160, 190, 210) : Color.WHITE);
+            mainBtn.setBackground(showing ? new Color(14, 37, 48) : new Color(20, 45, 60));
+            nav.revalidate();
+            nav.repaint();
+        });
+
+        nav.add(mainBtn);
+        nav.add(subPanel);
+        nav.add(Box.createVerticalStrut(4));
+    }
+
+    private void handleLogout() {
+        dispose();
+        new LoginForm();
     }
 }

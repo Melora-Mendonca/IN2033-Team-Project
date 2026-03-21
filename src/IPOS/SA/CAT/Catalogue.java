@@ -287,11 +287,6 @@ public class Catalogue extends JFrame {
                     new AdminDashboard(fullname, role);
                     dispose();
                     break;
-                case "Accounts":
-                    AccountService accountService = new AccountService();
-                    new AccountManagement(fullname, role, accountService);
-                    dispose();
-                    break;
             }
         });
 
@@ -398,13 +393,20 @@ public class Catalogue extends JFrame {
         buttonPanel.add(addButton);
         addButton.addActionListener(e    -> {
                     dispose();
-                    new ManageItem(fullname, role);
+                    new ManageItem(fullname, role, "ADD");
                 });
-//        updateButton.addActionListener(e -> showSimpleMessage("Update item — coming soon."));
-//        deleteButton.addActionListener(e -> showSimpleMessage("Delete item — coming soon."));
 
         buttonPanel.add(updateButton);
-        buttonPanel.add(deleteButton);
+        updateButton.addActionListener(e    -> {
+            dispose();
+            new ManageItem(fullname, role, "UPDATE");
+        });
+
+      buttonPanel.add(deleteButton);
+        deleteButton.addActionListener(e    -> {
+            dispose();
+            new ManageItem(fullname, role, "DELETE");
+        });
 
         statusLabel = new JLabel("Ready");
         statusLabel.setFont(new Font("Segoe UI", Font.PLAIN, 11));
