@@ -150,57 +150,98 @@ public class LoginForm extends JFrame {
     }
 
     private void createLoginPanel() {
-        // Sets the layout and background of the login panel, so other components within the panel can be correctly aligned
         LoginPanel.setLayout(new BoxLayout(LoginPanel, BoxLayout.Y_AXIS));
         LoginPanel.setBackground(new Color(245, 247, 250));
-        // A border is set for the panel so that content does not overflow out of the login panel
         LoginPanel.setBorder(BorderFactory.createEmptyBorder(30, 44, 30, 44));
 
-        // Creates a panel to store all the user role buttons
+        // ── ROLE SELECTION ───────────────────────────────────────
         roleRow = new JPanel(new FlowLayout(FlowLayout.CENTER, 8, 0));
         roleRow.setOpaque(false);
         roleRow.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
 
-        // Creates a group of buttons that when clicked, will display the login form for that user, and will assist in directing the user, once they are fully logged in.
-        // Standard professional font and colours are used for the buttons, with borders and colour changing when clicked.
         ButtonGroup group = new ButtonGroup();
-        String[] roles = {"administrator", "manager", "staff"};
-        for (String role : roles) {
-            JToggleButton tb = new JToggleButton(role);
-            tb.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-            tb.setPreferredSize(new Dimension(120, 32));
-            tb.setFocusPainted(false);
-            tb.setBackground(Color.WHITE);
-            tb.setForeground(new Color(107, 114, 128));
-            tb.setBorder(BorderFactory.createLineBorder(new Color(221, 225, 231)));
-            if (role.equals("Administrator"))
-                tb.setSelected(true);
-            group.add(tb);
-            roleRow.add(tb);
 
-            // Action listener updates the sign-in text to the appropriate user role for consistency
-            tb.addActionListener(e -> {
-                subtitleLb1.setText("Sign in as " + role);
-                subtitleLb1.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-                subtitleLb1.setForeground(new Color(107, 114, 128));
-                subtitleLb1.setAlignmentX(Component.LEFT_ALIGNMENT);
-                selectedRole = role;
-            });
-        }
+        JToggleButton adminBtn = new JToggleButton("Administrator");
+        JToggleButton directorBtn = new JToggleButton("Director of Operations");
+        JToggleButton staffBtn = new JToggleButton("Staff");
 
-        //  Sets the Title label for the login panel
+        styleToggleButton(adminBtn);
+        styleToggleButton(directorBtn);
+        styleToggleButton(staffBtn);
+
+        adminBtn.setSelected(true);
+        selectedRole = "administrator";
+
+        group.add(adminBtn);
+        group.add(directorBtn);
+        group.add(staffBtn);
+
+        roleRow.add(adminBtn);
+        roleRow.add(directorBtn);
+        roleRow.add(staffBtn);
+
+        // Staff dropdown — hidden by default
+        JPanel staffPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 8, 4));
+        staffPanel.setOpaque(false);
+        staffPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
+        staffPanel.setVisible(false);
+
+        JLabel staffTypeLabel = new JLabel("Staff type:");
+        staffTypeLabel.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        staffTypeLabel.setForeground(new Color(55, 65, 81));
+
+        JComboBox<String> staffDropdown = new JComboBox<>(new String[]{
+                "senior_accountant",
+                "accountant",
+                "warehouse_employee",
+                "delivery_employee"
+        });
+        staffDropdown.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        staffDropdown.setPreferredSize(new Dimension(200, 32));
+        staffDropdown.addActionListener(e -> {
+            selectedRole = staffDropdown.getSelectedItem().toString();
+            subtitleLb1.setText("Sign in as " + formatRole(selectedRole));
+        });
+
+        staffPanel.add(staffTypeLabel);
+        staffPanel.add(staffDropdown);
+
+        // Action listeners for role buttons
+        adminBtn.addActionListener(e -> {
+            selectedRole = "administrator";
+            subtitleLb1.setText("Sign in as Administrator");
+            staffPanel.setVisible(false);
+            LoginPanel.revalidate();
+            LoginPanel.repaint();
+        });
+
+        directorBtn.addActionListener(e -> {
+            selectedRole = "director_of_operations";
+            subtitleLb1.setText("Sign in as Director of Operations");
+            staffPanel.setVisible(false);
+            LoginPanel.revalidate();
+            LoginPanel.repaint();
+        });
+
+        staffBtn.addActionListener(e -> {
+            selectedRole = staffDropdown.getSelectedItem().toString();
+            subtitleLb1.setText("Sign in as " + formatRole(selectedRole));
+            staffPanel.setVisible(true);
+            LoginPanel.revalidate();
+            LoginPanel.repaint();
+        });
+
+        // ── TITLE ────────────────────────────────────────────────
         titleLbl = new JLabel("Welcome back");
         titleLbl.setFont(new Font("Segoe UI", Font.BOLD, 22));
         titleLbl.setForeground(new Color(17, 24, 39));
         titleLbl.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        // Adds a subtitle to inform the user of what the current role is set to
         subtitleLb1 = new JLabel("Sign in as Administrator");
         subtitleLb1.setFont(new Font("Segoe UI", Font.PLAIN, 12));
         subtitleLb1.setForeground(new Color(107, 114, 128));
-        //subtitleLb1.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        // Sets the Username label and the corresponding text entry field
+        // ── USERNAME ─────────────────────────────────────────────
         userLbl = new JLabel("USERNAME");
         userLbl.setFont(new Font("Segoe UI", Font.BOLD, 10));
         userLbl.setForeground(new Color(55, 65, 81));
@@ -214,7 +255,7 @@ public class LoginForm extends JFrame {
                 BorderFactory.createEmptyBorder(0, 12, 0, 12)
         ));
 
-        // Sets the Password label with a corresponding password field, that hides the text being entered for privacy.
+        // ── PASSWORD ─────────────────────────────────────────────
         passLbl = new JLabel("PASSWORD");
         passLbl.setFont(new Font("Segoe UI", Font.BOLD, 10));
         passLbl.setForeground(new Color(55, 65, 81));
@@ -228,6 +269,7 @@ public class LoginForm extends JFrame {
                 BorderFactory.createEmptyBorder(0, 12, 0, 12)
         ));
 
+        // ── STATUS ───────────────────────────────────────────────
         statusLbl = new JLabel("");
         statusLbl.setFont(new Font("Segoe UI", Font.PLAIN, 11));
         statusLbl.setForeground(new Color(218, 30, 40));
@@ -235,9 +277,10 @@ public class LoginForm extends JFrame {
 
         loginUser();
 
-        // Add all components to login panel at the set locations and with accurate alignment.
-        // Invisible components are used again for formatting and professional appearance
+        // ── ASSEMBLE ─────────────────────────────────────────────
         LoginPanel.add(roleRow);
+        LoginPanel.add(Box.createVerticalStrut(8));
+        LoginPanel.add(staffPanel);
         LoginPanel.add(Box.createVerticalStrut(24));
         LoginPanel.add(titleLbl);
         LoginPanel.add(Box.createVerticalStrut(4));
@@ -267,11 +310,11 @@ public class LoginForm extends JFrame {
         loginBtn.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         loginBtn.addActionListener(e -> {
-            String username = userField.getText();
+            String username = userField.getText().trim();
             String password = new String(passField.getPassword());
 
             if (username.isEmpty() || password.isEmpty()) {
-                statusLbl.setText("Sign In Failed, please enter your username and password.");
+                statusLbl.setText("Please enter your username and password.");
                 return;
             }
 
@@ -281,8 +324,10 @@ public class LoginForm extends JFrame {
             if (user != null) {
                 dispose();
 
+                // Check low stock warnings for admin and director
                 List<String> warnings = new ArrayList<>();
-                if (user.getRole().equals("administrator") || user.getRole().equals("manager")) {
+                if (user.getRole().equals("administrator") ||
+                        user.getRole().equals("director_of_operations")) {
                     warnings = connector.getStockWarnings();
                 }
 
@@ -292,20 +337,45 @@ public class LoginForm extends JFrame {
                         if (!warnings.isEmpty()) showStockWarning(dashboard, warnings);
                         break;
                     }
-                    case "manager": {
+                    case "director_of_operations": {
                         ManagerDashboard dashboard = new ManagerDashboard(user.getFullName(), user.getRole());
                         if (!warnings.isEmpty()) showStockWarning(dashboard, warnings);
                         break;
                     }
-                    case "staff": {
+                    case "senior_accountant":
+                    case "accountant":
+                    case "warehouse_employee":
+                    case "delivery_employee":
                         new StaffDashboard(user.getFullName(), user.getRole());
                         break;
-                    }
+                    default:
+                        statusLbl.setText("Role not recognised.");
+                        break;
                 }
             } else {
                 statusLbl.setText("Invalid username, password or role.");
             }
         });
+    }
+
+    private void styleToggleButton(JToggleButton btn) {
+        btn.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        btn.setPreferredSize(new Dimension(160, 32));
+        btn.setFocusPainted(false);
+        btn.setBackground(Color.WHITE);
+        btn.setForeground(new Color(107, 114, 128));
+        btn.setBorder(BorderFactory.createLineBorder(new Color(221, 225, 231)));
+    }
+
+    private String formatRole(String role) {
+        String[] words = role.split("_");
+        StringBuilder sb = new StringBuilder();
+        for (String word : words) {
+            sb.append(Character.toUpperCase(word.charAt(0)))
+                    .append(word.substring(1))
+                    .append(" ");
+        }
+        return sb.toString().trim();
     }
 
     private void showStockWarning(JFrame parent, List<String> warnings) {
@@ -319,7 +389,7 @@ public class LoginForm extends JFrame {
         JOptionPane.showMessageDialog(
                 parent,
                 sb.toString(),
-                "⚠  Low Stock Warning",
+                "Low Stock Warning",
                 JOptionPane.WARNING_MESSAGE
         );
     }

@@ -65,6 +65,8 @@ public class ManageItem extends JFrame {
                 return "Update Catalogue Item";
             case "DELETE":
                 return "Deactivate Catalogue Item";
+            case "DELIVERY":
+                return "Record Stock Delivery";
             default:
                 return "Manage Catalogue Item";
         }
@@ -79,6 +81,8 @@ public class ManageItem extends JFrame {
                 return "EDIT ITEM DETAILS";
             case "DELETE":
                 return "DEACTIVATE ITEM";
+            case "DELIVERY":
+                return "RECORD DELIVERY";
             default:
                 return "ITEM DETAILS";
         }
@@ -232,6 +236,14 @@ public class ManageItem extends JFrame {
                 grid.add(warning);
                 break;
             }
+            case "DELIVERY": {
+                JPanel row1 = new JPanel(new GridLayout(1, 1));
+                row1.setBackground(Color.WHITE);
+                row1.setMaximumSize(new Dimension(Integer.MAX_VALUE, 60));
+                row1.add(fieldWrapper("QUANTITY TO ADD (packs)", quantityField));
+                grid.add(row1);
+                break;
+            }
         }
 
         messageLabel = new JLabel(" ");
@@ -302,6 +314,15 @@ public class ManageItem extends JFrame {
                 actionsPanel.add(Box.createVerticalStrut(8));
                 actionsPanel.add(deactivateBtn);
                 actionsPanel.add(Box.createVerticalStrut(8));
+                actionsPanel.add(clearBtn);
+                break;
+            }
+            case "DELIVERY": {
+                JButton deliveryBtn = actionButton("Record Delivery", new Color(20, 83, 45));
+                JButton clearBtn    = actionButton("Clear",           new Color(107, 114, 128));
+                deliveryBtn.addActionListener(e -> recordDelivery());
+                clearBtn.addActionListener(e    -> clearForm());
+                actionsPanel.add(deliveryBtn); actionsPanel.add(Box.createVerticalStrut(8));
                 actionsPanel.add(clearBtn);
                 break;
             }
@@ -412,6 +433,43 @@ public class ManageItem extends JFrame {
             } catch (Exception ex) {
                 setMessage("Error: " + ex.getMessage(), false);
             }
+        }
+    }
+
+    private void recordDelivery() {
+        String id = itemIdField.getText().trim();
+        if (id.isEmpty()) {
+            setMessage("Load an item first.", false);
+            return;
+        }
+        if (quantityField.getText().trim().isEmpty()) {
+            setMessage("Enter a quantity.", false);
+            return;
+        }
+        try {
+            int qty = Integer.parseInt(quantityField.getText().trim());
+            if (qty <= 0) {
+                setMessage("Quantity must be greater than zero.", false);
+                return;
+            }
+            DBConnection db = new DBConnection();
+
+            // Check item exists first
+            ResultSet rs = db.query("SELECT item_id FROM Catalogue WHERE item_id = ? AND is_active = 1", id);
+            if (!rs.next()) {
+                setMessage("Item ID not found in catalogue.", false);
+                return;
+            }
+
+            db.update("INSERT INTO Stock_Deliveries (item_id, quantity_added, entered_by, notes) VALUES (?,?,1,'Manual delivery')", id, qty);
+            db.update("UPDATE Catalogue SET availability = availability + ? WHERE item_id = ?", qty, id);
+            setMessage("Delivery recorded. Stock updated by " + qty + " packs.", true);
+            quantityField.setText("");
+
+        } catch (NumberFormatException ex) {
+            setMessage("Please enter a valid quantity.", false);
+        } catch (Exception ex) {
+            setMessage("Error: " + ex.getMessage(), false);
         }
     }
 

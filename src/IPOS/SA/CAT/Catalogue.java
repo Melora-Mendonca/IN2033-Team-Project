@@ -52,6 +52,7 @@ public class Catalogue extends JFrame {
     private JButton deleteButton;
     private JButton refreshButton;
     private JButton searchButton;
+    private JButton deliveryButton;
     private JPanel MainPanel;
     private JPanel NavPanel;
     private JPanel ContentPanel;
@@ -385,10 +386,12 @@ public class Catalogue extends JFrame {
         addButton = new JButton("Add Item");
         updateButton = new JButton("Update Item");
         deleteButton = new JButton("Delete Item");
+        deliveryButton = new JButton("Record Delivery");
 
         styleButton(addButton);
         styleButton(updateButton);
         styleButton(deleteButton);
+        styleButton(deliveryButton);
 
         buttonPanel.add(addButton);
         addButton.addActionListener(e    -> {
@@ -402,10 +405,16 @@ public class Catalogue extends JFrame {
             new ManageItem(fullname, role, "UPDATE");
         });
 
-      buttonPanel.add(deleteButton);
+        buttonPanel.add(deleteButton);
         deleteButton.addActionListener(e    -> {
             dispose();
             new ManageItem(fullname, role, "DELETE");
+        });
+
+        buttonPanel.add(deliveryButton);
+        deliveryButton.addActionListener(e    -> {
+            dispose();
+            new ManageItem(fullname, role, "DELIVERY");
         });
 
         statusLabel = new JLabel("Ready");
@@ -429,27 +438,6 @@ public class Catalogue extends JFrame {
         btn.setBorderPainted(false);
         btn.setFont(new Font("Segoe UI", Font.PLAIN, 12));
     }
-
-
-    // For Week 1 the catalogue data is added manually.
-// In a full system this could be loaded from a database or file.
-
-//    private void initialiseSampleData() {
-//        Items.add(new CatalogueItem("100 00001", "Paracetamol", "box", "Caps", 20, 0.10, 10345, 300));
-//        Items.add(new CatalogueItem("100 00002", "Aspirin", "box", "Caps", 20, 0.50, 12453, 500));
-//        Items.add(new CatalogueItem("100 00003", "Analgin", "box", "Caps", 10, 1.20, 4235, 200));
-//        Items.add(new CatalogueItem("100 00004", "Celebrex, caps 100 mg", "box", "Caps", 10, 10.00, 3420, 200));
-//        Items.add(new CatalogueItem("100 00005", "Celebrex, caps 200 mg", "box", "Caps", 10, 18.50, 1450, 150));
-//        Items.add(new CatalogueItem("100 00006", "Retin-A Tretin, 30 g", "box", "Caps", 20, 25.00, 2013, 200));
-//        Items.add(new CatalogueItem("100 00007", "Lipitor TB, 20 mg", "box", "Caps", 30, 15.50, 1562, 200));
-//        Items.add(new CatalogueItem("100 00008", "Claritin CR, 60g", "box", "Caps", 20, 19.50, 2540, 200));
-//        Items.add(new CatalogueItem("200 00004", "Iodine tincture", "bottle", "ml", 100, 0.30, 22134, 200));
-//        Items.add(new CatalogueItem("200 00005", "Rhynol", "bottle", "ml", 200, 2.50, 1908, 300));
-//        Items.add(new CatalogueItem("300 00001", "Ospen", "box", "Caps", 20, 10.50, 809, 200));
-//        Items.add(new CatalogueItem("300 00002", "Amopen", "box", "Caps", 30, 15.00, 1340, 300));
-//        Items.add(new CatalogueItem("400 00001", "Vitamin C", "box", "Caps", 30, 1.20, 3258, 300));
-//        Items.add(new CatalogueItem("400 00002", "Vitamin B12", "box", "Caps", 30, 1.30, 2673, 300));
-//    }
 
     private void loadData() {
         Items.clear();
@@ -487,9 +475,15 @@ public class Catalogue extends JFrame {
 
         switch (selectedRole) {
             case "admin":
-            case "administrator": setAdminView();    break;
-            case "manager":       setManagerView();  break;
-            default:              setMerchantView(); break;
+            case "administrator":
+                setAdminView();
+                break;
+            case "director_of_operations":
+                setManagerView();
+                break;
+            default:
+                setMerchantView();
+                break;
         }
     }
 
@@ -500,7 +494,7 @@ public class Catalogue extends JFrame {
                 "Units in a pack", "Package Cost (£)", "Availability (packs)", "Stock Limit (packs)"
         };
 
-        buildTable(columns, true, true, true, Items);
+        buildTable(columns, true, true, true, true, Items);
         statusLabel.setText("Admin view: full catalogue access");
     }
     // Merchants can see catalogue items but stock limit is hidden
@@ -510,7 +504,7 @@ public class Catalogue extends JFrame {
                 "Units in a pack", "Package Cost (£)", "Availability (packs)"
         };
 
-        buildTable(columns, false, false, false, Items);
+        buildTable(columns, false, false, false, false, Items);
         statusLabel.setText("Merchant view: stock limit hidden");
     }
     // Manager role does not maintain catalogue in this prototype
@@ -526,11 +520,12 @@ public class Catalogue extends JFrame {
         addButton.setEnabled(false);
         updateButton.setEnabled(false);
         deleteButton.setEnabled(false);
+        deliveryButton.setEnabled(false);
 
         statusLabel.setText("Manager view: no catalogue maintenance access");
     }
 
-    private void buildTable(String[] columns, boolean canAdd, boolean canUpdate, boolean canDelete, List<CatalogueItem> items) {
+    private void buildTable(String[] columns, boolean canAdd, boolean canUpdate, boolean canDelete, boolean canRecord, List<CatalogueItem> items) {
         tableModel.setRowCount(0);
         tableModel.setColumnCount(0);
 
@@ -568,6 +563,7 @@ public class Catalogue extends JFrame {
         addButton.setEnabled(canAdd);
         updateButton.setEnabled(canUpdate);
         deleteButton.setEnabled(canDelete);
+        deliveryButton.setEnabled(canRecord);
     }
     // Searches catalogue items by item ID or desciption keyword
     private void searchCatalogue() {
@@ -598,13 +594,13 @@ public class Catalogue extends JFrame {
                     "Item ID", "Description", "Package Type", "Unit",
                     "Units in a pack", "Package Cost (£)", "Availability (packs)", "Stock Limit (packs)"
             };
-            buildTable(columns, true, true, true, filteredItems);
+            buildTable(columns, true, true, true, true, filteredItems);
         } else {
             String[] columns = {
                     "Item ID", "Description", "Package Type", "Unit",
                     "Units in a pack", "Package Cost (£)", "Availability (packs)"
             };
-            buildTable(columns, false, false, false, filteredItems);
+            buildTable(columns, false, false, false, false, filteredItems);
         }
 
         statusLabel.setText(filteredItems.size() + " item(s) found");
