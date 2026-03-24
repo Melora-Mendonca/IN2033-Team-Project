@@ -1,5 +1,7 @@
 package IPOS.SA.ACC;
 
+import IPOS.SA.ORD.OrderSubmissionFrame;
+
 import javax.swing.*;
 import java.awt.*;
 
@@ -122,6 +124,19 @@ public class StaffDashboard extends JFrame {
         btn.setBorderPainted(false);
         btn.setBackground(active ? new Color(30, 70, 90) : new Color(14, 37, 48));
         btn.setForeground(active ? Color.WHITE : new Color(160, 190, 210));
+
+        btn.addActionListener(e -> {
+            switch (label) {
+                case "Overview":
+                    dispose();
+                    new StaffDashboard(fullname, role);
+                    break;
+                case "Orders":
+                    new OrderSubmissionFrame();
+                    break;
+            }
+        });
+
         return btn;
     }
 

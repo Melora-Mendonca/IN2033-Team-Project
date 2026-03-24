@@ -1,6 +1,8 @@
 package IPOS.SA.ACC;
 
 import IPOS.SA.CAT.Catalogue;
+import IPOS.SA.ORD.OrderSubmissionFrame;
+import IPOS.SA.ORD.OrderTrackingFrame;
 
 import javax.swing.*;
 import java.awt.*;
@@ -96,12 +98,15 @@ public class AdminDashboard extends JFrame {
         NavPanel.add(navIcon);
         NavPanel.add(Box.createVerticalStrut(16));
 
-        // Adds nav buttons to the navigation panel
-        NavPanel.add(buildNavButton("Overview",  false));
+        NavPanel.add(buildNavButton("Overview",   false));
         NavPanel.add(Box.createVerticalStrut(4));
-        NavPanel.add(buildNavButton("Catalogue", false));
+        NavPanel.add(buildNavButton("Catalogue",  false));
         NavPanel.add(Box.createVerticalStrut(4));
-        NavPanel.add(buildNavButton("Orders",    false));
+        NavPanel.add(buildNavButton("New Order",  false));
+        NavPanel.add(Box.createVerticalStrut(4));
+        NavPanel.add(buildNavButton("Orders",     false));
+        NavPanel.add(Box.createVerticalStrut(4));
+        NavPanel.add(buildNavButton("Invoices",   false));
         NavPanel.add(Box.createVerticalStrut(4));
 
         // Expandable sections for certain navigation options
@@ -249,15 +254,23 @@ public class AdminDashboard extends JFrame {
         btn.setForeground(active ? Color.WHITE : new Color(160, 190, 210));
 
         btn.addActionListener(e -> {
-            dispose();
             switch (label) {
                 case "Catalogue":
-                    new Catalogue(fullname, role);
                     dispose();
+                    new Catalogue(fullname, role);
                     break;
                 case "Overview":
-                    new AdminDashboard(fullname, role);
                     dispose();
+                    new AdminDashboard(fullname, role);
+                    break;
+                case "New Order":
+                    new OrderSubmissionFrame();
+                    break;
+                case "Orders":
+                    new OrderTrackingFrame();
+                    break;
+                case "Invoices":
+                    new InvoiceListFrame();
                     break;
                 case "Accounts":
                     AccountService accountService = new AccountService();

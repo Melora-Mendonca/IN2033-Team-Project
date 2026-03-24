@@ -1,6 +1,7 @@
 package IPOS.SA.ACC;
 
 import IPOS.SA.CAT.Catalogue;
+import IPOS.SA.ORD.OrderTrackingFrame;
 
 import javax.swing.*;
 import java.awt.*;
@@ -89,7 +90,7 @@ public class ManagerDashboard extends JFrame {
         NavPanel.add(navIcon);
 
         // generates Navigation buttons — Overview is active by default
-        String[] navItems = {"Overview", "Catalogue", "Merchants", "Invoices", "Reports", "Settings"};
+        String[] navItems = {"Overview", "Catalogue", "Orders", "Merchants", "Invoices", "Reports", "Settings"};
         for (String item : navItems) {
             NavPanel.add(buildNavButton(item, item.equals("Overview")));
             NavPanel.add(Box.createVerticalStrut(4));
@@ -133,15 +134,20 @@ public class ManagerDashboard extends JFrame {
         btn.setForeground(active ? Color.WHITE : new Color(160, 190, 210));
 
         btn.addActionListener(e -> {
-            dispose();
             switch (label) {
                 case "Catalogue":
-                    new Catalogue(fullname, role);
                     dispose();
+                    new Catalogue(fullname, role);
                     break;
                 case "Overview":
-                    new AdminDashboard(fullname, role);
                     dispose();
+                    new ManagerDashboard(fullname, role);
+                    break;
+                case "Orders":
+                    new OrderTrackingFrame();
+                    break;
+                case "Invoices":
+                    new InvoiceListFrame();
                     break;
             }
         });
