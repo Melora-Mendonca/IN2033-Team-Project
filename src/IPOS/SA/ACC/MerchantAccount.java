@@ -108,7 +108,7 @@ public class MerchantAccount {
                 && (outstandingBalance + orderValue) <= creditLimit;
     }
 
-    public void addToOutstandingBalance(double amount) {
+    public void setOutstandingBalance(double amount) {
         outstandingBalance += amount;
     }
 

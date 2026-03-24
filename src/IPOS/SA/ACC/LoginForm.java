@@ -191,10 +191,10 @@ public class LoginForm extends JFrame {
         staffTypeLabel.setForeground(new Color(55, 65, 81));
 
         JComboBox<String> staffDropdown = new JComboBox<>(new String[]{
-                "senior_accountant",
-                "accountant",
-                "warehouse_employee",
-                "delivery_employee"
+                "Senior Accountant",
+                "Accountant",
+                "Warehouse Employee",
+                "Delivery Employee"
         });
         staffDropdown.setFont(new Font("Segoe UI", Font.PLAIN, 12));
         staffDropdown.setPreferredSize(new Dimension(200, 32));

@@ -240,10 +240,11 @@ public class Catalogue extends JFrame {
         switch (label) {
             case "Manage Merchant Accounts":
                 dispose();
-                new AccountManagement(fullname, role, new AccountService());
+                new AccountManagement(fullname, role, "MANAGE");
+                break;
             case "Create Merchant Account":
                 dispose();
-                new AccountManagement(fullname, role, new AccountService());
+                new AccountManagement(fullname, role,  "CREATE");
                 break;
             case "Commercial Applications":
                 JOptionPane.showMessageDialog(this, "Commercial Applications — coming soon.");

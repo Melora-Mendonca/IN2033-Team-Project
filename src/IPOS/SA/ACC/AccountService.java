@@ -34,7 +34,7 @@ public class AccountService {
     public void applyOrderToAccount(MerchantAccount account, double orderValue) {
         double discount = account.getDiscountPlan().calculateDiscount(orderValue);
         double finalAmount = orderValue - discount;
-        account.addToOutstandingBalance(finalAmount);
+        account.setOutstandingBalance(finalAmount);
     }
 
     public void updateAccountStatus(MerchantAccount account, int daysOverdue) {

@@ -1,18 +1,20 @@
 package IPOS.SA.ACC;
 
 import IPOS.SA.CAT.Catalogue;
+import IPOS.SA.DB.DBConnection;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
+import java.sql.*;
+
 
 public class AccountManagement extends JFrame {
-
-    private final AccountService accountService;
 
     // For the user's role and full name that is displayed in the header
     private String fullname;
     private String role;
+    private String mode;
 
     // For the data entry fields on the form
     private JLabel merchantIdLabel;
@@ -44,22 +46,20 @@ public class AccountManagement extends JFrame {
     private JPanel HeaderPanel;
     private JPanel FooterPanel;
     private JPanel CenterPanel;
-    private JPanel statusCard;
     private JPanel FormPanel;
     private JPanel StatusPanel;
     private JLabel headerLabel;
     private JLabel navIcon;
-    private JLabel headerSubTitle;
     private JButton logoutBtn;
     private JSeparator divider;
 
 
-    public AccountManagement(String fullname, String role, AccountService accountService) {
-        this.accountService = accountService;
+    public AccountManagement(String fullname, String role, String mode) {
         this.fullname = fullname;
         this.role = role;
+        this.mode = mode;
 
-        setTitle("Account Management");
+        setTitle("Merchant Account Management");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setContentPane(MainPanel);
         setExtendedState(JFrame.MAXIMIZED_BOTH);
@@ -228,10 +228,11 @@ public class AccountManagement extends JFrame {
         switch (label) {
             case "Manage Merchant Accounts":
                 dispose();
-                new AccountManagement(fullname, role, new AccountService());
+                new AccountManagement(fullname, role, "MANAGE");
+                break;
             case "Create Merchant Account":
                 dispose();
-                new AccountManagement(fullname, role, new AccountService());
+                new AccountManagement(fullname, role, "CREATE");
                 break;
             case "Commercial Applications":
                 JOptionPane.showMessageDialog(this, "Commercial Applications — coming soon.");
@@ -239,11 +240,11 @@ public class AccountManagement extends JFrame {
             case "View All Staff":
             case "Create Staff Account":
                 dispose();
-                //new StaffManagement(fullname, role);
+                new StaffAccountManagement(fullname, role, new AccountService(), "CREATE");
+                break;
             case "Manage Staff Account":
                 dispose();
-                //new StaffManagement(fullname, role);
-
+                new StaffAccountManagement(fullname, role, new AccountService(), "MANAGE");
                 break;
             case "View Merchant Orders":
             case "View Merchant Invoices":
@@ -274,11 +275,6 @@ public class AccountManagement extends JFrame {
                     break;
                 case "Overview":
                     new AdminDashboard(fullname, role);
-                    dispose();
-                    break;
-                case "Accounts":
-                    AccountService accountService = new AccountService();
-                    new AccountManagement(fullname, role, accountService);
                     dispose();
                     break;
             }
@@ -500,34 +496,77 @@ public class AccountManagement extends JFrame {
         actionsTitle.setForeground(new Color(107, 114, 128));
         actionsTitle.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        JButton loadBtn      = actionButton("Load Account", new Color(17, 24, 39));
-        JButton createBtn    = actionButton("Create Account", new Color(30, 70, 90));
-        JButton updateBtn    = actionButton("Update Account", new Color(30, 70, 90));
-        JButton suspendBtn   = actionButton("Suspend Account", new Color(127, 29, 29));
-        JButton reinstateBtn = actionButton("Reinstate Account", new Color(20, 83, 45));
-        JButton clearBtn     = actionButton("Clear", new Color(107, 114, 128));
+        switch(mode) {
+            case "CREATE":
+                JButton createBtn = actionButton("Create Account", new Color(30, 70, 90));
+                JButton clearBtn = actionButton("Clear", new Color(107, 114, 128));
+                JButton backBtn = actionButton("← Back", new Color(17, 24, 39));
 
-        loadBtn.addActionListener(e      -> loadAccount());
-        createBtn.addActionListener(e    -> createAccount());
-        updateBtn.addActionListener(e    -> updateAccount());
-        suspendBtn.addActionListener(e   -> updateStatus("suspended"));
-        reinstateBtn.addActionListener(e -> updateStatus("normal"));
-        clearBtn.addActionListener(e     -> clearForm());
+                createBtn.addActionListener(e -> createAccount());
+                clearBtn.addActionListener(e -> clearForm());
+                backBtn.addActionListener(e -> {
+                    dispose();
+                    new AdminDashboard(fullname, role);
+                });
 
-        actionsCard.add(actionsTitle);
-        actionsCard.add(Box.createVerticalStrut(10));
-        actionsCard.add(loadBtn);
-        actionsCard.add(Box.createVerticalStrut(8));
-        actionsCard.add(createBtn);
-        actionsCard.add(Box.createVerticalStrut(8));
-        actionsCard.add(updateBtn);
-        actionsCard.add(Box.createVerticalStrut(8));
-        actionsCard.add(suspendBtn);
-        actionsCard.add(Box.createVerticalStrut(8));
-        actionsCard.add(reinstateBtn);
-        actionsCard.add(Box.createVerticalStrut(8));
-        actionsCard.add(clearBtn);
+                actionsCard.add(createBtn);
+                actionsCard.add(Box.createVerticalStrut(8));
+                actionsCard.add(clearBtn);
+                actionsCard.add(Box.createVerticalStrut(8));
+                actionsCard.add(backBtn);
 
+                break;
+
+            case "MANAGE":
+                JButton loadBtn = actionButton("Load Account", new Color(17, 24, 39));
+                JButton updateBtn = actionButton("Update Account", new Color(30, 70, 90));
+                JButton suspendBtn = actionButton("Suspend Account", new Color(127, 29, 29));
+                JButton reinstateBtn = actionButton("Reinstate Account", new Color(20, 83, 45));
+                JButton deleteDiscountBtn = actionButton("Delete Discount Plan", new Color(107, 114, 128));
+                JButton deleteAccountBtn = actionButton("Delete Account", new Color(127, 29, 29));
+                JButton clearBtn1 = actionButton("Clear", new Color(107, 114, 128));
+                JButton backBtn1 = actionButton("← Back", new Color(17, 24, 39));
+
+                loadBtn.addActionListener(e -> loadAccount());
+                updateBtn.addActionListener(e -> updateAccount());
+                suspendBtn.addActionListener(e -> updateStatus("suspended"));
+                reinstateBtn.addActionListener(e -> updateStatus("normal"));
+                deleteDiscountBtn.addActionListener(e -> deleteDiscountPlan());
+                deleteAccountBtn.addActionListener(e -> deleteAccount());
+                clearBtn1.addActionListener(e -> clearForm());
+                backBtn1.addActionListener(e -> {
+                    dispose();
+                    new AdminDashboard(fullname, role);
+                });
+
+                actionsCard.add(actionsTitle);
+                actionsCard.add(Box.createVerticalStrut(10));
+                actionsCard.add(loadBtn);
+                actionsCard.add(Box.createVerticalStrut(8));
+                actionsCard.add(updateBtn);
+                actionsCard.add(Box.createVerticalStrut(8));
+                actionsCard.add(suspendBtn);
+                actionsCard.add(Box.createVerticalStrut(8));
+                actionsCard.add(reinstateBtn);
+                actionsCard.add(Box.createVerticalStrut(8));
+                actionsCard.add(deleteDiscountBtn);
+                actionsCard.add(Box.createVerticalStrut(8));
+                actionsCard.add(deleteAccountBtn);
+                actionsCard.add(Box.createVerticalStrut(8));
+                actionsCard.add(clearBtn1);
+                actionsCard.add(Box.createVerticalStrut(8));
+                actionsCard.add(backBtn1);
+
+                // Only show Restore from Default if director of operations
+                if (role.equals("director_of_operations")) {
+                    JButton restoreBtn = actionButton("Restore from Default", new Color(20, 83, 45));
+                    restoreBtn.addActionListener(e -> restoreFromDefault());
+                    actionsCard.add(restoreBtn);
+                    actionsCard.add(Box.createVerticalStrut(8));
+                }
+
+                break;
+        }
         rightColumn.add(StatusPanel);
         rightColumn.add(Box.createVerticalStrut(12));
         rightColumn.add(actionsCard);
@@ -566,112 +605,216 @@ public class AccountManagement extends JFrame {
         String id = merchantIdField.getText().trim();
         if (id.isEmpty()) { messageLabel.setText("Load an account first."); return; }
 
-        MerchantAccount acc = accountService.getAccount(id);
-        if (acc == null) { messageLabel.setText("Account not found."); return; }
+        try {
+            Connection conn = new DBConnection().getConn();
+            PreparedStatement stmt = conn.prepareStatement(
+                    "UPDATE Merchant_Details SET account_status=?, status_changed_date=CURRENT_DATE() WHERE ipos_account_no=?");
+            stmt.setString(1, status);
+            stmt.setString(2, id);
+            stmt.executeUpdate();
 
-        statusLabel.setText(status.toUpperCase());
-        messageLabel.setText("Status updated to: " + status);
-        messageLabel.setForeground(new Color(0, 97, 0));
+            statusLabel.setText(status);
+            messageLabel.setText("Status updated to: " + status);
+            messageLabel.setForeground(new Color(0, 97, 0));
+
+        } catch (Exception ex) {
+            messageLabel.setText("Error: " + ex.getMessage());
+            messageLabel.setForeground(new Color(200, 80, 80));
+        }
     }
 
     private void createAccount() {
         try {
-            String id = merchantIdField.getText().trim();
-            String name = businessNameField.getText().trim();
-            String email = emailField.getText().trim();
-            String phone = phoneField.getText().trim();
+            String id      = merchantIdField.getText().trim();
+            String name    = businessNameField.getText().trim();
+            String email   = emailField.getText().trim();
+            String phone   = phoneField.getText().trim();
             String address = addressField.getText().trim();
-            double credit = Double.parseDouble(creditLimitField.getText().trim());
+            double credit  = Double.parseDouble(creditLimitField.getText().trim());
             double discount = Double.parseDouble(discountValueField.getText().trim());
 
-            if (id.isEmpty()) {
-                messageLabel.setText("Merchant ID is required.");
-                return;
-            }
-            if (name.isEmpty()) {
-                messageLabel.setText("Business name is required.");
-                return;
-            }
-            if (credit < 0) {
-                messageLabel.setText("Credit limit cannot be negative.");
-                return;
-            }
-            if (discount < 0) {
-                messageLabel.setText("Discount cannot be negative.");
-                return;
-            }
-            if (accountService.accountExists(id)) {
+            if (id.isEmpty())   { messageLabel.setText("Merchant ID is required.");   return; }
+            if (name.isEmpty()) { messageLabel.setText("Business name is required."); return; }
+            if (credit < 0)     { messageLabel.setText("Credit limit cannot be negative."); return; }
+            if (discount < 0)   { messageLabel.setText("Discount cannot be negative."); return; }
+
+            Connection conn = new DBConnection().getConn();
+
+            // Check if account already exists
+            PreparedStatement check = conn.prepareStatement(
+                    "SELECT ipos_account_no FROM Merchant_Details WHERE ipos_account_no = ?");
+            check.setString(1, id);
+            if (check.executeQuery().next()) {
                 messageLabel.setText("Account already exists.");
                 return;
             }
 
-            DiscountPlan plan = new FixedDiscountPlan("Fixed Plan", discount);
+            PreparedStatement stmt = conn.prepareStatement(
+                    "INSERT INTO Merchant_Details (ipos_account_no, company_name, email, phone, address, credit_limit, fixed_rate, discount_type, account_status) VALUES (?,?,?,?,?,?,?,'fixed','normal')");
+            stmt.setString(1, id);
+            stmt.setString(2, name);
+            stmt.setString(3, email);
+            stmt.setString(4, phone);
+            stmt.setString(5, address);
+            stmt.setDouble(6, credit);
+            stmt.setDouble(7, discount);
+            stmt.executeUpdate();
 
-            MerchantAccount account = new MerchantAccount(
-                    id, name, email, phone, address, credit, plan
-            );
+            messageLabel.setText("Account created successfully.");
+            messageLabel.setForeground(new Color(0, 97, 0));
 
-            accountService.addAccount(account);
-
-            messageLabel.setText("Account created.");
-            populate(account);
-
+        } catch (NumberFormatException ex) {
+            messageLabel.setText("Please enter valid numbers for Credit Limit and Discount.");
         } catch (Exception ex) {
             messageLabel.setText("Error: " + ex.getMessage());
         }
     }
 
-
     private void loadAccount() {
-        MerchantAccount acc = accountService.getAccount(merchantIdField.getText().trim());
+        String id = merchantIdField.getText().trim();
+        if (id.isEmpty()) { messageLabel.setText("Enter a Merchant ID to load."); return; }
 
-        if (acc == null) {
-            messageLabel.setText("Account not found.");
-            return;
+        try {
+            Connection conn = new DBConnection().getConn();
+            PreparedStatement stmt = conn.prepareStatement(
+                    "SELECT * FROM Merchant_Details WHERE ipos_account_no = ?");
+            stmt.setString(1, id);
+            ResultSet rs = stmt.executeQuery();
+
+            if (rs.next()) {
+                businessNameField.setText(rs.getString("company_name"));
+                emailField.setText(rs.getString("email"));
+                phoneField.setText(rs.getString("phone"));
+                addressField.setText(rs.getString("address"));
+                creditLimitField.setText(String.valueOf(rs.getDouble("credit_limit")));
+                discountValueField.setText(String.valueOf(rs.getDouble("fixed_rate")));
+                balanceLabel.setText("£" + rs.getString("current_balance"));
+                statusLabel.setText(rs.getString("account_status"));
+                messageLabel.setText("Account loaded successfully.");
+                messageLabel.setForeground(new Color(0, 97, 0));
+            } else {
+                messageLabel.setText("Account not found.");
+                messageLabel.setForeground(new Color(200, 80, 80));
+            }
+        } catch (Exception ex) {
+            messageLabel.setText("Error: " + ex.getMessage());
+            messageLabel.setForeground(new Color(200, 80, 80));
         }
-
-        populate(acc);
-        messageLabel.setText("Loaded.");
     }
 
     private void updateAccount() {
+        String id = merchantIdField.getText().trim();
+        if (id.isEmpty()) { messageLabel.setText("Load an account first."); return; }
+
         try {
-            MerchantAccount acc = accountService.getAccount(merchantIdField.getText().trim());
+            Connection conn = new DBConnection().getConn();
+            PreparedStatement stmt = conn.prepareStatement(
+                    "UPDATE Merchant_Details SET company_name=?, email=?, phone=?, address=?, credit_limit=?, fixed_rate=? WHERE ipos_account_no=?");
+            stmt.setString(1, businessNameField.getText().trim());
+            stmt.setString(2, emailField.getText().trim());
+            stmt.setString(3, phoneField.getText().trim());
+            stmt.setString(4, addressField.getText().trim());
+            stmt.setDouble(5, Double.parseDouble(creditLimitField.getText().trim()));
+            stmt.setDouble(6, Double.parseDouble(discountValueField.getText().trim()));
+            stmt.setString(7, id);
+            stmt.executeUpdate();
 
-            if (acc == null) {
-                messageLabel.setText("Load account first.");
-                return;
-            }
+            messageLabel.setText("Account updated successfully.");
+            messageLabel.setForeground(new Color(0, 97, 0));
 
-            acc.setBusinessName(businessNameField.getText());
-            acc.setEmail(emailField.getText());
-            acc.setPhone(phoneField.getText());
-            acc.setAddress(addressField.getText());
-            acc.setCreditLimit(Double.parseDouble(creditLimitField.getText()));
-
-            double discount = Double.parseDouble(discountValueField.getText());
-            acc.setDiscountPlan(new FixedDiscountPlan("Fixed Plan", discount));
-
-            populate(acc);
-            messageLabel.setText("Updated.");
-
+        } catch (NumberFormatException ex) {
+            messageLabel.setText("Please enter valid numbers for Credit Limit and Discount.");
+            messageLabel.setForeground(new Color(200, 80, 80));
         } catch (Exception ex) {
             messageLabel.setText("Error: " + ex.getMessage());
+            messageLabel.setForeground(new Color(200, 80, 80));
         }
     }
 
-    private void populate(MerchantAccount acc) {
-        merchantIdField.setText(acc.getMerchantId());
-        businessNameField.setText(acc.getBusinessName());
-        emailField.setText(acc.getEmail());
-        phoneField.setText(acc.getPhone());
-        addressField.setText(acc.getAddress());
-        creditLimitField.setText(String.valueOf(acc.getCreditLimit()));
-        if (acc.getDiscountPlan() instanceof FixedDiscountPlan) {
-            discountValueField.setText(String.valueOf(((FixedDiscountPlan) acc.getDiscountPlan()).getPercentage()));
+
+    private void deleteDiscountPlan() {
+        String id = merchantIdField.getText().trim();
+        if (id.isEmpty()) { messageLabel.setText("Load an account first."); return; }
+
+        int confirm = JOptionPane.showConfirmDialog(this,
+                "Are you sure you want to delete the discount plan for account " + id + "?",
+                "Confirm Delete Discount", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+
+        if (confirm == JOptionPane.YES_OPTION) {
+            try {
+                Connection conn = new DBConnection().getConn();
+                String sql = "UPDATE Merchant_Details SET fixed_rate = 0, discount_type = 'fixed' WHERE ipos_account_no = ?";
+                PreparedStatement stmt = conn.prepareStatement(sql);
+                stmt.setString(1, id);
+                stmt.executeUpdate();
+                discountValueField.setText("0.0");
+                messageLabel.setText("Discount plan deleted.");
+            } catch (Exception e) {
+                messageLabel.setText("Error: " + e.getMessage());
+            }
         }
-        balanceLabel.setText(String.valueOf(acc.getOutstandingBalance()));
-        statusLabel.setText(acc.getStatus().name());
+    }
+
+    private void deleteAccount() {
+        String id = merchantIdField.getText().trim();
+        if (id.isEmpty()) { messageLabel.setText("Load an account first."); return; }
+
+        int confirm = JOptionPane.showConfirmDialog(this,
+                "Are you sure you want to delete merchant account " + id + "?\nThis cannot be undone.",
+                "Confirm Delete Account", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+
+        if (confirm == JOptionPane.YES_OPTION) {
+            try {
+                Connection conn = new DBConnection().getConn();
+                String sql = "UPDATE Merchant_Details SET account_status = 'suspended', current_balance = 0 WHERE ipos_account_no = ?";
+                PreparedStatement stmt = conn.prepareStatement(sql);
+                stmt.setString(1, id);
+                stmt.executeUpdate();
+                messageLabel.setText("Account deleted successfully.");
+                clearForm();
+            } catch (Exception e) {
+                messageLabel.setText("Error: " + e.getMessage());
+            }
+        }
+    }
+
+    private void restoreFromDefault() {
+        String id = merchantIdField.getText().trim();
+        if (id.isEmpty()) {
+            messageLabel.setText("Load an account first.");
+            return;
+        }
+
+        // Check if payment has been made before restoring
+        try {
+            Connection conn = new DBConnection().getConn();
+
+            // Check current balance
+            String balanceSql = "SELECT current_balance FROM Merchant_Details WHERE ipos_account_no = ?";
+            PreparedStatement balanceStmt = conn.prepareStatement(balanceSql);
+            balanceStmt.setString(1, id);
+            ResultSet rs = balanceStmt.executeQuery();
+
+            if (rs.next()) {
+                double balance = rs.getDouble("current_balance");
+                if (balance > 0) {
+                    messageLabel.setText("Cannot restore — outstanding balance of £" + balance + " must be cleared first.");
+                    return;
+                }
+            }
+
+            // Restore to normal
+            String sql = "UPDATE Merchant_Details SET account_status = 'normal', status_changed_date = CURRENT_DATE() WHERE ipos_account_no = ?";
+            PreparedStatement stmt = conn.prepareStatement(sql);
+            stmt.setString(1, id);
+            stmt.executeUpdate();
+
+            statusLabel.setText("normal");
+            messageLabel.setText("Account restored to normal successfully.");
+
+        } catch (Exception e) {
+            messageLabel.setText("Error: " + e.getMessage());
+        }
     }
 
     private void clearForm() {

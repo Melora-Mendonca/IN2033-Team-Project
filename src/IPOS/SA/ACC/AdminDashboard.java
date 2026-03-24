@@ -211,10 +211,11 @@ public class AdminDashboard extends JFrame {
         switch (label) {
             case "Manage Merchant Accounts":
                 dispose();
-                new AccountManagement(fullname, role, new AccountService());
+                new AccountManagement(fullname, role,  "MANAGE");
+                break;
             case "Create Merchant Account":
                 dispose();
-                new AccountManagement(fullname, role, new AccountService());
+                new AccountManagement(fullname, role, "CREATE");
                 break;
             case "Commercial Applications":
                 JOptionPane.showMessageDialog(this, "Commercial Applications — coming soon.");
@@ -222,11 +223,11 @@ public class AdminDashboard extends JFrame {
             case "View All Staff":
             case "Create Staff Account":
                 dispose();
-                //new StaffManagement(fullname, role);
+                new StaffAccountManagement(fullname, role, new AccountService(), "CREATE");
+                break;
             case "Manage Staff Account":
                 dispose();
-                //new StaffManagement(fullname, role);
-
+                new StaffAccountManagement(fullname, role, new AccountService(), "MANAGE");
                 break;
             case "View Merchant Orders":
             case "View Merchant Invoices":
@@ -257,11 +258,6 @@ public class AdminDashboard extends JFrame {
                     break;
                 case "Overview":
                     new AdminDashboard(fullname, role);
-                    dispose();
-                    break;
-                case "Accounts":
-                    AccountService accountService = new AccountService();
-                    new AccountManagement(fullname, role, accountService);
                     dispose();
                     break;
             }
