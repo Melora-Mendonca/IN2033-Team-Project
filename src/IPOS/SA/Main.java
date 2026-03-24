@@ -1,6 +1,6 @@
 package IPOS.SA;
 
-import IPOS.SA.ACC.LoginForm;
+import IPOS.SA.ACC.UI.LoginForm;
 
 import javax.swing.SwingUtilities;
 

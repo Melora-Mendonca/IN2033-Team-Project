@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="IPOS.SA.ACC.UI.LoginForm">
+  <grid id="27dc6" binding="MainPanel" layout-manager="BorderLayout" hgap="0" vgap="0">
+    <constraints>
+      <xy x="20" y="76" width="800" height="670"/>
+    </constraints>
+    <properties>
+      <alignmentX value="0.5"/>
+      <background color="-983809"/>
+      <enabled value="false"/>
+      <minimumSize width="800" height="500"/>
+      <preferredSize width="800" height="500"/>
+    </properties>
+    <border type="none"/>
+    <children>
+      <grid id="bb32a" binding="HeaderPanel" layout-manager="FlowLayout" hgap="10" vgap="60" flow-align="1">
+        <constraints border-constraint="North"/>
+        <properties>
+          <background color="-15850192"/>
+          <maximumSize width="800" height="500"/>
+          <preferredSize width="80" height="60"/>
+        </properties>
+        <border type="none"/>
+        <children/>
+      </grid>
+      <grid id="1760d" binding="ContentPanel" layout-manager="BorderLayout" hgap="0" vgap="0">
+        <constraints border-constraint="Center"/>
+        <properties>
+          <background color="-983809"/>
+          <maximumSize width="800" height="500"/>
+          <minimumSize width="800" height="500"/>
+          <preferredSize width="800" height="500"/>
+        </properties>
+        <border type="none"/>
+        <children>
+          <grid id="88b02" binding="LoginPanel" layout-manager="FlowLayout" hgap="250" vgap="10" flow-align="2">
+            <constraints border-constraint="East"/>
+            <properties>
+              <background color="-983809"/>
+            </properties>
+            <border type="none" title=""/>
+            <children/>
+          </grid>
+          <grid id="a02ce" binding="LogoPanel" layout-manager="FlowLayout" hgap="790" vgap="10" flow-align="0">
+            <constraints border-constraint="Center"/>
+            <properties>
+              <background color="-15850192"/>
+              <minimumSize width="300" height="500"/>
+              <preferredSize width="300" height="560"/>
+            </properties>
+            <border type="none"/>
+            <children/>
+          </grid>
+        </children>
+      </grid>
+      <grid id="4a303" binding="FooterPanel" layout-manager="FlowLayout" hgap="60" vgap="10" flow-align="0">
+        <constraints border-constraint="South"/>
+        <properties>
+          <background color="-983809"/>
+        </properties>
+        <border type="none"/>
+        <children/>
+      </grid>
+    </children>
+  </grid>
+</form>

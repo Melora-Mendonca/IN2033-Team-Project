@@ -1,6 +1,6 @@
 package IPOS.SA.DB;
 
-import IPOS.SA.ACC.User;
+import IPOS.SA.ACC.Model.User;
 
 import java.security.*;
 import java.sql.*;

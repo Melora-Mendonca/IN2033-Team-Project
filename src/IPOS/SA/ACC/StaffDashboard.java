@@ -1,5 +1,7 @@
 package IPOS.SA.ACC;
 
+import IPOS.SA.ACC.UI.LoginForm;
+
 import javax.swing.*;
 import java.awt.*;
 
