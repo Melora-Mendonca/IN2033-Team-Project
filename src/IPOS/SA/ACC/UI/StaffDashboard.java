@@ -3,6 +3,7 @@ package IPOS.SA.ACC.UI;
 import IPOS.SA.ACC.Model.StaffDashboardData;
 import IPOS.SA.ACC.Service.StaffService;
 import IPOS.SA.ACC.Model.OrderSummary;
+import IPOS.SA.CAT.UI.Catalogue;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
@@ -318,11 +319,11 @@ public class StaffDashboard extends JFrame {
         btn.addActionListener(e -> {
             dispose();
             switch (label) {
-                case "Overview":
-                    new StaffDashboard(fullname, role);
+                case "Catalogue":
+                    new Catalogue(fullname, role);
                     break;
-                default:
-                    JOptionPane.showMessageDialog(this, label + " — coming soon.");
+                case "Overview":
+                    new AdminDashboard(fullname, role);
                     break;
             }
         });

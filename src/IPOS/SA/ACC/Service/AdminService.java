@@ -1,8 +1,6 @@
 package IPOS.SA.ACC.Service;
 
-import IPOS.SA.ACC.Model.AdminDashboardData;
-import IPOS.SA.ACC.Model.OrderSummary;
-import IPOS.SA.ACC.Model.LowStockItem;
+import IPOS.SA.ACC.Model.*;
 import IPOS.SA.DB.DBConnection;
 import java.sql.ResultSet;
 import java.util.ArrayList;
@@ -111,4 +109,33 @@ public class AdminService {
 
         return items;
     }
+
+    public List<MerchantAccount> getAllMerchants() throws Exception {
+        List<MerchantAccount> merchants = new ArrayList<>();
+
+        ResultSet rs = db.query(
+                "SELECT ipos_account_no, company_name, email, phone, address, credit_limit, " +
+                        "current_balance, account_status, fixed_rate, DATE_FORMAT(registration_date, '%Y-%m-%d') as registration_date " +
+                        "FROM Merchant_Details ORDER BY company_name"
+        );
+
+        while (rs.next()) {
+            MerchantAccount merchant = new MerchantAccount(
+                    rs.getString("ipos_account_no"),
+                    rs.getString("company_name"),
+                    rs.getString("email"),
+                    rs.getString("phone"),
+                    rs.getString("address"),
+                    rs.getDouble("credit_limit"),
+                    rs.getDouble("current_balance"),
+                    rs.getString("account_status"),
+                    rs.getDouble("fixed_rate")
+            );
+            merchants.add(merchant);
+        }
+
+        return merchants;
+    }
+
+
 }

@@ -1,5 +1,6 @@
 package IPOS.SA.ACC.Service;
 
+import IPOS.SA.ACC.Model.Staff;
 import IPOS.SA.ACC.Model.StaffDashboardData;
 import IPOS.SA.ACC.Model.OrderSummary;
 import IPOS.SA.DB.DBConnection;
@@ -121,5 +122,27 @@ public class StaffService {
         }
 
         return orders;
+    }
+
+    public List<Staff> getStaffList() throws Exception {
+        List<Staff> staffList = new ArrayList<>();
+
+        ResultSet rs = db.query(
+                "SELECT user_id, username, full_name, email, role, is_active " +
+                        "FROM User_Login WHERE is_active = 1 ORDER BY full_name"
+        );
+
+        while (rs.next()) {
+            Staff staff = new Staff();
+            staff.setStaffId(rs.getString("user_id"));
+            staff.setUsername(rs.getString("username"));
+            staff.setFirstName(rs.getString("full_name"));
+            staff.setEmail(rs.getString("email"));
+            staff.setRole(rs.getString("role"));
+            staff.setActive(rs.getInt("is_active") == 1);
+            staffList.add(staff);
+        }
+
+        return staffList;
     }
 }

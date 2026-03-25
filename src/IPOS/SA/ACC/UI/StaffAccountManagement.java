@@ -114,7 +114,7 @@ public class StaffAccountManagement extends JFrame {
         });
 
         addExpandableNavItem(NavPanel, "Accounts", new String[]{
-                "Create Merchant Account", "Manage Merchant Accounts", "Commercial Applications"
+                "View All Merchants", "Create Merchant Account", "Manage Merchant Accounts", "Commercial Applications"
         });
 
         addExpandableNavItem(NavPanel, "Staff", new String[]{
@@ -640,6 +640,10 @@ public class StaffAccountManagement extends JFrame {
 
     private void handleSubNavClick(String label) {
         switch (label) {
+            case "View All Merchants":
+                dispose();
+                new MerchantList(fullname, role);
+                break;
             case "Manage Merchant Accounts":
                 dispose();
                 new AccountManagement(fullname, role, "MANAGE");
@@ -652,6 +656,9 @@ public class StaffAccountManagement extends JFrame {
                 JOptionPane.showMessageDialog(this, "Commercial Applications — coming soon.");
                 break;
             case "View All Staff":
+                dispose();
+                new StaffList(fullname, role);
+                break;
             case "Create Staff Account":
                 dispose();
                 new StaffAccountManagement(fullname, role, "CREATE");

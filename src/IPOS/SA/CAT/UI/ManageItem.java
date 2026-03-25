@@ -134,7 +134,9 @@ public class ManageItem extends JFrame {
         NavPanel.add(Box.createVerticalStrut(4));
 
         addExpandableNavItem(NavPanel, "Merchants", new String[]{"View Merchant Orders", "View Merchant Invoices"});
-        addExpandableNavItem(NavPanel, "Accounts", new String[]{"Create Merchant Account", "Manage Merchant Accounts", "Commercial Applications"});
+        addExpandableNavItem(NavPanel, "Accounts", new String[]{
+                "View All Merchants", "Create Merchant Account", "Manage Merchant Accounts", "Commercial Applications"
+        });
         addExpandableNavItem(NavPanel, "Staff", new String[]{"View All Staff", "Create Staff Account", "Manage Staff Account"});
 
         NavPanel.add(buildNavButton("Reports", false));

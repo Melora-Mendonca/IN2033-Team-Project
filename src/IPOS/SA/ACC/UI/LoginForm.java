@@ -338,30 +338,20 @@ public class LoginForm extends JFrame {
             return;
         }
 
-        // Debug output
-        System.out.println("\n=== LOGIN ATTEMPT ===");
-        System.out.println("Username: " + username);
-        System.out.println("Selected Role for authentication: " + selectedRole);
-
         // Authenticate using service layer
         User user = authService.authenticate(username, password, selectedRole);
 
         if (user != null) {
-            System.out.println("✓ Login successful!");
-            System.out.println("User: " + user.getFullName());
-            System.out.println("Normalized Role: " + user.getRole());
+            System.out.println("Login successful!");
             dispose();
             navigateToDashboard(user);
         } else {
-            System.out.println("✗ Login failed!");
+            System.out.println("Login failed!");
             statusLbl.setText("Invalid username, password or role.");
         }
     }
 
     private void navigateToDashboard(User user) {
-        System.out.println("\n=== NAVIGATING TO DASHBOARD ===");
-        System.out.println("User role (normalized): " + user.getRole());
-
         // Get stock warnings if needed
         List<String> warnings = null;
         if (user.getRole().equals("administrator") ||
@@ -384,7 +374,7 @@ public class LoginForm extends JFrame {
                     if (warnings != null && !warnings.isEmpty()) {
                         showStockWarning(dashboard, warnings);
                     }
-                    System.out.println("✓ AdminDashboard created successfully");
+                    System.out.println("AdminDashboard created successfully");
                     break;
 
                 case "director_of_operations":
@@ -393,7 +383,7 @@ public class LoginForm extends JFrame {
                     if (warnings != null && !warnings.isEmpty()) {
                         showStockWarning(managerDashboard, warnings);
                     }
-                    System.out.println("✓ ManagerDashboard created successfully");
+                    System.out.println("ManagerDashboard created successfully");
                     break;
 
                 case "senior_accountant":
@@ -402,7 +392,7 @@ public class LoginForm extends JFrame {
                 case "delivery_employee":
                     System.out.println("Creating StaffDashboard...");
                     StaffDashboard staffDashboard = new StaffDashboard(user.getFullName(), user.getRole());
-                    System.out.println("✓ StaffDashboard created successfully");
+                    System.out.println("StaffDashboard created successfully");
                     break;
 
                 default:

@@ -12,9 +12,7 @@
 
 package IPOS.SA.CAT.UI;
 
-import IPOS.SA.ACC.UI.AccountManagement;
-import IPOS.SA.ACC.UI.AdminDashboard;
-import IPOS.SA.ACC.UI.LoginForm;
+import IPOS.SA.ACC.UI.*;
 import IPOS.SA.CAT.Model.CatalogueItem;
 import IPOS.SA.DB.DBConnection;
 
@@ -140,9 +138,7 @@ public class Catalogue extends JFrame {
         });
 
         addExpandableNavItem(NavPanel, "Accounts", new String[]{
-                "Create Merchant Account",
-                "Manage Merchant Accounts",
-                "Commercial Applications"
+                "View All Merchants", "Create Merchant Account", "Manage Merchant Accounts", "Commercial Applications"
         });
 
         addExpandableNavItem(NavPanel, "Staff", new String[]{
@@ -238,6 +234,10 @@ public class Catalogue extends JFrame {
 
     private void handleSubNavClick(String label) {
         switch (label) {
+            case "View All Merchants":
+                dispose();
+                new MerchantList(fullname, role);
+                break;
             case "Manage Merchant Accounts":
                 dispose();
                 new AccountManagement(fullname, role, "MANAGE");
@@ -250,13 +250,15 @@ public class Catalogue extends JFrame {
                 JOptionPane.showMessageDialog(this, "Commercial Applications — coming soon.");
                 break;
             case "View All Staff":
+                dispose();
+                new StaffList(fullname, role);
+                break;
             case "Create Staff Account":
                 dispose();
-                //new StaffManagement(fullname, role);
+                new StaffAccountManagement(fullname, role, "CREATE");
             case "Manage Staff Account":
                 dispose();
-                //new StaffManagement(fullname, role);
-
+                new StaffAccountManagement(fullname, role, "MANAGE");
                 break;
             case "View Merchant Orders":
             case "View Merchant Invoices":
@@ -516,13 +518,13 @@ public class Catalogue extends JFrame {
         };
 
         buildTable(columns, false, false, false, false, Items);
+        statusLabel.setText("Manager view: Read-Only Access");
 
         addButton.setEnabled(false);
         updateButton.setEnabled(false);
         deleteButton.setEnabled(false);
         deliveryButton.setEnabled(false);
 
-        statusLabel.setText("Manager view: Read-Only Access");
     }
 
     private void buildTable(String[] columns, boolean canAdd, boolean canUpdate, boolean canDelete, boolean canRecord, List<CatalogueItem> items) {

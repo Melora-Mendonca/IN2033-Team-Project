@@ -681,6 +681,10 @@ public class AccountManagement extends JFrame {
 
     private void handleSubNavClick(String label) {
         switch (label) {
+            case "View All Merchants":
+                dispose();
+                new MerchantList(fullname, role);
+                break;
             case "Manage Merchant Accounts":
                 dispose();
                 new AccountManagement(fullname, role, "MANAGE");
@@ -693,6 +697,9 @@ public class AccountManagement extends JFrame {
                 JOptionPane.showMessageDialog(this, "Commercial Applications — coming soon.");
                 break;
             case "View All Staff":
+                dispose();
+                new StaffList(fullname, role);
+                break;
             case "Create Staff Account":
                 dispose();
                 new StaffAccountManagement(fullname, role, "CREATE");
