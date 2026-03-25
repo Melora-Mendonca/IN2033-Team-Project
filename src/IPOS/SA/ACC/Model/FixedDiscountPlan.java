@@ -1,4 +1,4 @@
-package IPOS.SA.ACC;
+package IPOS.SA.ACC.Model;
 
 public class FixedDiscountPlan extends DiscountPlan {
 

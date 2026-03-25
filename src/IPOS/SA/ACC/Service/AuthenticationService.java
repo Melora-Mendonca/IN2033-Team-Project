@@ -22,41 +22,17 @@ public class AuthenticationService {
         User user = dbConnector.authenticate(username, password, selectedRole);
 
         if (user != null) {
-            // Map the database role to your application's expected role format
-            String normalizedRole = normalizeRole(user.getRole());
-            user.setRole(normalizedRole);
-            System.out.println("Normalized role from '" + user.getRole() + "' to '" + normalizedRole + "'");
+            System.out.println("Database returned user with role: " + user.getRole());
+            System.out.println("Selected role from UI: " + selectedRole);
+
+            // IMPORTANT: Set the role to match what was selected in the UI
+            // This ensures the user gets the correct dashboard based on their selection
+            user.setRole(selectedRole);
+
+            System.out.println("Normalized role set to: " + user.getRole());
         }
 
         return user;
-    }
-
-    /**
-     * Normalizes role names from database format to application format
-     */
-    private String normalizeRole(String dbRole) {
-        if (dbRole == null) return null;
-
-        // Convert to lowercase and replace spaces with underscores
-        String normalized = dbRole.toLowerCase().replace(" ", "_");
-
-        // Map specific role names if needed
-        switch (normalized) {
-            case "admin_user":
-                return "administrator";
-            case "director_of_operations":
-                return "director_of_operations";
-            case "senior_accountant":
-                return "senior_accountant";
-            case "accountant":
-                return "accountant";
-            case "warehouse_employee":
-                return "warehouse_employee";
-            case "delivery_employee":
-                return "delivery_employee";
-            default:
-                return normalized;
-        }
     }
 
     public List<String> getStockWarnings() {
@@ -66,17 +42,14 @@ public class AuthenticationService {
     public boolean hasPermission(User user, String requiredRole) {
         if (user == null) return false;
 
-        // Administrator has all permissions
         if (user.getRole().equals("administrator")) return true;
 
-        // Director of operations has most permissions
         if (user.getRole().equals("director_of_operations") &&
                 (requiredRole.equals("director_of_operations") ||
                         requiredRole.equals("staff"))) {
             return true;
         }
 
-        // Staff only have staff permissions
         return user.getRole().equals(requiredRole);
     }
 

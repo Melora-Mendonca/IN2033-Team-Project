@@ -1,4 +1,4 @@
-package IPOS.SA.ACC;
+package IPOS.SA.ACC.Service;
 
 public class PaymentService {
 
@@ -8,7 +8,7 @@ public class PaymentService {
         this.accountService = accountService;
     }
 
-    public void recordPayment(MerchantAccount account, Payment payment) {
-        accountService.recordPayment(account, payment.getAmount());
-    }
+//    public void recordPayment(MerchantAccount account, Payment payment) {
+//        accountService.recordPayment(account, payment.getAmount());
+//    }
 }

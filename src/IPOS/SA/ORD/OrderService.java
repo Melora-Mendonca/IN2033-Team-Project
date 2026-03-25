@@ -1,6 +1,7 @@
 package IPOS.SA.ORD;
 
-import IPOS.SA.ACC.*;
+import IPOS.SA.ACC.Service.AccountService;
+import IPOS.SA.ACC.Service.InvoiceService;
 import IPOS.SA.DB.InvoiceDBConnector;
 import IPOS.SA.DB.OrderDBConnector;
 
@@ -18,29 +19,29 @@ public class OrderService {
         this.invoiceDB = new InvoiceDBConnector();
     }
 
-    public Invoice placeOrder(Order order, MerchantAccount account) {
-        double grossTotal = order.calculateOrderTotal();
-
-        if (!accountService.canMerchantPlaceOrder(account, grossTotal)) {
-            return null;
-        }
-
-        accountService.applyOrderToAccount(account, grossTotal);
-
-        double discountAmount = account.getDiscountPlan().calculateDiscount(grossTotal);
-        double finalTotal = grossTotal - discountAmount;
-
-        orderDB.saveOrder(order, grossTotal, discountAmount, finalTotal);
-
-        for (OrderItem item : order.getItems()) {
-            orderDB.reduceStock(item.getItemId(), item.getQuantity());
-        }
-
-        Invoice invoice = invoiceService.generateInvoice(order, account);
-        invoiceDB.saveInvoice(invoice);
-
-        return invoice;
-    }
+//    public Invoice placeOrder(Order order, MerchantAccount account) {
+//        double grossTotal = order.calculateOrderTotal();
+//
+//        if (!accountService.canMerchantPlaceOrder(account, grossTotal)) {
+//            return null;
+//        }
+//
+//        accountService.applyOrderToAccount(account, grossTotal);
+//
+//        double discountAmount = account.getDiscountPlan().calculateDiscount(grossTotal);
+//        double finalTotal = grossTotal - discountAmount;
+//
+//        orderDB.saveOrder(order, grossTotal, discountAmount, finalTotal);
+//
+//        for (OrderItem item : order.getItems()) {
+//            orderDB.reduceStock(item.getItemId(), item.getQuantity());
+//        }
+//
+//        Invoice invoice = invoiceService.generateInvoice(order, account);
+//        invoiceDB.saveInvoice(invoice);
+//
+//        return invoice;
+//    }
 
     public void updateOrderStatus(Order order, OrderStatus status) {
         order.setStatus(status);

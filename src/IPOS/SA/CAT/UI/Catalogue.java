@@ -12,7 +12,7 @@
 
 package IPOS.SA.CAT.UI;
 
-import IPOS.SA.ACC.AccountManagement;
+import IPOS.SA.ACC.UI.AccountManagement;
 import IPOS.SA.ACC.UI.AdminDashboard;
 import IPOS.SA.ACC.UI.LoginForm;
 import IPOS.SA.CAT.Model.CatalogueItem;
@@ -319,7 +319,7 @@ public class Catalogue extends JFrame {
 
         // Only show role selector for admin
         if (role.equals("administrator")) {
-            roleComboBox = new JComboBox<>(new String[]{"Admin", "Merchant", "Manager"});
+            roleComboBox = new JComboBox<>(new String[]{"Admin", "Merchant", "Director"});
             roleComboBox.setFont(new Font("Segoe UI", Font.PLAIN, 12));
             roleComboBox.addActionListener(e -> updateTableForSelectedRole());
             rolePanel.add(roleLabel);
@@ -508,22 +508,21 @@ public class Catalogue extends JFrame {
         buildTable(columns, false, false, false, false, Items);
         statusLabel.setText("Merchant view: stock limit hidden");
     }
-    // Manager role does not maintain catalogue in this prototype
+    // Manager role does not maintain catalogue in this prototype, but has read only access
     private void setManagerView() {
         String[] columns = {
-                "Message"
+                "Item ID", "Description", "Package Type", "Unit",
+                "Units in a pack", "Package Cost (£)", "Availability (packs)", "Stock Limit (packs)"
         };
 
-        tableModel.setDataVector(new Object[][]{
-                {"Manager does not use catalogue maintenance in the final system. This role mainly focuses on reports and account changes."}
-        }, columns);
+        buildTable(columns, false, false, false, false, Items);
 
         addButton.setEnabled(false);
         updateButton.setEnabled(false);
         deleteButton.setEnabled(false);
         deliveryButton.setEnabled(false);
 
-        statusLabel.setText("Manager view: no catalogue maintenance access");
+        statusLabel.setText("Manager view: Read-Only Access");
     }
 
     private void buildTable(String[] columns, boolean canAdd, boolean canUpdate, boolean canDelete, boolean canRecord, List<CatalogueItem> items) {

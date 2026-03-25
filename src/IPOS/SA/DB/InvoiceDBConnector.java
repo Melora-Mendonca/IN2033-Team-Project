@@ -1,6 +1,6 @@
 package IPOS.SA.DB;
 
-import IPOS.SA.ACC.Invoice;
+import IPOS.SA.ACC.Model.Invoice;
 import IPOS.SA.ORD.OrderItem;
 
 import java.sql.*;

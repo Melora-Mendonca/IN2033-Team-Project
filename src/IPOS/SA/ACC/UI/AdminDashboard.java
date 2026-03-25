@@ -1,6 +1,5 @@
 package IPOS.SA.ACC.UI;
 
-import IPOS.SA.ACC.AccountManagement;
 import IPOS.SA.CAT.UI.Catalogue;
 import IPOS.SA.ACC.Model.AdminDashboardData;
 import IPOS.SA.ACC.Model.OrderSummary;

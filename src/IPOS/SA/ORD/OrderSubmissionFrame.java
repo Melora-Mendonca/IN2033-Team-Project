@@ -1,7 +1,10 @@
 package IPOS.SA.ORD;
 
-import IPOS.SA.ACC.*;
-import IPOS.SA.CAT.CatalogueItem;
+import IPOS.SA.ACC.Model.FixedDiscountPlan;
+import IPOS.SA.ACC.Model.Invoice;
+import IPOS.SA.ACC.Model.MerchantAccount;
+import IPOS.SA.ACC.Service.InvoiceService;
+import IPOS.SA.CAT.Model.CatalogueItem;
 import IPOS.SA.DB.InvoiceDBConnector;
 import IPOS.SA.DB.OrderDBConnector;
 
@@ -316,7 +319,7 @@ public class OrderSubmissionFrame extends JFrame {
 
         OrderDBConnector    orderDB       = new OrderDBConnector();
         InvoiceDBConnector  invoiceDB     = new InvoiceDBConnector();
-        InvoiceService      invoiceService = new InvoiceService();
+        InvoiceService invoiceService = new InvoiceService();
 
         orderDB.saveOrder(order, grossTotal, discountAmount, finalTotal);
 

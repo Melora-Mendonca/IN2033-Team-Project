@@ -4,8 +4,6 @@ import IPOS.SA.ACC.Model.User;
 import IPOS.SA.ACC.Service.AuthenticationService;
 // No need to import dashboard classes since they're in the same package
 
-import IPOS.SA.ACC.StaffDashboard;
-import IPOS.SA.ACC.ManagerDashboard;
 import javax.swing.*;
 import java.awt.*;
 import java.util.List;

@@ -42,6 +42,28 @@ public class DBConnection {
         }
     }
 
+    public ResultSet query(String sql, Object... params) throws SQLException {
+        PreparedStatement stmt = conn.prepareStatement(sql);
+
+        // Set parameters
+        for (int i = 0; i < params.length; i++) {
+            stmt.setObject(i + 1, params[i]);
+        }
+
+        return stmt.executeQuery();
+    }
+
+    public int update(String sql, Object... params) throws SQLException {
+        PreparedStatement stmt = conn.prepareStatement(sql);
+
+        // Set parameters
+        for (int i = 0; i < params.length; i++) {
+            stmt.setObject(i + 1, params[i]);
+        }
+
+        return stmt.executeUpdate();
+    }
+
     public Connection getConn() {
         return conn;
     }

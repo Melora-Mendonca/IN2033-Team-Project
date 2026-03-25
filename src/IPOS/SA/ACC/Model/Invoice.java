@@ -1,4 +1,4 @@
-package IPOS.SA.ACC;
+package IPOS.SA.ACC.Model;
 
 import IPOS.SA.ORD.OrderItem;
 

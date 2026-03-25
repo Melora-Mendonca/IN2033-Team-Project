@@ -1,7 +1,9 @@
-package IPOS.SA.ACC;
+package IPOS.SA.ACC.Service;
 
 import java.time.LocalDate;
 
+import IPOS.SA.ACC.Model.Invoice;
+import IPOS.SA.ACC.Model.MerchantAccount;
 import IPOS.SA.ORD.Order;
 
 public class InvoiceService {
