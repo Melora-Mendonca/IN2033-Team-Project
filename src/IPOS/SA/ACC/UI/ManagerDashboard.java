@@ -91,16 +91,31 @@ public class ManagerDashboard extends JFrame {
         NavPanel.add(navIcon);
         NavPanel.add(Box.createVerticalStrut(16));
 
-        String[] navItems = {"Overview", "Catalogue", "Merchants", "Invoices", "Reports", "Settings"};
-        for (String item : navItems) {
-            NavPanel.add(buildNavButton(item, item.equals("Overview")));
-            NavPanel.add(Box.createVerticalStrut(4));
-        }
+        NavPanel.add(buildNavButton("Overview", true));
+        NavPanel.add(Box.createVerticalStrut(4));
+        NavPanel.add(buildNavButton("Catalogue", false));
+        NavPanel.add(Box.createVerticalStrut(4));
+
+        addExpandableNavItem(NavPanel, "Merchants", new String[]{
+                "View Merchant Orders", "View Merchant Invoices"
+        });
+
+        addExpandableNavItem(NavPanel, "Accounts", new String[]{
+                "View All Merchants", "Manage Merchant Accounts"
+        });
+
+        addExpandableNavItem(NavPanel, "Staff", new String[]{
+                "View All Staff"
+        });
+
+        NavPanel.add(buildNavButton("Reports", false));
+        NavPanel.add(Box.createVerticalStrut(4));
+        NavPanel.add(buildNavButton("Settings", false));
+        NavPanel.add(Box.createVerticalStrut(4));
 
         divider = new JSeparator();
         divider.setForeground(Color.WHITE);
         divider.setMaximumSize(new Dimension(Integer.MAX_VALUE, 1));
-
         NavPanel.add(divider);
         NavPanel.add(Box.createVerticalGlue());
 
@@ -114,17 +129,134 @@ public class ManagerDashboard extends JFrame {
         logoutBtn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 36));
         logoutBtn.setHorizontalAlignment(SwingConstants.LEFT);
         logoutBtn.addActionListener(e -> handleLogout());
-
         NavPanel.add(logoutBtn);
     }
 
+    private void addExpandableNavItem(JPanel nav, String label, String[] subItems) {
+        JButton mainBtn = new JButton(label);
+        mainBtn.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        mainBtn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 36));
+        mainBtn.setAlignmentX(Component.LEFT_ALIGNMENT);
+        mainBtn.setHorizontalAlignment(SwingConstants.LEFT);
+        mainBtn.setFocusPainted(false);
+        mainBtn.setBorderPainted(false);
+        mainBtn.setBackground(new Color(14, 37, 48));
+        mainBtn.setForeground(new Color(160, 190, 210));
+
+        JPanel subPanel = new JPanel();
+        subPanel.setLayout(new BoxLayout(subPanel, BoxLayout.Y_AXIS));
+        subPanel.setBackground(new Color(10, 28, 38));
+        subPanel.setVisible(false);
+
+        for (String sub : subItems) {
+            JButton subBtn = new JButton("    › " + sub);
+            subBtn.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+            subBtn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 30));
+            subBtn.setAlignmentX(Component.LEFT_ALIGNMENT);
+            subBtn.setHorizontalAlignment(SwingConstants.LEFT);
+            subBtn.setFocusPainted(false);
+            subBtn.setBorderPainted(false);
+            subBtn.setBackground(new Color(10, 28, 38));
+            subBtn.setForeground(new Color(120, 160, 185));
+
+            subBtn.addMouseListener(new java.awt.event.MouseAdapter() {
+                public void mouseEntered(java.awt.event.MouseEvent e) {
+                    subBtn.setForeground(Color.WHITE);
+                    subBtn.setBackground(new Color(20, 50, 65));
+                }
+                public void mouseExited(java.awt.event.MouseEvent e) {
+                    subBtn.setForeground(new Color(120, 160, 185));
+                    subBtn.setBackground(new Color(10, 28, 38));
+                }
+            });
+
+            subBtn.addActionListener(e -> handleSubNavClick(sub));
+            subPanel.add(subBtn);
+            subPanel.add(Box.createVerticalStrut(2));
+        }
+
+        mainBtn.addActionListener(e -> {
+            boolean showing = subPanel.isVisible();
+            subPanel.setVisible(!showing);
+            mainBtn.setForeground(showing ? new Color(160, 190, 210) : Color.WHITE);
+            mainBtn.setBackground(showing ? new Color(14, 37, 48) : new Color(20, 45, 60));
+            nav.revalidate();
+            nav.repaint();
+        });
+
+        nav.add(mainBtn);
+        nav.add(subPanel);
+        nav.add(Box.createVerticalStrut(4));
+    }
+
+    private void handleSubNavClick(String label) {
+        switch (label) {
+            case "View All Merchants":
+                dispose();
+                new MerchantList(fullname, role);
+                break;
+            case "Manage Merchant Accounts":
+                dispose();
+                new AccountManagement(fullname, role, "MANAGE");
+                break;
+            case "View All Staff":
+                dispose();
+                new StaffList(fullname, role);
+                break;
+            case "View Merchant Orders":
+            case "View Merchant Invoices":
+            default:
+                JOptionPane.showMessageDialog(this, label + " — coming soon.");
+                break;
+        }
+    }
+
+    private JButton buildNavButton(String label, boolean active) {
+        JButton btn = new JButton(label);
+        btn.setFont(new Font("Segoe UI", active ? Font.BOLD : Font.PLAIN, 13));
+        btn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 36));
+        btn.setAlignmentX(Component.LEFT_ALIGNMENT);
+        btn.setHorizontalAlignment(SwingConstants.LEFT);
+        btn.setFocusPainted(false);
+        btn.setBorderPainted(false);
+        btn.setBackground(active ? new Color(30, 70, 90) : new Color(14, 37, 48));
+        btn.setForeground(active ? Color.WHITE : new Color(160, 190, 210));
+
+        btn.addActionListener(e -> {
+            dispose();
+            switch (label) {
+                case "Catalogue":
+                    new Catalogue(fullname, role);
+                    break;
+                case "Overview":
+                    new AdminDashboard(fullname, role);
+                    break;
+            }
+        });
+
+        return btn;
+    }
+
     private void createCenterPanel() {
+        // First, set up MainPanel layout
+        MainPanel.setLayout(new BorderLayout());
+
+        // Add NavPanel to the left
+        MainPanel.add(NavPanel, BorderLayout.WEST);
+
+        // Add HeaderPanel to the top
+        MainPanel.add(HeaderPanel, BorderLayout.NORTH);
+
+        // Create CenterPanel for main content
         CenterPanel = new JPanel(new BorderLayout());
         CenterPanel.setBackground(new Color(245, 247, 250));
         CenterPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
         ContentPanel.setLayout(new BorderLayout());
         ContentPanel.add(CenterPanel, BorderLayout.CENTER);
+
+        // Add ContentPanel to the center of MainPanel
+        MainPanel.add(ContentPanel, BorderLayout.CENTER);
     }
 
     private void loadDashboardData() {
@@ -277,35 +409,6 @@ public class ManagerDashboard extends JFrame {
         stockPanel.add(stockScroll, BorderLayout.CENTER);
 
         tableWrapper.add(stockPanel);
-    }
-
-    private JButton buildNavButton(String label, boolean active) {
-        JButton btn = new JButton(label);
-        btn.setFont(new Font("Segoe UI", active ? Font.BOLD : Font.PLAIN, 13));
-        btn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 36));
-        btn.setAlignmentX(Component.LEFT_ALIGNMENT);
-        btn.setHorizontalAlignment(SwingConstants.LEFT);
-        btn.setFocusPainted(false);
-        btn.setBorderPainted(false);
-        btn.setBackground(active ? new Color(30, 70, 90) : new Color(14, 37, 48));
-        btn.setForeground(active ? Color.WHITE : new Color(160, 190, 210));
-
-        btn.addActionListener(e -> {
-            dispose();
-            switch (label) {
-                case "Catalogue":
-                    new Catalogue(fullname, role);
-                    break;
-                case "Overview":
-                    new AdminDashboard(fullname, role);
-                    break;
-                default:
-                    JOptionPane.showMessageDialog(this, label + " — coming soon.");
-                    break;
-            }
-        });
-
-        return btn;
     }
 
     private void handleLogout() {

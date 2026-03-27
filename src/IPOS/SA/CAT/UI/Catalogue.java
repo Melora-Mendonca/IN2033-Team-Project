@@ -319,8 +319,8 @@ public class Catalogue extends JFrame {
         roleLabel.setForeground(Color.WHITE);
         roleLabel.setFont(new Font("Segoe UI", Font.PLAIN, 12));
 
-        // Only show role selector for admin
-        if (role.equals("administrator")) {
+        // In createContentPanel(), update the roleComboBox:
+        if (role.equals("Administrator")) {
             roleComboBox = new JComboBox<>(new String[]{"Admin", "Merchant", "Director"});
             roleComboBox.setFont(new Font("Segoe UI", Font.PLAIN, 12));
             roleComboBox.addActionListener(e -> updateTableForSelectedRole());
@@ -453,10 +453,10 @@ public class Catalogue extends JFrame {
                         rs.getString("description"),
                         rs.getString("package_type"),
                         rs.getString("unit"),
-                        rs.getInt("units_per_pack"),
+                        rs.getInt("unit_per_pack"),
                         rs.getDouble("package_cost"),
                         rs.getInt("availability"),
-                        rs.getInt("stock_limit")
+                        rs.getInt("minimum_stock_level")
                 ));
             }
             statusLabel.setText(Items.size() + " items loaded");
@@ -470,19 +470,24 @@ public class Catalogue extends JFrame {
     private void updateTableForSelectedRole() {
         String selectedRole;
 
-        if (role.equals("administrator")) {
+        if (role.equals("Administrator")) {
+            // Get the selected value from dropdown and convert to lowercase
             selectedRole = roleComboBox.getSelectedItem().toString().toLowerCase();
+            System.out.println("Dropdown selection: " + selectedRole); // For debugging
         } else {
             selectedRole = role;
+            System.out.println("Non-admin role: " + selectedRole); // For debugging
         }
 
         switch (selectedRole) {
-            case "admin":
-            case "administrator":
+            case "Administrator":
                 setAdminView();
                 break;
-            case "director_of_operations":
+            case "Director of Operations":
                 setManagerView();
+                break;
+            case "Merchant":
+                setMerchantView();
                 break;
             default:
                 setMerchantView();

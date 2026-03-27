@@ -37,7 +37,7 @@ public class ManagerService {
 
     private int getLowStockCount() throws Exception {
         ResultSet rs = db.query(
-                "SELECT COUNT(*) as count FROM Catalogue WHERE availability <= stock_limit AND is_active = 1"
+                "SELECT COUNT(*) as count FROM Catalogue WHERE availability <= minimum_stock_level AND is_active = 1"
         );
 
         if (rs.next()) {
@@ -49,8 +49,8 @@ public class ManagerService {
     private int getTotalInvoices() throws Exception {
         try {
             ResultSet rs = db.query(
-                    "SELECT COUNT(*) as count FROM Invoices WHERE MONTH(invoice_date) = MONTH(CURRENT_DATE()) " +
-                            "AND YEAR(invoice_date) = YEAR(CURRENT_DATE())"
+                    "SELECT COUNT(*) as count FROM Invoice WHERE MONTH(invoice_date) = MONTH(CURDATE()) " +
+                            "AND YEAR(invoice_date) = YEAR(CURDATE())"
             );
 
             if (rs.next()) {
@@ -66,9 +66,9 @@ public class ManagerService {
     private double getTotalTurnover() throws Exception {
         try {
             ResultSet rs = db.query(
-                    "SELECT COALESCE(SUM(total_amount), 0) as total FROM Invoices " +
-                            "WHERE MONTH(invoice_date) = MONTH(CURRENT_DATE()) " +
-                            "AND YEAR(invoice_date) = YEAR(CURRENT_DATE())"
+                    "SELECT COALESCE(SUM(total_amount), 0) as total FROM Invoice " +
+                            "WHERE MONTH(invoice_date) = MONTH(CURDATE()) " +
+                            "AND YEAR(invoice_date) = YEAR(CURDATE())"
             );
 
             if (rs.next()) {
@@ -83,9 +83,9 @@ public class ManagerService {
 
     private int getStockTurnover() throws Exception {
         ResultSet rs = db.query(
-                "SELECT COUNT(*) as count FROM Stock_Deliveries " +
-                        "WHERE MONTH(delivery_date) = MONTH(CURRENT_DATE()) " +
-                        "AND YEAR(delivery_date) = YEAR(CURRENT_DATE())"
+                "SELECT COUNT(*) as count FROM StockDelivery " +
+                        "WHERE MONTH(delivery_date) = MONTH(CURDATE()) " +
+                        "AND YEAR(delivery_date) = YEAR(CURDATE())"
         );
 
         if (rs.next()) {
@@ -98,9 +98,9 @@ public class ManagerService {
         List<LowStockItem> items = new ArrayList<>();
 
         ResultSet rs = db.query(
-                "SELECT item_id, description, availability, stock_limit " +
-                        "FROM Catalogue WHERE availability <= stock_limit AND is_active = 1 " +
-                        "ORDER BY (stock_limit - availability) DESC LIMIT 10"
+                "SELECT item_id, description, availability, minimum_stock_level as stock_limit " +
+                        "FROM Catalogue WHERE availability <= minimum_stock_level AND is_active = 1 " +
+                        "ORDER BY (minimum_stock_level - availability) DESC LIMIT 10"
         );
 
         while (rs.next()) {

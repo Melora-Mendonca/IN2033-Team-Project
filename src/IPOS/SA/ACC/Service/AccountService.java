@@ -15,12 +15,11 @@ public class AccountService {
 
     /**
      * Add a new merchant account (CREATE)
-     * Uses the exact INSERT query from your createAccount() method
      */
     public boolean addAccount(MerchantAccount account) throws Exception {
-        // Check if account already exists (using your exact query)
+        // Check if account already exists
         ResultSet checkRs = db.query(
-                "SELECT ipos_account_no FROM Merchant_Details WHERE ipos_account_no = ?",
+                "SELECT merchant_id FROM Merchant WHERE merchant_id = ?",
                 account.getMerchantId()
         );
 
@@ -28,16 +27,30 @@ public class AccountService {
             return false; // Account already exists
         }
 
-        // Using your exact INSERT query from createAccount()
+        // Insert new merchant account
         int rowsAffected = db.update(
-                "INSERT INTO Merchant_Details (ipos_account_no, company_name, email, phone, address, credit_limit, fixed_rate, discount_type, account_status) VALUES (?,?,?,?,?,?,?,'fixed','normal')",
+                "INSERT INTO Merchant (merchant_id, company_name, business_type, registration_number, " +
+                        "email, phone, fax, address, credit_limit, outstanding_balance, " +
+                        "account_status, discount_type, fixed_discount_rate, flexible_discount_rate, " +
+                        "registration_date, is_Active, last_payment_date) " +
+                        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                 account.getMerchantId(),
                 account.getBusinessName(),
+                account.getBusinessType(),
+                account.getRegistrationNumber(),
                 account.getEmail(),
                 account.getPhone(),
+                account.getFax(),
                 account.getAddress(),
                 account.getCreditLimit(),
-                account.getDiscountPercentage()
+                account.getOutstandingBalance(),
+                account.getAccountStatus(),
+                account.getDiscountType(),
+                account.getFixedDiscountRate(),
+                account.getFlexibleDiscountRate(),
+                account.getRegistrationDate(),
+                account.isActive() ? 1 : 0,
+                account.getLastPaymentDate()
         );
 
         return rowsAffected > 0;
@@ -45,25 +58,35 @@ public class AccountService {
 
     /**
      * Get a merchant account by ID (READ)
-     * Uses the exact SELECT query from your loadAccount() method
      */
     public MerchantAccount getAccount(String merchantId) throws Exception {
         ResultSet rs = db.query(
-                "SELECT * FROM Merchant_Details WHERE ipos_account_no = ?",
+                "SELECT merchant_id, company_name, business_type, registration_number, email, phone, fax, " +
+                        "address, credit_limit, outstanding_balance, account_status, " +
+                        "discount_type, fixed_discount_rate, flexible_discount_rate, registration_date, " +
+                        "is_Active, last_payment_date FROM Merchant WHERE merchant_id = ?",
                 merchantId
         );
 
         if (rs.next()) {
             return new MerchantAccount(
-                    rs.getString("ipos_account_no"),
+                    rs.getString("merchant_id"),
                     rs.getString("company_name"),
+                    rs.getString("business_type"),
+                    rs.getString("registration_number"),
                     rs.getString("email"),
                     rs.getString("phone"),
+                    rs.getString("fax"),
                     rs.getString("address"),
                     rs.getDouble("credit_limit"),
-                    rs.getDouble("current_balance"),
+                    rs.getDouble("outstanding_balance"),
                     rs.getString("account_status"),
-                    rs.getDouble("fixed_rate")
+                    rs.getString("discount_type"),
+                    rs.getDouble("fixed_discount_rate"),
+                    rs.getDouble("flexible_discount_rate"),
+                    rs.getDate("registration_date"),
+                    rs.getInt("is_Active") == 1,
+                    rs.getDate("last_payment_date")
             );
         }
         return null;
@@ -71,11 +94,10 @@ public class AccountService {
 
     /**
      * Check if account exists
-     * Uses the exact check query from your createAccount() method
      */
     public boolean accountExists(String merchantId) throws Exception {
         ResultSet rs = db.query(
-                "SELECT ipos_account_no FROM Merchant_Details WHERE ipos_account_no = ?",
+                "SELECT merchant_id FROM Merchant WHERE merchant_id = ?",
                 merchantId
         );
         return rs.next();
@@ -83,14 +105,18 @@ public class AccountService {
 
     /**
      * Update account (UPDATE)
-     * Uses the exact UPDATE query from your updateAccount() method
      */
     public boolean updateAccount(MerchantAccount account) throws Exception {
         int rowsAffected = db.update(
-                "UPDATE Merchant_Details SET company_name=?, email=?, phone=?, address=?, credit_limit=?, fixed_rate=? WHERE ipos_account_no=?",
+                "UPDATE Merchant SET company_name=?, business_type=?, registration_number=?, " +
+                        "email=?, phone=?, fax=?, address=?, credit_limit=?, " +
+                        "fixed_discount_rate=? WHERE merchant_id=?",
                 account.getBusinessName(),
+                account.getBusinessType(),
+                account.getRegistrationNumber(),
                 account.getEmail(),
                 account.getPhone(),
+                account.getFax(),
                 account.getAddress(),
                 account.getCreditLimit(),
                 account.getDiscountPercentage(),
@@ -102,11 +128,10 @@ public class AccountService {
 
     /**
      * Update account status (suspend/reinstate)
-     * Uses the exact UPDATE query from your updateStatus() method
      */
     public boolean updateAccountStatus(String merchantId, String status) throws Exception {
         int rowsAffected = db.update(
-                "UPDATE Merchant_Details SET account_status=?, status_changed_date=CURRENT_DATE() WHERE ipos_account_no=?",
+                "UPDATE Merchant SET account_status=? WHERE merchant_id=?",
                 status.toLowerCase(),
                 merchantId
         );
@@ -115,12 +140,11 @@ public class AccountService {
     }
 
     /**
-     * Delete discount plan
-     * Uses the exact SQL from your deleteDiscountPlan() method
+     * Delete discount plan (set to 0)
      */
     public boolean deleteDiscountPlan(String merchantId) throws Exception {
         int rowsAffected = db.update(
-                "UPDATE Merchant_Details SET fixed_rate = 0, discount_type = 'fixed' WHERE ipos_account_no = ?",
+                "UPDATE Merchant SET fixed_discount_rate = 0, discount_type = 'fixed' WHERE merchant_id = ?",
                 merchantId
         );
 
@@ -128,12 +152,11 @@ public class AccountService {
     }
 
     /**
-     * Delete account (deactivate)
-     * Uses the exact SQL from your deleteAccount() method
+     * Delete account (deactivate) - sets status to 0 and balance to 0
      */
     public boolean deleteAccount(String merchantId) throws Exception {
         int rowsAffected = db.update(
-                "UPDATE Merchant_Details SET account_status = 'suspended', current_balance = 0 WHERE ipos_account_no = ?",
+                "UPDATE Merchant SET is_Active = 0, outstanding_balance = 0 WHERE merchant_id = ?",
                 merchantId
         );
 
@@ -142,25 +165,24 @@ public class AccountService {
 
     /**
      * Restore account from default
-     * Uses the exact queries from your restoreFromDefault() method
      */
     public boolean restoreFromDefault(String merchantId) throws Exception {
-        // Check current balance (using your exact query)
+        // Check current balance
         ResultSet rs = db.query(
-                "SELECT current_balance FROM Merchant_Details WHERE ipos_account_no = ?",
+                "SELECT outstanding_balance FROM Merchant WHERE merchant_id = ?",
                 merchantId
         );
 
         if (rs.next()) {
-            double balance = rs.getDouble("current_balance");
+            double balance = rs.getDouble("outstanding_balance");
             if (balance > 0) {
                 return false; // Cannot restore - outstanding balance
             }
         }
 
-        // Restore to normal (using your exact query)
+        // Restore to normal
         int rowsAffected = db.update(
-                "UPDATE Merchant_Details SET account_status = 'normal', status_changed_date = CURRENT_DATE() WHERE ipos_account_no = ?",
+                "UPDATE Merchant SET account_status = 'normal' WHERE merchant_id = ?",
                 merchantId
         );
 
@@ -172,12 +194,12 @@ public class AccountService {
      */
     public double getAccountBalance(String merchantId) throws Exception {
         ResultSet rs = db.query(
-                "SELECT current_balance FROM Merchant_Details WHERE ipos_account_no = ?",
+                "SELECT outstanding_balance FROM Merchant WHERE merchant_id = ?",
                 merchantId
         );
 
         if (rs.next()) {
-            return rs.getDouble("current_balance");
+            return rs.getDouble("outstanding_balance");
         }
         return 0.0;
     }
@@ -188,20 +210,31 @@ public class AccountService {
     public List<MerchantAccount> getAllAccounts() throws Exception {
         List<MerchantAccount> accounts = new ArrayList<>();
         ResultSet rs = db.query(
-                "SELECT * FROM Merchant_Details ORDER BY company_name"
+                "SELECT merchant_id, company_name, business_type, registration_number, email, phone, fax, " +
+                        "address, credit_limit, outstanding_balance, account_status, " +
+                        "discount_type, fixed_discount_rate, flexible_discount_rate, registration_date, " +
+                        "is_Active, last_payment_date FROM Merchant ORDER BY company_name"
         );
 
         while (rs.next()) {
             accounts.add(new MerchantAccount(
-                    rs.getString("ipos_account_no"),
+                    rs.getString("merchant_id"),
                     rs.getString("company_name"),
+                    rs.getString("business_type"),
+                    rs.getString("registration_number"),
                     rs.getString("email"),
                     rs.getString("phone"),
+                    rs.getString("fax"),
                     rs.getString("address"),
                     rs.getDouble("credit_limit"),
-                    rs.getDouble("current_balance"),
+                    rs.getDouble("outstanding_balance"),
                     rs.getString("account_status"),
-                    rs.getDouble("fixed_rate")
+                    rs.getString("discount_type"),
+                    rs.getDouble("fixed_discount_rate"),
+                    rs.getDouble("flexible_discount_rate"),
+                    rs.getDate("registration_date"),
+                    rs.getInt("is_Active") == 1,
+                    rs.getDate("last_payment_date")
             ));
         }
         return accounts;

@@ -14,10 +14,10 @@ public class StaffAccountService {
     }
 
     /**
-     * Create a new staff account
+     * Create a new staff account (using UserLogin table)
      */
     public boolean createStaff(Staff staff) throws Exception {
-        // Check if staff ID already exists
+        // Check if staff ID already exists (using user_id)
         if (staffExists(staff.getStaffId())) {
             return false;
         }
@@ -27,32 +27,30 @@ public class StaffAccountService {
             return false;
         }
 
-        // Default password is the username (or you can set a default)
-        String defaultPassword = staff.getUsername();
+        // Default password is the username + "123" (matching your login)
+        String defaultPassword = staff.getUsername() + "123";
 
         int rowsAffected = db.update(
-                "INSERT INTO Staff_Details (staff_id, username, first_name, surname, email, phone, " +
-                        "address, role, password, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1)",
-                staff.getStaffId(),
+                "INSERT INTO UserLogin (username, password_hash, first_Name, sur_Name, email, role, is_Active) " +
+                        "VALUES (?, ?, ?, ?, ?, ?, 1)",
                 staff.getUsername(),
+                defaultPassword,
                 staff.getFirstName(),
                 staff.getSurName(),
                 staff.getEmail(),
-                staff.getPhone(),
-                staff.getAddress(),
-                staff.getRole(),
-                defaultPassword
+                staff.getRole()
         );
 
         return rowsAffected > 0;
     }
 
     /**
-     * Load a staff account by ID
+     * Load a staff account by ID (user_id from UserLogin)
      */
     public Staff loadStaff(String staffId) throws Exception {
         ResultSet rs = db.query(
-                "SELECT * FROM Staff_Details WHERE staff_id = ?",
+                "SELECT user_id, username, first_Name, sur_Name, email, role, is_Active " +
+                        "FROM UserLogin WHERE user_id = ?",
                 staffId
         );
 
@@ -67,7 +65,8 @@ public class StaffAccountService {
      */
     public Staff loadStaffByUsername(String username) throws Exception {
         ResultSet rs = db.query(
-                "SELECT * FROM Staff_Details WHERE username = ?",
+                "SELECT user_id, username, first_Name, sur_Name, email, role, is_Active " +
+                        "FROM UserLogin WHERE username = ?",
                 username
         );
 
@@ -82,16 +81,14 @@ public class StaffAccountService {
      */
     public boolean updateStaff(Staff staff) throws Exception {
         int rowsAffected = db.update(
-                "UPDATE Staff_Details SET username=?, first_name=?, surname=?, email=?, phone=?, " +
-                        "address=?, role=? WHERE staff_id=?",
+                "UPDATE UserLogin SET username=?, first_Name=?, sur_Name=?, email=?, role=? " +
+                        "WHERE user_id=?",
                 staff.getUsername(),
                 staff.getFirstName(),
                 staff.getSurName(),
                 staff.getEmail(),
-                staff.getPhone(),
-                staff.getAddress(),
                 staff.getRole(),
-                staff.getStaffId()
+                Integer.parseInt(staff.getStaffId())  // Convert staffId (String) to int for user_id
         );
 
         return rowsAffected > 0;
@@ -103,8 +100,8 @@ public class StaffAccountService {
     public boolean updateStaffStatus(String staffId, boolean isActive) throws Exception {
         int activeFlag = isActive ? 1 : 0;
         int rowsAffected = db.update(
-                "UPDATE Staff_Details SET is_active = ? WHERE staff_id = ?",
-                activeFlag, staffId
+                "UPDATE UserLogin SET is_Active = ? WHERE user_id = ?",
+                activeFlag, Integer.parseInt(staffId)
         );
 
         return rowsAffected > 0;
@@ -129,20 +126,20 @@ public class StaffAccountService {
      */
     public boolean deleteStaff(String staffId) throws Exception {
         int rowsAffected = db.update(
-                "DELETE FROM Staff_Details WHERE staff_id = ?",
-                staffId
+                "DELETE FROM UserLogin WHERE user_id = ?",
+                Integer.parseInt(staffId)
         );
 
         return rowsAffected > 0;
     }
 
     /**
-     * Check if staff ID exists
+     * Check if staff ID exists (user_id)
      */
     public boolean staffExists(String staffId) throws Exception {
         ResultSet rs = db.query(
-                "SELECT staff_id FROM Staff_Details WHERE staff_id = ?",
-                staffId
+                "SELECT user_id FROM UserLogin WHERE user_id = ?",
+                Integer.parseInt(staffId)
         );
         return rs.next();
     }
@@ -152,7 +149,7 @@ public class StaffAccountService {
      */
     public boolean usernameExists(String username) throws Exception {
         ResultSet rs = db.query(
-                "SELECT username FROM Staff_Details WHERE username = ?",
+                "SELECT username FROM UserLogin WHERE username = ?",
                 username
         );
         return rs.next();
@@ -164,7 +161,8 @@ public class StaffAccountService {
     public List<Staff> getAllActiveStaff() throws Exception {
         List<Staff> staffList = new ArrayList<>();
         ResultSet rs = db.query(
-                "SELECT * FROM Staff_Details WHERE is_active = 1 ORDER BY first_name, surname"
+                "SELECT user_id, username, first_Name, sur_Name, email, role, is_Active " +
+                        "FROM UserLogin WHERE is_Active = 1 ORDER BY first_Name, sur_Name"
         );
 
         while (rs.next()) {
@@ -179,7 +177,8 @@ public class StaffAccountService {
     public List<Staff> getAllStaff() throws Exception {
         List<Staff> staffList = new ArrayList<>();
         ResultSet rs = db.query(
-                "SELECT * FROM Staff_Details ORDER BY first_name, surname"
+                "SELECT user_id, username, first_Name, sur_Name, email, role, is_Active " +
+                        "FROM UserLogin ORDER BY first_Name, sur_Name"
         );
 
         while (rs.next()) {
@@ -194,7 +193,8 @@ public class StaffAccountService {
     public List<Staff> searchStaffByName(String searchTerm) throws Exception {
         List<Staff> staffList = new ArrayList<>();
         ResultSet rs = db.query(
-                "SELECT * FROM Staff_Details WHERE first_name LIKE ? OR surname LIKE ? ORDER BY first_name",
+                "SELECT user_id, username, first_Name, sur_Name, email, role, is_Active " +
+                        "FROM UserLogin WHERE first_Name LIKE ? OR sur_Name LIKE ? ORDER BY first_Name",
                 "%" + searchTerm + "%", "%" + searchTerm + "%"
         );
 
@@ -209,8 +209,8 @@ public class StaffAccountService {
      */
     public boolean resetPassword(String staffId, String newPassword) throws Exception {
         int rowsAffected = db.update(
-                "UPDATE Staff_Details SET password = ? WHERE staff_id = ?",
-                newPassword, staffId
+                "UPDATE UserLogin SET password_hash = ? WHERE user_id = ?",
+                newPassword, Integer.parseInt(staffId)
         );
         return rowsAffected > 0;
     }
@@ -220,15 +220,13 @@ public class StaffAccountService {
      */
     private Staff extractStaffFromResultSet(ResultSet rs) throws Exception {
         Staff staff = new Staff();
-        staff.setStaffId(rs.getString("staff_id"));
+        staff.setStaffId(String.valueOf(rs.getInt("user_id")));  // Convert int to String for staffId
         staff.setUsername(rs.getString("username"));
-        staff.setFirstName(rs.getString("first_name"));
-        staff.setSurName(rs.getString("surname"));
+        staff.setFirstName(rs.getString("first_Name"));
+        staff.setSurName(rs.getString("sur_Name"));
         staff.setEmail(rs.getString("email"));
-        staff.setPhone(rs.getString("phone"));
-        staff.setAddress(rs.getString("address"));
         staff.setRole(rs.getString("role"));
-        staff.setActive(rs.getInt("is_active") == 1);
+        staff.setActive(rs.getInt("is_Active") == 1);
         return staff;
     }
 }

@@ -212,7 +212,7 @@ public class StaffList extends JFrame {
             if (selectedRow >= 0) {
                 String staffId = (String) staffTable.getValueAt(selectedRow, 0);
                 dispose();
-                new StaffAccountManagement(fullname, role, "MANAGE");
+                new StaffAccountManagement(fullname, role, "MANAGE", staffId);
             } else {
                 JOptionPane.showMessageDialog(this, "Please select a staff member to view details.");
             }

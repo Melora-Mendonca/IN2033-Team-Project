@@ -566,7 +566,7 @@ public class ManageItem extends JFrame {
                 Integer.parseInt(units_per_packField.getText().trim()),
                 Double.parseDouble(costField.getText().trim()),
                 Integer.parseInt(availabilityField.getText().trim()),
-                Integer.parseInt(stock_limitField.getText().trim())
+                Integer.parseInt(stock_limitField.getText().trim())  // This maps to minimum_stock_level in DB
         );
     }
 
@@ -578,7 +578,7 @@ public class ManageItem extends JFrame {
         units_per_packField.setText(String.valueOf(item.getUnitsInPack()));
         costField.setText(String.valueOf(item.getPackageCost()));
         availabilityField.setText(String.valueOf(item.getAvailabilityPacks()));
-        stock_limitField.setText(String.valueOf(item.getStockLimitPacks()));
+        stock_limitField.setText(String.valueOf(item.getStockLimitPacks()));  // This maps to minimum_stock_level
     }
 
     private boolean validateRequiredFields() {

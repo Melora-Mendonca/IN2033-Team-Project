@@ -151,7 +151,7 @@ public class LoginForm extends JFrame {
         styleToggleButton(staffBtn);
 
         adminBtn.setSelected(true);
-        selectedRole = "administrator";
+        selectedRole = "Administrator";
 
         group.add(adminBtn);
         group.add(directorBtn);
@@ -190,7 +190,7 @@ public class LoginForm extends JFrame {
 
         // Action listeners for role buttons
         adminBtn.addActionListener(e -> {
-            selectedRole = "administrator";
+            selectedRole = "Administrator";
             subtitleLb1.setText("Sign in as Administrator");
             staffPanel.setVisible(false);
             LoginPanel.revalidate();
@@ -198,7 +198,7 @@ public class LoginForm extends JFrame {
         });
 
         directorBtn.addActionListener(e -> {
-            selectedRole = "director_of_operations";
+            selectedRole = "Director of Operations";
             subtitleLb1.setText("Sign in as Director of Operations");
             staffPanel.setVisible(false);
             LoginPanel.revalidate();
@@ -222,13 +222,13 @@ public class LoginForm extends JFrame {
     private String convertRoleToDatabaseFormat(String displayRole) {
         switch (displayRole) {
             case "Senior Accountant":
-                return "senior_accountant";
+                return "Senior Accountant";
             case "Accountant":
-                return "accountant";
+                return "Accountant";
             case "Warehouse Employee":
-                return "warehouse_employee";
+                return "Warehouse Employee";
             case "Delivery Employee":
-                return "delivery_employee";
+                return "Delivery Employee";
             default:
                 return displayRole.toLowerCase().replace(" ", "_");
         }
@@ -355,7 +355,7 @@ public class LoginForm extends JFrame {
         // Get stock warnings if needed
         List<String> warnings = null;
         if (user.getRole().equals("administrator") ||
-                user.getRole().equals("director_of_operations")) {
+                user.getRole().equals("Director of Operations")) {
             try {
                 warnings = authService.getStockWarnings();
                 System.out.println("Stock warnings count: " + (warnings != null ? warnings.size() : 0));
@@ -368,7 +368,7 @@ public class LoginForm extends JFrame {
         // Navigate to appropriate dashboard based on normalized role
         try {
             switch (user.getRole()) {
-                case "administrator":
+                case "Administrator":
                     System.out.println("Creating AdminDashboard...");
                     AdminDashboard dashboard = new AdminDashboard(user.getFullName(), user.getRole());
                     if (warnings != null && !warnings.isEmpty()) {
@@ -377,7 +377,7 @@ public class LoginForm extends JFrame {
                     System.out.println("AdminDashboard created successfully");
                     break;
 
-                case "director_of_operations":
+                case "Director of Operations":
                     System.out.println("Creating ManagerDashboard...");
                     ManagerDashboard managerDashboard = new ManagerDashboard(user.getFullName(), user.getRole());
                     if (warnings != null && !warnings.isEmpty()) {
@@ -386,10 +386,10 @@ public class LoginForm extends JFrame {
                     System.out.println("ManagerDashboard created successfully");
                     break;
 
-                case "senior_accountant":
-                case "accountant":
-                case "warehouse_employee":
-                case "delivery_employee":
+                case "Senior Accountant":
+                case "Accountant":
+                case "Warehouse Employee":
+                case "Delivery Employee":
                     System.out.println("Creating StaffDashboard...");
                     StaffDashboard staffDashboard = new StaffDashboard(user.getFullName(), user.getRole());
                     System.out.println("StaffDashboard created successfully");

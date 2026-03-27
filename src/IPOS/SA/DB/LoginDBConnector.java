@@ -14,7 +14,7 @@ public class LoginDBConnector {
     public User authenticate(String username, String password, String role) {
         try {
             Connection conn = new DBConnection().getConn();
-            String sql = "SELECT * FROM User_Login WHERE username = ? AND password_hash = ? AND role = ? AND is_active = 1";
+            String sql = "SELECT * FROM UserLogin WHERE username = ? AND password_hash = ? AND role = ? AND is_active = 1";
             PreparedStatement stmt = conn.prepareStatement(sql);
             stmt.setString(1, username);
             stmt.setString(2, hashPassword(password));
@@ -22,7 +22,8 @@ public class LoginDBConnector {
 
             ResultSet rs = stmt.executeQuery();
             if (rs.next()) {
-                return new User(rs.getString("username"), rs.getString("role"), rs.getString("full_name"));
+                String fullName = rs.getString("first_Name") + " " + rs.getString("sur_Name");
+                return new User(rs.getString("username"), fullName, rs.getString("role"));
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -44,11 +45,14 @@ public class LoginDBConnector {
         }
     }
 
-    public List<String> getStockWarnings(){
+    public List<String> getStockWarnings() {
         List<String> warnings = new ArrayList<>();
-        try{
+        try {
             Connection conn = new DBConnection().getConn();
-            String sql = "SELECT item_id, description, availability, stock_limit FROM Catalogue WHERE is_active = 1 AND availability < stock_limit ORDER BY availability ASC";
+            // Updated: changed stock_limit to minimum_stock_level
+            String sql = "SELECT item_id, description, availability, minimum_stock_level " +
+                    "FROM Catalogue WHERE is_active = 1 AND availability < minimum_stock_level " +
+                    "ORDER BY (minimum_stock_level - availability) DESC";
             PreparedStatement stmt = conn.prepareStatement(sql);
             ResultSet rs = stmt.executeQuery();
             while (rs.next()) {
@@ -56,7 +60,7 @@ public class LoginDBConnector {
                         rs.getString("item_id") + " — " +
                                 rs.getString("description") +
                                 " (Stock: " + rs.getInt("availability") +
-                                " / Min: " + rs.getInt("stock_limit") + ")"
+                                " / Min: " + rs.getInt("minimum_stock_level") + ")"
                 );
             }
         } catch (Exception e) {

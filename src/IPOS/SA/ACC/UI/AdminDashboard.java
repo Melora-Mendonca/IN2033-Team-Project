@@ -143,12 +143,25 @@ public class AdminDashboard extends JFrame {
     }
 
     private void createCenterPanel() {
+        // First, set up MainPanel layout
+        MainPanel.setLayout(new BorderLayout());
+
+        // Add NavPanel to the left
+        MainPanel.add(NavPanel, BorderLayout.WEST);
+
+        // Add HeaderPanel to the top
+        MainPanel.add(HeaderPanel, BorderLayout.NORTH);
+
+        // Create CenterPanel for main content
         CenterPanel = new JPanel(new BorderLayout());
         CenterPanel.setBackground(new Color(245, 247, 250));
         CenterPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
         ContentPanel.setLayout(new BorderLayout());
         ContentPanel.add(CenterPanel, BorderLayout.CENTER);
+
+        // Add ContentPanel to the center of MainPanel
+        MainPanel.add(ContentPanel, BorderLayout.CENTER);
     }
 
     private void loadDashboardData() {
@@ -228,7 +241,7 @@ public class AdminDashboard extends JFrame {
         tableWrapper.setBackground(new Color(245, 247, 250));
         tableWrapper.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
 
-//        createOrdersTable(data.getRecentOrders());
+          createOrdersTable(data.getRecentOrders());
           createStockTable(data.getLowStockItems());
 
         CenterPanel.add(tableWrapper, BorderLayout.CENTER);
@@ -289,19 +302,23 @@ public class AdminDashboard extends JFrame {
 
                         String status = value.toString();
                         switch (status) {
-                            case "Accepted":
+                            case "pending":
+                                label.setBackground(new Color(216, 186, 223));
+                                label.setForeground(new Color(90, 4, 133));
+                                break;
+                            case "accepted":
                                 label.setBackground(new Color(255, 243, 205));
                                 label.setForeground(new Color(133, 100, 4));
                                 break;
-                            case "Processing":
+                            case "processing":
                                 label.setBackground(new Color(207, 226, 255));
                                 label.setForeground(new Color(10, 64, 168));
                                 break;
-                            case "Dispatched":
+                            case "dispatched":
                                 label.setBackground(new Color(255, 220, 185));
                                 label.setForeground(new Color(168, 80, 10));
                                 break;
-                            case "Delivered":
+                            case "delivered":
                                 label.setBackground(new Color(198, 239, 206));
                                 label.setForeground(new Color(0, 97, 0));
                                 break;

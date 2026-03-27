@@ -16,12 +16,16 @@ public class AccountManagement extends JFrame {
     private final String role;
     private final String mode;
 
-    // For the data entry fields on the form
+    // For the data entry fields on the form - UPDATED FIELDS
     private JTextField merchantIdField;
-    private JTextField businessNameField;
+    private JTextField companyNameField;
+    private JTextField businessTypeField;
+    private JTextField registrationNumberField;
     private JTextField emailField;
     private JTextField phoneField;
+    private JTextField faxField;
     private JTextField addressField;
+    private JTextField contactPersonField;
     private JTextField creditLimitField;
     private JTextField discountValueField;
 
@@ -45,10 +49,15 @@ public class AccountManagement extends JFrame {
     private JSeparator divider;
 
     public AccountManagement(String fullname, String role, String mode) {
-        this.accountService = new AccountService();
-        this.fullname = fullname;
-        this.role = role;
-        this.mode = mode;
+        this(fullname, role, mode, null);
+    }
+
+        // New constructor with merchant ID
+    public AccountManagement(String fullname, String role, String mode, String merchantId) {
+            this.accountService = new AccountService();
+            this.fullname = fullname;
+            this.role = role;
+            this.mode = mode;
 
         setTitle("Merchant Account Management");
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
@@ -57,6 +66,12 @@ public class AccountManagement extends JFrame {
         setLocationRelativeTo(null);
 
         initializeUI();
+
+        // If merchantId is provided, load the account automatically
+        if (merchantId != null && !merchantId.isEmpty() && "MANAGE".equals(mode)) {
+            merchantIdField.setText(merchantId);
+            loadAccount();  // Automatically load the account
+        }
 
         setVisible(true);
     }
@@ -167,37 +182,58 @@ public class AccountManagement extends JFrame {
         grid.setLayout(new BoxLayout(grid, BoxLayout.Y_AXIS));
         grid.setBackground(Color.WHITE);
 
-        // Create all fields
+        // Create all fields - UPDATED FIELDS
         merchantIdField = createTextField();
-        businessNameField = createTextField();
+        companyNameField = createTextField();
+        businessTypeField = createTextField();
+        registrationNumberField = createTextField();
         emailField = createTextField();
         phoneField = createTextField();
+        faxField = createTextField();
         addressField = createTextField();
+        contactPersonField = createTextField();
         creditLimitField = createTextField();
         discountValueField = createTextField();
 
+        // Row 1 - Merchant ID and Company Name
         JPanel row1 = new JPanel(new GridLayout(1, 2, 12, 0));
         row1.setBackground(Color.WHITE);
         row1.setMaximumSize(new Dimension(Integer.MAX_VALUE, 60));
         row1.add(fieldWrapper("MERCHANT ID", merchantIdField));
-        row1.add(fieldWrapper("BUSINESS NAME", businessNameField));
+        row1.add(fieldWrapper("COMPANY NAME", companyNameField));
 
-        JPanel row2 = new JPanel(new GridLayout(1, 1));
+        // Row 2 - Business Type and Registration Number
+        JPanel row2 = new JPanel(new GridLayout(1, 2, 12, 0));
         row2.setBackground(Color.WHITE);
         row2.setMaximumSize(new Dimension(Integer.MAX_VALUE, 60));
-        row2.add(fieldWrapper("ADDRESS", addressField));
+        row2.add(fieldWrapper("BUSINESS TYPE", businessTypeField));
+        row2.add(fieldWrapper("REGISTRATION NUMBER", registrationNumberField));
 
-        JPanel row3 = new JPanel(new GridLayout(1, 2, 12, 0));
+        // Row 4 - Address
+        JPanel row3 = new JPanel(new GridLayout(1, 1));
         row3.setBackground(Color.WHITE);
         row3.setMaximumSize(new Dimension(Integer.MAX_VALUE, 60));
-        row3.add(fieldWrapper("EMAIL", emailField));
-        row3.add(fieldWrapper("PHONE", phoneField));
+        row3.add(fieldWrapper("ADDRESS", addressField));
 
+        // Row 5 - Email and Phone
         JPanel row4 = new JPanel(new GridLayout(1, 2, 12, 0));
         row4.setBackground(Color.WHITE);
         row4.setMaximumSize(new Dimension(Integer.MAX_VALUE, 60));
-        row4.add(fieldWrapper("CREDIT LIMIT (£)", creditLimitField));
-        row4.add(fieldWrapper("FIXED DISCOUNT %", discountValueField));
+        row4.add(fieldWrapper("EMAIL", emailField));
+        row4.add(fieldWrapper("PHONE", phoneField));
+
+        // Row 6 - Fax and Credit Limit
+        JPanel row5 = new JPanel(new GridLayout(1, 2, 12, 0));
+        row5.setBackground(Color.WHITE);
+        row5.setMaximumSize(new Dimension(Integer.MAX_VALUE, 60));
+        row5.add(fieldWrapper("FAX", faxField));
+        row5.add(fieldWrapper("CREDIT LIMIT (£)", creditLimitField));
+
+        // Row 7 - Fixed Discount %
+        JPanel row6 = new JPanel(new GridLayout(1, 1));
+        row6.setBackground(Color.WHITE);
+        row6.setMaximumSize(new Dimension(Integer.MAX_VALUE, 60));
+        row6.add(fieldWrapper("FIXED DISCOUNT %", discountValueField));
 
         grid.add(row1);
         grid.add(Box.createVerticalStrut(12));
@@ -206,6 +242,10 @@ public class AccountManagement extends JFrame {
         grid.add(row3);
         grid.add(Box.createVerticalStrut(12));
         grid.add(row4);
+        grid.add(Box.createVerticalStrut(12));
+        grid.add(row5);
+        grid.add(Box.createVerticalStrut(12));
+        grid.add(row6);
 
         messageLabel = new JLabel(" ");
         messageLabel.setFont(new Font("Segoe UI", Font.PLAIN, 11));
@@ -342,9 +382,10 @@ public class AccountManagement extends JFrame {
         actionsCard.add(clearBtn);
         actionsCard.add(Box.createVerticalStrut(8));
         actionsCard.add(backBtn);
+        actionsCard.add(Box.createVerticalStrut(8));
 
         // Only show Restore from Default if director of operations
-        if (role.equals("director_of_operations")) {
+        if (role.equals("Director of Operations")) {
             JButton restoreBtn = actionButton("Restore from Default", new Color(20, 83, 45));
             restoreBtn.addActionListener(e -> restoreFromDefault());
             actionsCard.add(restoreBtn);
@@ -352,14 +393,18 @@ public class AccountManagement extends JFrame {
         }
     }
 
-    // Business Logic Methods (using AccountService)
+    // Business Logic Methods (using AccountService) - UPDATED createAccount
     private void createAccount() {
         try {
             String id = merchantIdField.getText().trim();
-            String name = businessNameField.getText().trim();
+            String companyName = companyNameField.getText().trim();
+            String businessType = businessTypeField.getText().trim();
+            String registrationNumber = registrationNumberField.getText().trim();
             String email = emailField.getText().trim();
             String phone = phoneField.getText().trim();
+            String fax = faxField.getText().trim();
             String address = addressField.getText().trim();
+            String contactPerson = contactPersonField.getText().trim();
 
             if (creditLimitField.getText().trim().isEmpty() || discountValueField.getText().trim().isEmpty()) {
                 setMessage("Please enter credit limit and discount percentage.", false);
@@ -374,8 +419,8 @@ public class AccountManagement extends JFrame {
                 setMessage("Merchant ID is required.", false);
                 return;
             }
-            if (name.isEmpty()) {
-                setMessage("Business name is required.", false);
+            if (companyName.isEmpty()) {
+                setMessage("Company name is required.", false);
                 return;
             }
             if (credit < 0) {
@@ -388,7 +433,10 @@ public class AccountManagement extends JFrame {
             }
 
             DiscountPlan plan = new FixedDiscountPlan("Fixed Plan", discount);
-            MerchantAccount account = new MerchantAccount(id, name, email, phone, address, credit, plan);
+            MerchantAccount account = new MerchantAccount(
+                    id, companyName, businessType, registrationNumber, email,
+                    phone, fax, address, credit, plan
+            );
 
             if (accountService.addAccount(account)) {
                 setMessage("Account created successfully.", true);
@@ -446,9 +494,12 @@ public class AccountManagement extends JFrame {
 
             MerchantAccount account = new MerchantAccount(
                     id,
-                    businessNameField.getText().trim(),
+                    companyNameField.getText().trim(),
+                    businessTypeField.getText().trim(),
+                    registrationNumberField.getText().trim(),
                     emailField.getText().trim(),
                     phoneField.getText().trim(),
+                    faxField.getText().trim(),
                     addressField.getText().trim(),
                     Double.parseDouble(creditLimitField.getText().trim()),
                     plan
@@ -559,12 +610,15 @@ public class AccountManagement extends JFrame {
         }
     }
 
-    // Helper Methods
+    // Helper Methods - UPDATED populateForm
     private void populateForm(MerchantAccount account) {
         merchantIdField.setText(account.getMerchantId());
-        businessNameField.setText(account.getBusinessName());
+        companyNameField.setText(account.getBusinessName());
+        businessTypeField.setText(account.getBusinessType());
+        registrationNumberField.setText(account.getRegistrationNumber());
         emailField.setText(account.getEmail());
         phoneField.setText(account.getPhone());
+        faxField.setText(account.getFax());
         addressField.setText(account.getAddress());
         creditLimitField.setText(String.valueOf(account.getCreditLimit()));
         discountValueField.setText(String.valueOf(account.getDiscountPercentage()));
@@ -572,10 +626,14 @@ public class AccountManagement extends JFrame {
 
     private void clearForm() {
         merchantIdField.setText("");
-        businessNameField.setText("");
+        companyNameField.setText("");
+        businessTypeField.setText("");
+        registrationNumberField.setText("");
         emailField.setText("");
         phoneField.setText("");
+        faxField.setText("");
         addressField.setText("");
+        contactPersonField.setText("");
         creditLimitField.setText("");
         discountValueField.setText("");
         balanceLabel.setText("0.00");
@@ -588,7 +646,7 @@ public class AccountManagement extends JFrame {
         messageLabel.setForeground(success ? new Color(0, 97, 0) : new Color(200, 80, 80));
     }
 
-    // UI Helper Methods
+    // UI Helper Methods (unchanged)
     private JTextField createTextField() {
         JTextField field = new JTextField();
         field.setFont(new Font("Segoe UI", Font.PLAIN, 13));

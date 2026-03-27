@@ -21,7 +21,7 @@ public class catalogueService {
                 itemId
         );
 
-        if (rs.next()) {
+        if (rs != null && rs.next()) {
             return extractItemFromResultSet(rs);
         }
         return null;
@@ -34,7 +34,7 @@ public class catalogueService {
                 itemId
         );
 
-        if (rs.next()) {
+        if (rs != null && rs.next()) {
             return extractItemFromResultSet(rs);
         }
         return null;
@@ -47,7 +47,7 @@ public class catalogueService {
                 itemId
         );
 
-        if (rs.next()) {
+        if (rs != null && rs.next()) {
             return rs.getInt("is_active") == 1;
         }
         return false;
@@ -59,7 +59,7 @@ public class catalogueService {
                 "SELECT item_id FROM Catalogue WHERE item_id = ?",
                 itemId
         );
-        return rs.next();
+        return rs != null && rs.next();
     }
 
     // Get the active status of an item
@@ -69,7 +69,7 @@ public class catalogueService {
                 itemId
         );
 
-        if (rs.next()) {
+        if (rs != null && rs.next()) {
             return rs.getInt("is_active") == 1;
         }
         return false;
@@ -82,9 +82,9 @@ public class catalogueService {
             return false;
         }
 
-        db.update(
+        int rowsAffected = db.update(
                 "INSERT INTO Catalogue (item_id, description, package_type, unit, " +
-                        "units_per_pack, package_cost, availability, stock_limit, is_active) " +
+                        "unit_per_pack, package_cost, availability, minimum_stock_level, is_active) " +
                         "VALUES (?,?,?,?,?,?,?,?,1)",
                 item.getItemId(),
                 item.getDescription(),
@@ -93,9 +93,9 @@ public class catalogueService {
                 item.getUnitsInPack(),
                 item.getPackageCost(),
                 item.getAvailabilityPacks(),
-                item.getStockLimitPacks()
+                item.getStockLimitPacks()  // This maps to minimum_stock_level
         );
-        return true;
+        return rowsAffected > 0;
     }
 
     // Update an existing item (only if active)
@@ -107,7 +107,7 @@ public class catalogueService {
 
         int rowsAffected = db.update(
                 "UPDATE Catalogue SET description=?, package_type=?, unit=?, " +
-                        "units_per_pack=?, package_cost=?, availability=?, stock_limit=? " +
+                        "unit_per_pack=?, package_cost=?, availability=?, minimum_stock_level=? " +
                         "WHERE item_id=? AND is_active=1",
                 item.getDescription(),
                 item.getPackageType(),
@@ -124,7 +124,6 @@ public class catalogueService {
 
     // Deactivate an item (soft delete)
     public boolean deactivateItem(String itemId) throws Exception {
-        // Check if item exists
         if (!itemExists(itemId)) {
             return false;
         }
@@ -139,7 +138,6 @@ public class catalogueService {
 
     // Reactivate an item
     public boolean reactivateItem(String itemId) throws Exception {
-        // Check if item exists
         if (!itemExists(itemId)) {
             return false;
         }
@@ -152,7 +150,7 @@ public class catalogueService {
         return rowsAffected > 0;
     }
 
-    // Record a stock delivery
+    // Record a stock delivery - UPDATED to match your StockDelivery table
     public boolean recordDelivery(String itemId, int quantity, int enteredBy) throws Exception {
         if (quantity <= 0) {
             return false;
@@ -164,14 +162,14 @@ public class catalogueService {
         }
 
         try {
-            // Insert delivery record
+            // Insert delivery record into StockDelivery table
             db.update(
-                    "INSERT INTO Stock_Deliveries (item_id, quantity_added, entered_by, notes) " +
-                            "VALUES (?,?,?,'Manual delivery')",
+                    "INSERT INTO StockDelivery (catalogue_item_id, quantity, delivery_date, status, supplier_name, userlogin_user_id) " +
+                            "VALUES (?, ?, CURDATE(), 'completed', 'Manual Entry', ?)",
                     itemId, quantity, enteredBy
             );
 
-            // Update stock
+            // Update stock in Catalogue table
             db.update(
                     "UPDATE Catalogue SET availability = availability + ? " +
                             "WHERE item_id = ? AND is_active = 1",
@@ -191,7 +189,7 @@ public class catalogueService {
                 "SELECT * FROM Catalogue WHERE is_active = 1 ORDER BY item_id"
         );
 
-        while (rs.next()) {
+        while (rs != null && rs.next()) {
             items.add(extractItemFromResultSet(rs));
         }
 
@@ -205,7 +203,7 @@ public class catalogueService {
                 "SELECT * FROM Catalogue ORDER BY item_id"
         );
 
-        while (rs.next()) {
+        while (rs != null && rs.next()) {
             items.add(extractItemFromResultSet(rs));
         }
 
@@ -219,10 +217,10 @@ public class catalogueService {
                 rs.getString("description"),
                 rs.getString("package_type"),
                 rs.getString("unit"),
-                rs.getInt("units_per_pack"),
+                rs.getInt("unit_per_pack"),
                 rs.getDouble("package_cost"),
                 rs.getInt("availability"),
-                rs.getInt("stock_limit")
+                rs.getInt("minimum_stock_level")
         );
     }
 }

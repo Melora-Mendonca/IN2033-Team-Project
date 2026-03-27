@@ -232,7 +232,7 @@ public class MerchantList extends JFrame {
             if (selectedRow >= 0) {
                 String merchantId = (String) merchantTable.getValueAt(selectedRow, 0);
                 dispose();
-                new AccountManagement(fullname, role, "MANAGE");
+                new AccountManagement(fullname, role, "MANAGE", merchantId);  // Pass merchantId
             } else {
                 JOptionPane.showMessageDialog(this, "Please select a merchant to view details.");
             }

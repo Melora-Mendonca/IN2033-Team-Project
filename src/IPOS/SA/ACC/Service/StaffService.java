@@ -42,15 +42,14 @@ public class StaffService {
     private int getPendingOrders() throws Exception {
         try {
             ResultSet rs = db.query(
-                    "SELECT COUNT(*) as count FROM Orders WHERE status IN ('Pending', 'Processing')"
+                    "SELECT COUNT(*) as count FROM `Order` WHERE status IN ('pending', 'processing')"
             );
 
-            if (rs.next()) {
+            if (rs != null && rs.next()) {
                 return rs.getInt("count");
             }
         } catch (Exception e) {
-            // Orders table might not exist yet
-            System.err.println("Orders table not found: " + e.getMessage());
+            System.err.println("Orders table error: " + e.getMessage());
         }
         return 0;
     }
@@ -61,14 +60,14 @@ public class StaffService {
     private int getRecentOrdersCount() throws Exception {
         try {
             ResultSet rs = db.query(
-                    "SELECT COUNT(*) as count FROM Orders WHERE order_date >= DATE_SUB(CURRENT_DATE(), INTERVAL 7 DAY)"
+                    "SELECT COUNT(*) as count FROM `Order` WHERE order_date >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)"
             );
 
-            if (rs.next()) {
+            if (rs != null && rs.next()) {
                 return rs.getInt("count");
             }
         } catch (Exception e) {
-            System.err.println("Orders table not found: " + e.getMessage());
+            System.err.println("Orders table error: " + e.getMessage());
         }
         return 0;
     }
@@ -79,16 +78,16 @@ public class StaffService {
     private double getTotalValueProcessed() throws Exception {
         try {
             ResultSet rs = db.query(
-                    "SELECT COALESCE(SUM(total_amount), 0) as total FROM Orders " +
-                            "WHERE MONTH(order_date) = MONTH(CURRENT_DATE()) " +
-                            "AND YEAR(order_date) = YEAR(CURRENT_DATE())"
+                    "SELECT COALESCE(SUM(total_amount), 0) as total FROM `Order` " +
+                            "WHERE MONTH(order_date) = MONTH(CURDATE()) " +
+                            "AND YEAR(order_date) = YEAR(CURDATE())"
             );
 
-            if (rs.next()) {
+            if (rs != null && rs.next()) {
                 return rs.getDouble("total");
             }
         } catch (Exception e) {
-            System.err.println("Orders table not found: " + e.getMessage());
+            System.err.println("Orders table error: " + e.getMessage());
         }
         return 0.0;
     }
@@ -101,11 +100,13 @@ public class StaffService {
 
         try {
             ResultSet rs = db.query(
-                    "SELECT order_id, merchant_name, order_date, status, total_amount " +
-                            "FROM Orders ORDER BY order_date DESC LIMIT 5"
+                    "SELECT o.order_id, m.company_name as merchant_name, o.order_date, o.status, o.total_amount " +
+                            "FROM `Order` o " +
+                            "JOIN Merchant m ON o.merchant_id = m.merchant_id " +
+                            "ORDER BY o.order_date DESC LIMIT 5"
             );
 
-            while (rs.next()) {
+            while (rs != null && rs.next()) {
                 orders.add(new OrderSummary(
                         rs.getString("order_id"),
                         rs.getString("merchant_name"),
@@ -115,7 +116,7 @@ public class StaffService {
                 ));
             }
         } catch (Exception e) {
-            System.err.println("Orders table not found: " + e.getMessage());
+            System.err.println("Orders table error: " + e.getMessage());
             // Return sample data if table doesn't exist
             orders.add(new OrderSummary("ORD-001", "Sample Merchant", "2024-01-15", "Processing", 250.00));
             orders.add(new OrderSummary("ORD-002", "Sample Merchant", "2024-01-14", "Delivered", 180.50));
@@ -124,22 +125,24 @@ public class StaffService {
         return orders;
     }
 
+    // Add this method if needed for staff list
     public List<Staff> getStaffList() throws Exception {
         List<Staff> staffList = new ArrayList<>();
 
         ResultSet rs = db.query(
-                "SELECT user_id, username, full_name, email, role, is_active " +
-                        "FROM User_Login WHERE is_active = 1 ORDER BY full_name"
+                "SELECT user_id, username, first_Name, sur_Name, email, role, is_Active " +
+                        "FROM UserLogin WHERE is_Active = 1 ORDER BY first_Name, sur_Name"
         );
 
-        while (rs.next()) {
+        while (rs != null && rs.next()) {
             Staff staff = new Staff();
-            staff.setStaffId(rs.getString("user_id"));
+            staff.setStaffId(String.valueOf(rs.getInt("user_id")));
             staff.setUsername(rs.getString("username"));
-            staff.setFirstName(rs.getString("full_name"));
+            staff.setFirstName(rs.getString("first_Name"));
+            staff.setSurName(rs.getString("sur_Name"));
             staff.setEmail(rs.getString("email"));
             staff.setRole(rs.getString("role"));
-            staff.setActive(rs.getInt("is_active") == 1);
+            staff.setActive(rs.getInt("is_Active") == 1);
             staffList.add(staff);
         }
 
