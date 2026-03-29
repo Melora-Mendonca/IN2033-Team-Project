@@ -334,15 +334,13 @@ public class StaffAccountManagement extends JFrame {
     private void addManageButtons(JPanel actionsCard) {
         JButton loadBtn = actionButton("Load Account", new Color(17, 24, 39));
         JButton updateBtn = actionButton("Update Account", new Color(30, 70, 90));
-        JButton deactivateBtn = actionButton("Deactivate Account", new Color(127, 29, 29));
-        JButton reactivateBtn = actionButton("Reactivate Account", new Color(20, 83, 45));
+        JButton deleteBtn = actionButton("Delete Account", new Color(127, 29, 29));
         JButton clearBtn = actionButton("Clear", new Color(107, 114, 128));
         JButton backBtn = actionButton("← Back", new Color(17, 24, 39));
 
         loadBtn.addActionListener(e -> loadStaff());
         updateBtn.addActionListener(e -> updateStaff());
-        deactivateBtn.addActionListener(e -> deactivateStaff());
-        reactivateBtn.addActionListener(e -> reactivateStaff());
+        deleteBtn.addActionListener(e -> deactivateStaff());
         clearBtn.addActionListener(e -> clearForm());
         backBtn.addActionListener(e -> {
             dispose();
@@ -353,9 +351,7 @@ public class StaffAccountManagement extends JFrame {
         actionsCard.add(Box.createVerticalStrut(8));
         actionsCard.add(updateBtn);
         actionsCard.add(Box.createVerticalStrut(8));
-        actionsCard.add(deactivateBtn);
-        actionsCard.add(Box.createVerticalStrut(8));
-        actionsCard.add(reactivateBtn);
+        actionsCard.add(deleteBtn);
         actionsCard.add(Box.createVerticalStrut(8));
         actionsCard.add(clearBtn);
         actionsCard.add(Box.createVerticalStrut(8));
@@ -471,42 +467,16 @@ public class StaffAccountManagement extends JFrame {
         }
 
         int confirm = JOptionPane.showConfirmDialog(this,
-                "Are you sure you want to deactivate staff account " + staffId + "?",
-                "Confirm Deactivation", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+                "Are you sure you want to delete staff account " + staffId + "?",
+                "Confirm deletion", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
 
         if (confirm == JOptionPane.YES_OPTION) {
             try {
-                if (accountService.deactivateStaff(staffId)) {
+                if (accountService.deleteStaff(staffId)) {
                     statusLabel.setText("INACTIVE");
-                    setMessage("Staff deactivated successfully.", true);
+                    setMessage("Staff deleted successfully.", true);
                 } else {
-                    setMessage("Failed to deactivate staff.", false);
-                }
-            } catch (Exception ex) {
-                setMessage("Error: " + ex.getMessage(), false);
-                ex.printStackTrace();
-            }
-        }
-    }
-
-    private void reactivateStaff() {
-        String staffId = staffIdField.getText().trim();
-        if (staffId.isEmpty()) {
-            setMessage("Load a staff account first.", false);
-            return;
-        }
-
-        int confirm = JOptionPane.showConfirmDialog(this,
-                "Are you sure you want to reactivate staff account " + staffId + "?",
-                "Confirm Reactivation", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
-
-        if (confirm == JOptionPane.YES_OPTION) {
-            try {
-                if (accountService.reactivateStaff(staffId)) {
-                    statusLabel.setText("ACTIVE");
-                    setMessage("Staff reactivated successfully.", true);
-                } else {
-                    setMessage("Failed to reactivate staff.", false);
+                    setMessage("Failed to delete staff.", false);
                 }
             } catch (Exception ex) {
                 setMessage("Error: " + ex.getMessage(), false);

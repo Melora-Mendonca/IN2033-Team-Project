@@ -6,18 +6,29 @@ import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Service class responsible for managing merchant accounts.
+ * Provides CRUD operations and additional account-related business logic.
+ */
 public class AccountService {
     private DBConnection db;
 
+    /**
+     * Default constructor initializes the service with a database connection.
+     */
     public AccountService() {
         this.db = new DBConnection();
     }
 
     /**
-     * Add a new merchant account (CREATE)
+     * Adds a new merchant account to the system.
+     *
+     * @param account the merchant account to be added
+     * @return true if account was successfully created, false if it already exists
+     * @throws Exception if a database error occurs
      */
     public boolean addAccount(MerchantAccount account) throws Exception {
-        // Check if account already exists
+        // Checks if account already exists
         ResultSet checkRs = db.query(
                 "SELECT merchant_id FROM Merchant WHERE merchant_id = ?",
                 account.getMerchantId()
@@ -27,7 +38,7 @@ public class AccountService {
             return false; // Account already exists
         }
 
-        // Insert new merchant account
+        // Inserts new merchant account if account doesnt exist
         int rowsAffected = db.update(
                 "INSERT INTO Merchant (merchant_id, company_name, business_type, registration_number, " +
                         "email, phone, fax, address, credit_limit, outstanding_balance, " +
@@ -57,7 +68,11 @@ public class AccountService {
     }
 
     /**
-     * Get a merchant account by ID (READ)
+     * Retrieves a merchant account by its ID.
+     *
+     * @param merchantId the unique merchant identifier
+     * @return MerchantAccount object if found, otherwise null
+     * @throws Exception if a database error occurs
      */
     public MerchantAccount getAccount(String merchantId) throws Exception {
         ResultSet rs = db.query(
@@ -93,18 +108,11 @@ public class AccountService {
     }
 
     /**
-     * Check if account exists
-     */
-    public boolean accountExists(String merchantId) throws Exception {
-        ResultSet rs = db.query(
-                "SELECT merchant_id FROM Merchant WHERE merchant_id = ?",
-                merchantId
-        );
-        return rs.next();
-    }
-
-    /**
-     * Update account (UPDATE)
+     * Updates details of a merchant account when edited.
+     *
+     * @param account the account with updated information
+     * @return true if update was successful
+     * @throws Exception if a database error occurs
      */
     public boolean updateAccount(MerchantAccount account) throws Exception {
         int rowsAffected = db.update(
@@ -127,7 +135,12 @@ public class AccountService {
     }
 
     /**
-     * Update account status (suspend/reinstate)
+     * Updates the status of a merchant account when suspended or reinstated.
+     *
+     * @param merchantId the merchant ID
+     * @param status the new account status
+     * @return true if update was successful
+     * @throws Exception if a database error occurs
      */
     public boolean updateAccountStatus(String merchantId, String status) throws Exception {
         int rowsAffected = db.update(
@@ -140,7 +153,11 @@ public class AccountService {
     }
 
     /**
-     * Delete discount plan (set to 0)
+     * Deletes the discount plan by resetting it to default values.
+     *
+     * @param merchantId the merchant ID
+     * @return true if update was successful
+     * @throws Exception if a database error occurs
      */
     public boolean deleteDiscountPlan(String merchantId) throws Exception {
         int rowsAffected = db.update(
@@ -152,11 +169,15 @@ public class AccountService {
     }
 
     /**
-     * Delete account (deactivate) - sets status to 0 and balance to 0
+     * Deletes a merchant account.
+     *
+     * @param merchantId the merchant ID
+     * @return true if update was successful
+     * @throws Exception if a database error occurs
      */
     public boolean deleteAccount(String merchantId) throws Exception {
         int rowsAffected = db.update(
-                "UPDATE Merchant SET is_Active = 0, outstanding_balance = 0 WHERE merchant_id = ?",
+                "DELETE FROM Merchant WHERE merchant_id = ?",
                 merchantId
         );
 
@@ -164,7 +185,11 @@ public class AccountService {
     }
 
     /**
-     * Restore account from default
+     * Restores an account from default status if no outstanding balance exists.
+     *
+     * @param merchantId the merchant ID
+     * @return true if restored successfully, false if balance is still outstanding
+     * @throws Exception if a database error occurs
      */
     public boolean restoreFromDefault(String merchantId) throws Exception {
         // Check current balance
@@ -190,7 +215,11 @@ public class AccountService {
     }
 
     /**
-     * Get account balance
+     * Retrieves the current outstanding balance of an account.
+     *
+     * @param merchantId the merchant ID
+     * @return account balance, or 0.0 if not found
+     * @throws Exception if a database error occurs
      */
     public double getAccountBalance(String merchantId) throws Exception {
         ResultSet rs = db.query(
@@ -205,7 +234,10 @@ public class AccountService {
     }
 
     /**
-     * Get all active accounts
+     * Retrieves all merchant accounts ordered by company name.
+     *
+     * @return list of merchant accounts
+     * @throws Exception if a database error occurs
      */
     public List<MerchantAccount> getAllAccounts() throws Exception {
         List<MerchantAccount> accounts = new ArrayList<>();

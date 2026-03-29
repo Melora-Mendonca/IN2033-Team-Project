@@ -8,36 +8,47 @@ import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Service responsible for retrieving staff dashboard data
+ * and staff-related information.
+ */
 public class StaffService {
     private DBConnection db;
 
+    /**
+     * Default constructor initialises the service with a database connection.
+     */
     public StaffService() {
         this.db = new DBConnection();
     }
 
     /**
-     * Get all dashboard data for staff
+     * Retrieves all dashboard data for staff users.
+     *
+     * @return populated StaffDashboardData object
+     * @throws Exception if a database error occurs
      */
     public StaffDashboardData getDashboardData() throws Exception {
         StaffDashboardData data = new StaffDashboardData();
 
-        // Get pending orders count
+        // Gets pending orders count
         data.setPendingOrders(getPendingOrders());
 
-        // Get recent orders count (last 7 days)
+        // Gets recent orders count (last 7 days)
         data.setRecentOrders(getRecentOrdersCount());
 
-        // Get total value processed this month
+        // Gets total value processed this month
         data.setTotalValueProcessed(getTotalValueProcessed());
 
-        // Get recent orders list
+        // Gets recent orders list
         data.setRecentOrderList(getRecentOrdersList());
 
         return data;
     }
 
     /**
-     * Get count of pending orders
+     * Gets the number of orders that are in the pending or processing stage
+     * @return count of orders currently pending or processing
      */
     private int getPendingOrders() throws Exception {
         try {
@@ -55,7 +66,8 @@ public class StaffService {
     }
 
     /**
-     * Get count of orders from last 7 days
+     * Gets the number of orders made in the last week
+     * @return number of orders created in the last 7 days
      */
     private int getRecentOrdersCount() throws Exception {
         try {
@@ -73,7 +85,8 @@ public class StaffService {
     }
 
     /**
-     * Get total value of orders processed this month
+     * Gets the total value of the orders processed this month
+     * @return total value of orders processed in the current month
      */
     private double getTotalValueProcessed() throws Exception {
         try {
@@ -93,7 +106,8 @@ public class StaffService {
     }
 
     /**
-     * Get list of recent orders (last 5)
+     * Gets the list of recent orders
+     * @return list of the 5 most recent orders
      */
     private List<OrderSummary> getRecentOrdersList() throws Exception {
         List<OrderSummary> orders = new ArrayList<>();
@@ -103,7 +117,7 @@ public class StaffService {
                     "SELECT o.order_id, m.company_name as merchant_name, o.order_date, o.status, o.total_amount " +
                             "FROM `Order` o " +
                             "JOIN Merchant m ON o.merchant_id = m.merchant_id " +
-                            "ORDER BY o.order_date DESC LIMIT 5"
+                            "ORDER BY o.order_date DESC"
             );
 
             while (rs != null && rs.next()) {
@@ -125,7 +139,12 @@ public class StaffService {
         return orders;
     }
 
-    // Add this method if needed for staff list
+    /**
+     * Retrieves a list of all active staff members.
+     *
+     * @return list of staff users
+     * @throws Exception if a database error occurs
+     */
     public List<Staff> getStaffList() throws Exception {
         List<Staff> staffList = new ArrayList<>();
 

@@ -7,34 +7,51 @@ import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Service responsible for retrieving data required
+ * for the Manager dashboard.
+ */
 public class ManagerService {
     private DBConnection db;
 
+    /**
+     * Initialises the service with a database connection.
+     */
     public ManagerService() {
         this.db = new DBConnection();
     }
 
+    /**
+     * Retrieves all data for the dashboard cards and tables.
+     *
+     * @return populated ManagerDashboardData object
+     * @throws Exception if a database error occurs
+     */
     public ManagerDashboardData getDashboardData() throws Exception {
         ManagerDashboardData data = new ManagerDashboardData();
 
-        // Get low stock count
+        // Gets low stock count
         data.setLowStockCount(getLowStockCount());
 
-        // Get total invoices for current month
+        // Gets total invoices for current month
         data.setTotalInvoices(getTotalInvoices());
 
-        // Get total turnover for current month
+        // Gets total turnover for current month
         data.setTotalTurnover(getTotalTurnover());
 
-        // Get stock turnover count
+        // Gets stock turnover count
         data.setStockTurnover(getStockTurnover());
 
-        // Get low stock items list
+        // Gets low stock items list
         data.setLowStockItems(getLowStockItems());
 
         return data;
     }
 
+    /**
+     * Gets the count of low stock items
+     * @return count of items below minimum stock level
+     */
     private int getLowStockCount() throws Exception {
         ResultSet rs = db.query(
                 "SELECT COUNT(*) as count FROM Catalogue WHERE availability <= minimum_stock_level AND is_active = 1"
@@ -46,6 +63,10 @@ public class ManagerService {
         return 0;
     }
 
+    /**
+     * Gets the total invoices that have been generated for that month
+     * @return number of invoices created in the current month
+     */
     private int getTotalInvoices() throws Exception {
         try {
             ResultSet rs = db.query(
@@ -57,12 +78,16 @@ public class ManagerService {
                 return rs.getInt("count");
             }
         } catch (Exception e) {
-            // Table might not exist yet, return 0
+            // If table does not exist yet, return 0
             System.err.println("Invoices table not found: " + e.getMessage());
         }
         return 0;
     }
 
+    /**
+     * Gets the total turnover made for that month based on the invoices generated.
+     * @return total invoice value for the current month
+     */
     private double getTotalTurnover() throws Exception {
         try {
             ResultSet rs = db.query(
@@ -75,12 +100,16 @@ public class ManagerService {
                 return rs.getDouble("total");
             }
         } catch (Exception e) {
-            // Table might not exist yet, return 0
+            // If table does not exist yet, return 0
             System.err.println("Invoices table not found: " + e.getMessage());
         }
         return 0.0;
     }
 
+    /**
+     * Gets tht total stock turnover for that month based on the number of stock deliveries made
+     * @return number of stock deliveries in the current month
+     */
     private int getStockTurnover() throws Exception {
         ResultSet rs = db.query(
                 "SELECT COUNT(*) as count FROM StockDelivery " +
@@ -94,6 +123,10 @@ public class ManagerService {
         return 0;
     }
 
+    /**
+     * Gets the list of low stock items
+     * @return list of low stock items ordered by severity
+     */
     private List<LowStockItem> getLowStockItems() throws Exception {
         List<LowStockItem> items = new ArrayList<>();
 

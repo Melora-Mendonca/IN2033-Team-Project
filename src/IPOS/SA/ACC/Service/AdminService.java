@@ -6,13 +6,26 @@ import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Service class responsible for retrieving and aggregating
+ * data required for the Admin Dashboard.
+ */
 public class AdminService {
     private DBConnection db;
 
+    /**
+     * Default constructor initializes the service with a database connection.
+     */
     public AdminService() {
         this.db = new DBConnection();
     }
 
+    /**
+     * Retrieves all dashboard data and aggregates it into a single object.
+     *
+     * @return AdminDashboardData containing counts and lists for the dashboard
+     * @throws Exception if an error occurs during database querying.
+     */
     public AdminDashboardData getDashboardData() throws Exception {
         AdminDashboardData data = new AdminDashboardData();
 
@@ -25,15 +38,21 @@ public class AdminService {
         // Get overdue payments count
         data.setOverduePaymentsCount(getOverduePaymentsCount());
 
-        // Get recent orders
+        // Get recent orders list
         data.setRecentOrders(getRecentOrders());
 
-        // Get low stock items
+        // Get low stock items list
         data.setLowStockItems(getLowStockItems());
 
         return data;
     }
 
+    /**
+     * Retrieves the count of items that are below their minimum stock level.
+     *
+     * @return number of low stock items
+     * @throws Exception if a database error occurs
+     */
     private int getLowStockCount() throws Exception {
         try {
             ResultSet rs = db.query(
@@ -48,6 +67,12 @@ public class AdminService {
         return 0;
     }
 
+    /**
+     * Retrieves the number of stock deliveries made in the current month.
+     *
+     * @return number of deliveries for the current month
+     * @throws Exception if a database error occurs
+     */
     private int getStockDeliveriesCount() throws Exception {
         try {
             ResultSet rs = db.query(
@@ -64,6 +89,13 @@ public class AdminService {
         return 0;
     }
 
+    /**
+     * Retrieves the number of invoices that are overdue.
+     * An invoice is considered overdue if its due date has passed, and it is not marked as fully paid.
+     *
+     * @return number of overdue invoices
+     * @throws Exception if a database error occurs
+     */
     private int getOverduePaymentsCount() throws Exception {
         try {
             // Query invoices that are overdue (due date passed and not fully paid)
@@ -80,6 +112,12 @@ public class AdminService {
         return 0;
     }
 
+    /**
+     * Retrieves the most recent orders along with merchant details.
+     *
+     * @return list of recent order summaries
+     * @throws Exception if a database error occurs
+     */
     private List<OrderSummary> getRecentOrders() throws Exception {
         List<OrderSummary> orders = new ArrayList<>();
 
@@ -89,7 +127,7 @@ public class AdminService {
                     "SELECT o.order_id, o.order_date, o.status, o.total_amount, m.company_name as merchant_name " +
                             "FROM `Order` o " +
                             "JOIN Merchant m ON o.merchant_id = m.merchant_id " +
-                            "ORDER BY o.order_date DESC LIMIT 5"
+                            "ORDER BY o.order_date DESC"
             );
 
             while (rs != null && rs.next()) {
@@ -108,6 +146,13 @@ public class AdminService {
         return orders;
     }
 
+    /**
+     * Retrieves a list of items that are low in stock,
+     * ordered by how critical the shortage is.
+     *
+     * @return list of low stock items
+     * @throws Exception if a database error occurs
+     */
     private List<LowStockItem> getLowStockItems() throws Exception {
         List<LowStockItem> items = new ArrayList<>();
 
@@ -115,7 +160,7 @@ public class AdminService {
             ResultSet rs = db.query(
                     "SELECT item_id, description, availability, minimum_stock_level " +
                             "FROM Catalogue WHERE availability <= minimum_stock_level AND is_active = 1 " +
-                            "ORDER BY (minimum_stock_level - availability) DESC LIMIT 10"
+                            "ORDER BY (minimum_stock_level - availability) DESC"
             );
 
             if (rs != null) {

@@ -6,28 +6,39 @@ import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Service responsible for managing staff accounts,
+ * including creation, updates, deletion, and retrieval.
+ */
 public class StaffAccountService {
     private DBConnection db;
 
+    /**
+     * Default constructor initialises the service with a database connection.
+     */
     public StaffAccountService() {
         this.db = new DBConnection();
     }
 
     /**
-     * Create a new staff account (using UserLogin table)
+     * Creates a new staff account in the system.
+     *
+     * @param staff the staff object to be created
+     * @return true if the account was created successfully, false otherwise
+     * @throws Exception if a database error occurs
      */
     public boolean createStaff(Staff staff) throws Exception {
-        // Check if staff ID already exists (using user_id)
+        // Checks if staff ID already exists (using user_id)
         if (staffExists(staff.getStaffId())) {
             return false;
         }
 
-        // Check if username already exists
+        // Checks if username already exists
         if (usernameExists(staff.getUsername())) {
             return false;
         }
 
-        // Default password is the username + "123" (matching your login)
+        // Creates a default password for all staff when creating account
         String defaultPassword = staff.getUsername() + "123";
 
         int rowsAffected = db.update(
@@ -45,7 +56,11 @@ public class StaffAccountService {
     }
 
     /**
-     * Load a staff account by ID (user_id from UserLogin)
+     * Retrieves a staff member by ID.
+     *
+     * @param staffId the ID of the staff member
+     * @return Staff object if found, otherwise null
+     * @throws Exception if a database error occurs
      */
     public Staff loadStaff(String staffId) throws Exception {
         ResultSet rs = db.query(
@@ -61,23 +76,11 @@ public class StaffAccountService {
     }
 
     /**
-     * Load a staff account by username
-     */
-    public Staff loadStaffByUsername(String username) throws Exception {
-        ResultSet rs = db.query(
-                "SELECT user_id, username, first_Name, sur_Name, email, role, is_Active " +
-                        "FROM UserLogin WHERE username = ?",
-                username
-        );
-
-        if (rs.next()) {
-            return extractStaffFromResultSet(rs);
-        }
-        return null;
-    }
-
-    /**
-     * Update an existing staff account
+     * Updates staff details when modified by the administrator.
+     *
+     * @param staff the staff object containing updated data
+     * @return true if update was successful
+     * @throws Exception if a database error occurs
      */
     public boolean updateStaff(Staff staff) throws Exception {
         int rowsAffected = db.update(
@@ -95,7 +98,12 @@ public class StaffAccountService {
     }
 
     /**
-     * Update staff status (active/inactive)
+     * Updates staff status to active or inactive status.
+     *
+     * @param staffId the staff ID
+     * @param isActive true for active, false for inactive
+     * @return true if update was successful
+     * @throws Exception if a database error occurs
      */
     public boolean updateStaffStatus(String staffId, boolean isActive) throws Exception {
         int activeFlag = isActive ? 1 : 0;
@@ -107,22 +115,13 @@ public class StaffAccountService {
         return rowsAffected > 0;
     }
 
-    /**
-     * Deactivate staff account (soft delete)
-     */
-    public boolean deactivateStaff(String staffId) throws Exception {
-        return updateStaffStatus(staffId, false);
-    }
 
     /**
-     * Reactivate staff account
-     */
-    public boolean reactivateStaff(String staffId) throws Exception {
-        return updateStaffStatus(staffId, true);
-    }
-
-    /**
-     * Delete staff account (hard delete - use carefully)
+     * Permanently deletes a staff account.
+     *
+     * @param staffId the staff ID
+     * @return true if deletion was successful
+     * @throws Exception if a database error occurs
      */
     public boolean deleteStaff(String staffId) throws Exception {
         int rowsAffected = db.update(
@@ -134,7 +133,11 @@ public class StaffAccountService {
     }
 
     /**
-     * Check if staff ID exists (user_id)
+     * Checks to see if a staff ID exists.
+     *
+     * @param staffId the staff ID
+     * @return true if exists
+     * @throws Exception if a database error occurs
      */
     public boolean staffExists(String staffId) throws Exception {
         ResultSet rs = db.query(
@@ -145,7 +148,11 @@ public class StaffAccountService {
     }
 
     /**
-     * Check if username exists
+     * Checks to see if a username exists.
+     *
+     * @param username the username
+     * @return true if exists
+     * @throws Exception if a database error occurs
      */
     public boolean usernameExists(String username) throws Exception {
         ResultSet rs = db.query(
@@ -156,56 +163,12 @@ public class StaffAccountService {
     }
 
     /**
-     * Get all active staff members
-     */
-    public List<Staff> getAllActiveStaff() throws Exception {
-        List<Staff> staffList = new ArrayList<>();
-        ResultSet rs = db.query(
-                "SELECT user_id, username, first_Name, sur_Name, email, role, is_Active " +
-                        "FROM UserLogin WHERE is_Active = 1 ORDER BY first_Name, sur_Name"
-        );
-
-        while (rs.next()) {
-            staffList.add(extractStaffFromResultSet(rs));
-        }
-        return staffList;
-    }
-
-    /**
-     * Get all staff members (including inactive)
-     */
-    public List<Staff> getAllStaff() throws Exception {
-        List<Staff> staffList = new ArrayList<>();
-        ResultSet rs = db.query(
-                "SELECT user_id, username, first_Name, sur_Name, email, role, is_Active " +
-                        "FROM UserLogin ORDER BY first_Name, sur_Name"
-        );
-
-        while (rs.next()) {
-            staffList.add(extractStaffFromResultSet(rs));
-        }
-        return staffList;
-    }
-
-    /**
-     * Search staff by name
-     */
-    public List<Staff> searchStaffByName(String searchTerm) throws Exception {
-        List<Staff> staffList = new ArrayList<>();
-        ResultSet rs = db.query(
-                "SELECT user_id, username, first_Name, sur_Name, email, role, is_Active " +
-                        "FROM UserLogin WHERE first_Name LIKE ? OR sur_Name LIKE ? ORDER BY first_Name",
-                "%" + searchTerm + "%", "%" + searchTerm + "%"
-        );
-
-        while (rs.next()) {
-            staffList.add(extractStaffFromResultSet(rs));
-        }
-        return staffList;
-    }
-
-    /**
-     * Reset staff password
+     * Resets a staff member's password.
+     *
+     * @param staffId the staff ID
+     * @param newPassword the new password
+     * @return true if successful
+     * @throws Exception if a database error occurs
      */
     public boolean resetPassword(String staffId, String newPassword) throws Exception {
         int rowsAffected = db.update(
@@ -216,7 +179,11 @@ public class StaffAccountService {
     }
 
     /**
-     * Extract Staff from ResultSet
+     * Converts a ResultSet row into a Staff object.
+     *
+     * @param rs the result set
+     * @return Staff object
+     * @throws Exception if a database error occurs
      */
     private Staff extractStaffFromResultSet(ResultSet rs) throws Exception {
         Staff staff = new Staff();

@@ -4,13 +4,28 @@ import IPOS.SA.ACC.Model.User;
 import IPOS.SA.DB.LoginDBConnector;
 import java.util.List;
 
+/**
+ * Service responsible for handling user authentication
+ * and retrieving authentication-related data for logging in.
+ */
 public class AuthenticationService {
     private LoginDBConnector dbConnector;
 
+    /**
+     * Initialises the authentication service with a database connector.
+     */
     public AuthenticationService() {
         this.dbConnector = new LoginDBConnector();
     }
 
+    /**
+     * Authenticates the current user based on username, hashed password, and selected role.
+     *
+     * @param username the entered username
+     * @param password the entered password
+     * @param selectedRole the role selected from the UI
+     * @return authenticated User object or null if authentication fails
+     */
     public User authenticate(String username, String password, String selectedRole) {
         if (username == null || username.trim().isEmpty() ||
                 password == null || password.trim().isEmpty() ||
@@ -18,23 +33,30 @@ public class AuthenticationService {
             return null;
         }
 
-        // Get the user from database
+        // Gets the user from database
         User user = dbConnector.authenticate(username, password, selectedRole);
 
         if (user != null) {
+
+            // DEBUG
             System.out.println("Database returned user with role: " + user.getRole());
             System.out.println("Selected role from UI: " + selectedRole);
 
-            // IMPORTANT: Set the role to match what was selected in the UI
-            // This ensures the user gets the correct dashboard based on their selection
+            // Sets the role of the user to what they selected, so that the user is guided to the correct dashboard
             user.setRole(selectedRole);
 
+            // DEBUG
             System.out.println("Normalized role set to: " + user.getRole());
         }
 
         return user;
     }
 
+    /**
+     * Retrieves automatic stock warning message upon login if there is a item that is currently low in stock
+     *
+     * @return list of stock warnings
+     */
     public List<String> getStockWarnings() {
         return dbConnector.getStockWarnings();
     }
