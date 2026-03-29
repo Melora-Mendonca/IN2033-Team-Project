@@ -3,6 +3,7 @@ package IPOS.SA.ACC.UI;
 import IPOS.SA.ACC.Model.Staff;
 import IPOS.SA.ACC.Service.StaffService;
 import IPOS.SA.CAT.UI.Catalogue;
+import IPOS.SA.RPT.UI.ReportForm;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -425,6 +426,9 @@ public class StaffList extends JFrame {
                     break;
                 case "Overview":
                     new AdminDashboard(fullname, role);
+                    break;
+                case "Reports":
+                    new ReportForm(fullname, role);
                     break;
             }
         });

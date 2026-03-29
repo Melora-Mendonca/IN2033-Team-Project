@@ -3,6 +3,7 @@ package IPOS.SA.ACC.UI;
 import IPOS.SA.ACC.Model.MerchantAccount;
 import IPOS.SA.ACC.Service.AccountService;
 import IPOS.SA.CAT.UI.Catalogue;
+import IPOS.SA.RPT.UI.ReportForm;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -452,6 +453,9 @@ public class MerchantList extends JFrame {
                     break;
                 case "Overview":
                     new AdminDashboard(fullname, role);
+                    break;
+                case "Reports":
+                    new ReportForm(fullname, role);
                     break;
             }
         });

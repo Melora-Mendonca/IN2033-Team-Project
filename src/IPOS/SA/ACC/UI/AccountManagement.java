@@ -5,6 +5,7 @@ import IPOS.SA.ACC.Service.AccountService;
 import IPOS.SA.ACC.Model.FixedDiscountPlan;
 import IPOS.SA.ACC.Model.DiscountPlan;
 import IPOS.SA.CAT.UI.Catalogue;
+import IPOS.SA.RPT.UI.ReportForm;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -793,6 +794,9 @@ public class AccountManagement extends JFrame {
                     break;
                 case "Overview":
                     new AdminDashboard(fullname, role);
+                    break;
+                case "Reports":
+                    new ReportForm(fullname, role);
                     break;
             }
         });

@@ -24,26 +24,28 @@ import java.util.ArrayList;
 import java.util.List;
 import java.sql.*;
 
-// Main window that displays the catalogue GUI
+/**
+ * Main Frame that displays the catalogue to all users who are logged into IPOS-SA
+ */
 public class Catalogue extends JFrame {
 
     // List used to store all catalogue items
-    //// These items will appear in the catalogue table
+    // These items will appear in the catalogue table
     private final List<CatalogueItem> Items = new ArrayList<>();
 
-    //// GUI components used in the catalogue window
-
-    // table used to display catalogue data
+    // Table used to display catalogue data
     private JTable catalogueTable;
 
-    // model that controls the table data
+    // Controls the table data
     private DefaultTableModel tableModel;
 
-    // search field for searching item ID or keyword
+    // Search field for searching item via item ID or keyword
     private JTextField searchField;
 
-    // dropdown used to simulate different user roles
+    // Dropdown used to simulate different user roles
     private JComboBox<String> roleComboBox;
+
+    //
     private JLabel statusLabel;
     private JButton addButton;
     private JButton updateButton;
@@ -65,7 +67,7 @@ public class Catalogue extends JFrame {
     private String role;
 
 
-    // Constructor that creates the catalogue window and loads the GUI
+    // Constructor that creates the catalogue window and loads the frame
     public Catalogue(String fullname, String role) {
         this.fullname = fullname;
         this.role = role;
@@ -78,12 +80,10 @@ public class Catalogue extends JFrame {
         // Sets the frame location to the center of the screen
         setLocationRelativeTo(null);
 
-        //initialiseSampleData();
         createHeaderPanel();
         createNavPanel();
         createContentPanel();
         loadData();
-        //initialiseGui();
         updateTableForSelectedRole();
 
         // Sets the frame to be visible when running
@@ -480,13 +480,13 @@ public class Catalogue extends JFrame {
         }
 
         switch (selectedRole) {
-            case "Administrator":
+            case "admin":
                 setAdminView();
                 break;
-            case "Director of Operations":
+            case "director":
                 setManagerView();
                 break;
-            case "Merchant":
+            case "merchant":
                 setMerchantView();
                 break;
             default:

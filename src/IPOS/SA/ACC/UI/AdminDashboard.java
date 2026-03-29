@@ -5,6 +5,7 @@ import IPOS.SA.ACC.Model.AdminDashboardData;
 import IPOS.SA.ACC.Model.OrderSummary;
 import IPOS.SA.ACC.Model.LowStockItem;
 import IPOS.SA.ACC.Service.AdminService;
+import IPOS.SA.RPT.UI.ReportForm;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
@@ -521,6 +522,9 @@ public class AdminDashboard extends JFrame {
                     break;
                 case "Overview":
                     new AdminDashboard(fullname, role);
+                    break;
+                case "Reports":
+                    new ReportForm(fullname, role);
                     break;
             }
         });

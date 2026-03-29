@@ -4,6 +4,7 @@ import IPOS.SA.ACC.Model.ManagerDashboardData;
 import IPOS.SA.ACC.Model.LowStockItem;
 import IPOS.SA.ACC.Service.ManagerService;
 import IPOS.SA.CAT.UI.Catalogue;
+import IPOS.SA.RPT.UI.ReportForm;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -230,6 +231,9 @@ public class ManagerDashboard extends JFrame {
                     break;
                 case "Overview":
                     new AdminDashboard(fullname, role);
+                    break;
+                case "Reports":
+                    new ReportForm(fullname, role);
                     break;
             }
         });
