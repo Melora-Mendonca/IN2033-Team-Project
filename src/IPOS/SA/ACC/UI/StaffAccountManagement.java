@@ -1,25 +1,20 @@
 package IPOS.SA.ACC.UI;
 
-import IPOS.SA.ACC.Service.StaffAccountService;
-import IPOS.SA.CAT.UI.Catalogue;
 import IPOS.SA.ACC.Model.Staff;
-import IPOS.SA.RPT.UI.ReportForm;
+import IPOS.SA.ACC.Service.StaffAccountService;
+import IPOS.SA.UI.BaseFrame;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 
-public class StaffAccountManagement extends JFrame {
+public class StaffAccountManagement extends BaseFrame {
 
     private final StaffAccountService accountService;
+    private final String mode;
+    private final String staffIdToLoad;
 
-    // For the user's role and full name that is displayed in the header
-    private String fullname;
-    private String role;
-    private String mode;
-    private String staffIdToLoad;  // For loading a specific staff member
-
-    private JTextField staffIdField;  // Will be disabled in MANAGE mode
+    private JTextField staffIdField;
     private JTextField usernameField;
     private JTextField firstNameField;
     private JTextField surNameField;
@@ -28,144 +23,42 @@ public class StaffAccountManagement extends JFrame {
     private JTextField addressField;
     private JComboBox<String> roleDropdown;
 
-    private String selectedRole = "Administrator";
+    private String selectedRole = "administrator";
     private JLabel statusLabel;
     private JLabel messageLabel;
 
-    // Panels for the form layout, header and navigation
-    private JPanel MainPanel;
-    private JPanel ContentPanel;
-    private JPanel NavPanel;
-    private JPanel HeaderPanel;
-    private JPanel CenterPanel;
-    private JPanel FormPanel;
-    private JPanel StatusPanel;
-    private JPanel FooterPanel;
-    private JLabel headerLabel;
-    private JLabel navIcon;
-    private JButton logoutBtn;
-    private JSeparator divider;
-
-    // Constructor for CREATE mode
     public StaffAccountManagement(String fullname, String role, String mode) {
         this(fullname, role, mode, null);
     }
 
-    // Constructor with staff ID for loading existing staff
     public StaffAccountManagement(String fullname, String role, String mode, String staffId) {
+        super(fullname, role, "Staff Account Management");
         this.accountService = new StaffAccountService();
-        this.fullname = fullname;
-        this.role = role;
-        this.mode = mode;
-        this.staffIdToLoad = staffId;
+        this.mode           = mode;
+        this.staffIdToLoad  = staffId;
 
-        setTitle("Staff Account Management");
-        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        setContentPane(MainPanel);
-        setExtendedState(JFrame.MAXIMIZED_BOTH);
-        setLocationRelativeTo(null);
+        buildContent();
 
-        initializeUI();
-
-        // If staffId is provided and we're in MANAGE mode, load the account automatically
         if (staffIdToLoad != null && !staffIdToLoad.isEmpty() && "MANAGE".equals(mode)) {
             staffIdField.setText(staffIdToLoad);
-            staffIdField.setEnabled(false);  // Disable editing staff ID
+            staffIdField.setEnabled(false);
             loadStaff();
         }
-
-        setVisible(true);
     }
 
-    private void initializeUI() {
-        createHeaderPanel();
-        createNavPanel();
-        createFormPanel();
-        createStatusPanel();
+    @Override
+    protected String getHeaderTitle() {
+        return "Staff Account Management";
     }
 
-    private void createHeaderPanel() {
-        HeaderPanel.setLayout(new BoxLayout(HeaderPanel, BoxLayout.X_AXIS));
-        HeaderPanel.setPreferredSize(new Dimension(1000, 54));
-        HeaderPanel.setBackground(new Color(240, 252, 255));
-        HeaderPanel.setBorder(BorderFactory.createEmptyBorder(0, 24, 0, 24));
-
-        JPanel textPanel = new JPanel();
-        textPanel.setLayout(new BoxLayout(textPanel, BoxLayout.Y_AXIS));
-        textPanel.setOpaque(false);
-
-        headerLabel = new JLabel("Staff Account Management");
-        headerLabel.setForeground(Color.BLACK);
-        headerLabel.setFont(new Font("Segoe UI", Font.BOLD, 18));
-
-        textPanel.add(headerLabel);
-        HeaderPanel.add(textPanel);
-    }
-
-    private void createNavPanel() {
-        NavPanel.setLayout(new BoxLayout(NavPanel, BoxLayout.Y_AXIS));
-        NavPanel.setBackground(new Color(14, 37, 48));
-        NavPanel.setBorder(BorderFactory.createEmptyBorder(20, 16, 20, 16));
-        NavPanel.setPreferredSize(new Dimension(220, 0));
-
-        ImageIcon Icon = new ImageIcon(new ImageIcon("data/Logo.png")
-                .getImage().getScaledInstance(80, 60, Image.SCALE_SMOOTH));
-        navIcon = new JLabel(Icon);
-
-        NavPanel.add(navIcon);
-        NavPanel.add(Box.createVerticalStrut(16));
-
-        NavPanel.add(buildNavButton("Overview", false));
-        NavPanel.add(Box.createVerticalStrut(4));
-        NavPanel.add(buildNavButton("Catalogue", false));
-        NavPanel.add(Box.createVerticalStrut(4));
-        NavPanel.add(buildNavButton("Orders", false));
-        NavPanel.add(Box.createVerticalStrut(4));
-
-        addExpandableNavItem(NavPanel, "Merchants", new String[]{
-                "View Merchant Orders", "View Merchant Invoices"
-        });
-
-        addExpandableNavItem(NavPanel, "Accounts", new String[]{
-                "View All Merchants", "Create Merchant Account", "Manage Merchant Accounts", "Commercial Applications"
-        });
-
-        addExpandableNavItem(NavPanel, "Staff", new String[]{
-                "View All Staff", "Create Staff Account", "Manage Staff Account",
-        });
-
-        NavPanel.add(buildNavButton("Reports", false));
-        NavPanel.add(Box.createVerticalStrut(4));
-        NavPanel.add(buildNavButton("Settings", false));
-        NavPanel.add(Box.createVerticalStrut(4));
-
-        divider = new JSeparator();
-        divider.setForeground(Color.WHITE);
-        divider.setMaximumSize(new Dimension(Integer.MAX_VALUE, 1));
-        NavPanel.add(divider);
-        NavPanel.add(Box.createVerticalGlue());
-
-        logoutBtn = new JButton("→  Log out");
-        logoutBtn.setFont(new Font("Segoe UI", Font.BOLD, 13));
-        logoutBtn.setForeground(new Color(200, 80, 80));
-        logoutBtn.setBackground(new Color(14, 37, 48));
-        logoutBtn.setBorderPainted(false);
-        logoutBtn.setFocusPainted(false);
-        logoutBtn.setAlignmentX(Component.LEFT_ALIGNMENT);
-        logoutBtn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 36));
-        logoutBtn.setHorizontalAlignment(SwingConstants.LEFT);
-        logoutBtn.addActionListener(e -> handleLogout());
-        NavPanel.add(logoutBtn);
-    }
-
-    private void createFormPanel() {
-        CenterPanel = new JPanel(new BorderLayout());
+    private void buildContent() {
+        CenterPanel.setLayout(new BorderLayout());
         CenterPanel.setBackground(new Color(245, 247, 250));
-        CenterPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
-        FormPanel = new JPanel(new BorderLayout());
-        FormPanel.setBackground(Color.WHITE);
-        FormPanel.setBorder(BorderFactory.createCompoundBorder(
+        // ── FORM PANEL ───────────────────────────────────────
+        JPanel formPanel = new JPanel(new BorderLayout());
+        formPanel.setBackground(Color.WHITE);
+        formPanel.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(new Color(221, 225, 231), 1),
                 new EmptyBorder(20, 20, 20, 20)));
 
@@ -178,91 +71,55 @@ public class StaffAccountManagement extends JFrame {
         grid.setLayout(new BoxLayout(grid, BoxLayout.Y_AXIS));
         grid.setBackground(Color.WHITE);
 
-        // Create fields
-        staffIdField = createTextField();
-        usernameField = createTextField();
-        firstNameField = createTextField();
-        surNameField = createTextField();
-        emailField = createTextField();
-        phoneField = createTextField();
-        addressField = createTextField();
+        staffIdField    = createTextField();
+        usernameField   = createTextField();
+        firstNameField  = createTextField();
+        surNameField    = createTextField();
+        emailField      = createTextField();
+        phoneField      = createTextField();
+        addressField    = createTextField();
 
         roleDropdown = new JComboBox<>(new String[]{
-                "Administrator",
-                "Director of Operations",
-                "Senior Accountant",
-                "Accountant",
-                "Warehouse Employee",
-                "Delivery Employee"
+                "administrator",
+                "director_of_operations",
+                "senior_accountant",
+                "accountant",
+                "warehouse_employee",
+                "delivery_employee"
         });
         roleDropdown.setFont(new Font("Segoe UI", Font.PLAIN, 12));
         roleDropdown.setMaximumSize(new Dimension(Integer.MAX_VALUE, 38));
-        roleDropdown.addActionListener(e -> {
-            selectedRole = roleDropdown.getSelectedItem().toString();
-        });
+        roleDropdown.addActionListener(e ->
+                selectedRole = roleDropdown.getSelectedItem().toString());
 
-        // Row 1 - Role selection
-        JPanel row1 = new JPanel(new GridLayout(1, 1));
-        row1.setBackground(Color.WHITE);
-        row1.setMaximumSize(new Dimension(Integer.MAX_VALUE, 60));
-        row1.add(fieldWrapper("ROLE", roleDropdown));
+        JPanel row1 = row(1); row1.add(fieldWrapper("ROLE",       roleDropdown));
+        JPanel row2 = row(2); row2.add(fieldWrapper("STAFF ID",   staffIdField));
+        row2.add(fieldWrapper("USERNAME",   usernameField));
+        JPanel row3 = row(2); row3.add(fieldWrapper("FIRST NAME", firstNameField));
+        row3.add(fieldWrapper("SURNAME",    surNameField));
+        JPanel row4 = row(2); row4.add(fieldWrapper("EMAIL",      emailField));
+        row4.add(fieldWrapper("PHONE",      phoneField));
+        JPanel row5 = row(1); row5.add(fieldWrapper("ADDRESS",    addressField));
 
-        // Row 2 - Staff ID and Username
-        JPanel row2 = new JPanel(new GridLayout(1, 2, 12, 0));
-        row2.setBackground(Color.WHITE);
-        row2.setMaximumSize(new Dimension(Integer.MAX_VALUE, 60));
-        row2.add(fieldWrapper("STAFF ID", staffIdField));
-        row2.add(fieldWrapper("USERNAME", usernameField));
-
-        // Row 3 - First Name and Surname
-        JPanel row3 = new JPanel(new GridLayout(1, 2, 12, 0));
-        row3.setBackground(Color.WHITE);
-        row3.setMaximumSize(new Dimension(Integer.MAX_VALUE, 60));
-        row3.add(fieldWrapper("FIRST NAME", firstNameField));
-        row3.add(fieldWrapper("SURNAME", surNameField));
-
-        // Row 4 - Email and Phone
-        JPanel row4 = new JPanel(new GridLayout(1, 2, 12, 0));
-        row4.setBackground(Color.WHITE);
-        row4.setMaximumSize(new Dimension(Integer.MAX_VALUE, 60));
-        row4.add(fieldWrapper("EMAIL", emailField));
-        row4.add(fieldWrapper("PHONE", phoneField));
-
-        // Row 5 - Address
-        JPanel row5 = new JPanel(new GridLayout(1, 1));
-        row5.setBackground(Color.WHITE);
-        row5.setMaximumSize(new Dimension(Integer.MAX_VALUE, 60));
-        row5.add(fieldWrapper("ADDRESS", addressField));
-
-        grid.add(row1);
-        grid.add(Box.createVerticalStrut(12));
-        grid.add(row2);
-        grid.add(Box.createVerticalStrut(12));
-        grid.add(row3);
-        grid.add(Box.createVerticalStrut(12));
-        grid.add(row4);
-        grid.add(Box.createVerticalStrut(12));
+        grid.add(row1); grid.add(Box.createVerticalStrut(12));
+        grid.add(row2); grid.add(Box.createVerticalStrut(12));
+        grid.add(row3); grid.add(Box.createVerticalStrut(12));
+        grid.add(row4); grid.add(Box.createVerticalStrut(12));
         grid.add(row5);
 
         messageLabel = new JLabel(" ");
         messageLabel.setFont(new Font("Segoe UI", Font.PLAIN, 11));
         messageLabel.setBorder(new EmptyBorder(8, 0, 0, 0));
 
-        FormPanel.add(formTitle, BorderLayout.NORTH);
-        FormPanel.add(grid, BorderLayout.CENTER);
-        FormPanel.add(messageLabel, BorderLayout.SOUTH);
+        formPanel.add(formTitle,    BorderLayout.NORTH);
+        formPanel.add(grid,         BorderLayout.CENTER);
+        formPanel.add(messageLabel, BorderLayout.SOUTH);
 
-        CenterPanel.add(FormPanel, BorderLayout.CENTER);
-
-        ContentPanel.setLayout(new BorderLayout());
-        ContentPanel.add(CenterPanel, BorderLayout.CENTER);
-    }
-
-    private void createStatusPanel() {
+        // ── RIGHT COLUMN ─────────────────────────────────────
         JPanel rightColumn = new JPanel();
         rightColumn.setLayout(new BoxLayout(rightColumn, BoxLayout.Y_AXIS));
         rightColumn.setBackground(new Color(245, 247, 250));
-        rightColumn.setPreferredSize(new Dimension(200, 0));
+        rightColumn.setPreferredSize(new Dimension(210, 0));
 
         JLabel statusTitle = new JLabel("ACCOUNT STATUS");
         statusTitle.setFont(new Font("Segoe UI", Font.BOLD, 12));
@@ -283,7 +140,6 @@ public class StaffAccountManagement extends JFrame {
         statusPanel.add(statusTitle);
         statusPanel.add(statusLabel);
 
-        // Actions card
         JPanel actionsCard = new JPanel();
         actionsCard.setLayout(new BoxLayout(actionsCard, BoxLayout.Y_AXIS));
         actionsCard.setBackground(Color.WHITE);
@@ -295,94 +151,71 @@ public class StaffAccountManagement extends JFrame {
         actionsTitle.setFont(new Font("Segoe UI", Font.BOLD, 13));
         actionsTitle.setForeground(new Color(107, 114, 128));
         actionsTitle.setAlignmentX(Component.LEFT_ALIGNMENT);
+        actionsCard.add(actionsTitle);
+        actionsCard.add(Box.createVerticalStrut(10));
 
         switch (mode) {
-            case "CREATE":
-                addCreateButtons(actionsCard);
-                break;
-            case "MANAGE":
-                addManageButtons(actionsCard);
-                break;
+            case "CREATE": addCreateButtons(actionsCard); break;
+            case "MANAGE": addManageButtons(actionsCard); break;
         }
 
         rightColumn.add(statusPanel);
         rightColumn.add(Box.createVerticalStrut(12));
         rightColumn.add(actionsCard);
 
+        CenterPanel.add(formPanel,   BorderLayout.CENTER);
         CenterPanel.add(rightColumn, BorderLayout.EAST);
     }
 
     private void addCreateButtons(JPanel actionsCard) {
         JButton createBtn = actionButton("Create Account", new Color(30, 70, 90));
-        JButton clearBtn = actionButton("Clear", new Color(107, 114, 128));
-        JButton backBtn = actionButton("← Back", new Color(17, 24, 39));
+        JButton clearBtn  = actionButton("Clear",          new Color(107, 114, 128));
+        JButton backBtn   = actionButton("← Back",         new Color(17, 24, 39));
 
         createBtn.addActionListener(e -> createStaff());
-        clearBtn.addActionListener(e -> clearForm());
-        backBtn.addActionListener(e -> {
-            dispose();
-            new AdminDashboard(fullname, role);
-        });
+        clearBtn.addActionListener(e  -> clearForm());
+        backBtn.addActionListener(e   -> { dispose(); new AdminDashboard(fullname, role); });
 
-        actionsCard.add(createBtn);
-        actionsCard.add(Box.createVerticalStrut(8));
-        actionsCard.add(clearBtn);
-        actionsCard.add(Box.createVerticalStrut(8));
+        actionsCard.add(createBtn); actionsCard.add(Box.createVerticalStrut(8));
+        actionsCard.add(clearBtn);  actionsCard.add(Box.createVerticalStrut(8));
         actionsCard.add(backBtn);
     }
 
     private void addManageButtons(JPanel actionsCard) {
-        JButton loadBtn = actionButton("Load Account", new Color(17, 24, 39));
+        JButton loadBtn   = actionButton("Load Account",   new Color(17, 24, 39));
         JButton updateBtn = actionButton("Update Account", new Color(30, 70, 90));
         JButton deleteBtn = actionButton("Delete Account", new Color(127, 29, 29));
-        JButton clearBtn = actionButton("Clear", new Color(107, 114, 128));
-        JButton backBtn = actionButton("← Back", new Color(17, 24, 39));
+        JButton clearBtn  = actionButton("Clear",          new Color(107, 114, 128));
+        JButton backBtn   = actionButton("← Back",         new Color(17, 24, 39));
 
-        loadBtn.addActionListener(e -> loadStaff());
+        loadBtn.addActionListener(e   -> loadStaff());
         updateBtn.addActionListener(e -> updateStaff());
         deleteBtn.addActionListener(e -> deactivateStaff());
-        clearBtn.addActionListener(e -> clearForm());
-        backBtn.addActionListener(e -> {
-            dispose();
-            new AdminDashboard(fullname, role);
-        });
+        clearBtn.addActionListener(e  -> clearForm());
+        backBtn.addActionListener(e   -> { dispose(); new AdminDashboard(fullname, role); });
 
-        actionsCard.add(loadBtn);
-        actionsCard.add(Box.createVerticalStrut(8));
-        actionsCard.add(updateBtn);
-        actionsCard.add(Box.createVerticalStrut(8));
-        actionsCard.add(deleteBtn);
-        actionsCard.add(Box.createVerticalStrut(8));
-        actionsCard.add(clearBtn);
-        actionsCard.add(Box.createVerticalStrut(8));
+        actionsCard.add(loadBtn);   actionsCard.add(Box.createVerticalStrut(8));
+        actionsCard.add(updateBtn); actionsCard.add(Box.createVerticalStrut(8));
+        actionsCard.add(deleteBtn); actionsCard.add(Box.createVerticalStrut(8));
+        actionsCard.add(clearBtn);  actionsCard.add(Box.createVerticalStrut(8));
         actionsCard.add(backBtn);
     }
 
-    // Business Logic Methods
+    // ── BUSINESS LOGIC ───────────────────────────────────────
     private void createStaff() {
         try {
-            String staffId = staffIdField.getText().trim();
-            String username = usernameField.getText().trim();
-            String firstName = firstNameField.getText().trim();
-            String surName = surNameField.getText().trim();
-            String email = emailField.getText().trim();
-            String phone = phoneField.getText().trim();
-            String address = addressField.getText().trim();
+            String username   = usernameField.getText().trim();
+            String firstName  = firstNameField.getText().trim();
+            String surName    = surNameField.getText().trim();
 
-            // Validation
-            if (username.isEmpty()) {
-                setMessage("Username is required.", false);
-                return;
-            }
-            if (firstName.isEmpty() || surName.isEmpty()) {
-                setMessage("First name and surname are required.", false);
-                return;
-            }
+            if (username.isEmpty())                      { setMessage("Username is required.", false); return; }
+            if (firstName.isEmpty() || surName.isEmpty()) { setMessage("First name and surname are required.", false); return; }
 
-            // For CREATE mode, staffId is auto-generated by database, so we don't need to pass it
-            // The service will handle the auto-increment
-            Staff staff = new Staff("", username, firstName, surName,  // Empty staffId for auto-generation
-                    email, phone, address, selectedRole);
+            Staff staff = new Staff("", username, firstName, surName,
+                    emailField.getText().trim(),
+                    phoneField.getText().trim(),
+                    addressField.getText().trim(),
+                    selectedRole);
 
             if (accountService.createStaff(staff)) {
                 setMessage("Staff account created successfully.", true);
@@ -390,23 +223,16 @@ public class StaffAccountManagement extends JFrame {
             } else {
                 setMessage("Username already exists.", false);
             }
-
         } catch (Exception ex) {
             setMessage("Error: " + ex.getMessage(), false);
-            ex.printStackTrace();
         }
     }
 
     private void loadStaff() {
-        String staffId = staffIdField.getText().trim();
-        if (staffId.isEmpty()) {
-            setMessage("Enter a Staff ID to load.", false);
-            return;
-        }
-
+        String id = staffIdField.getText().trim();
+        if (id.isEmpty()) { setMessage("Enter a Staff ID to load.", false); return; }
         try {
-            Staff staff = accountService.loadStaff(staffId);
-
+            Staff staff = accountService.loadStaff(id);
             if (staff != null) {
                 populateForm(staff);
                 statusLabel.setText(staff.isActive() ? "ACTIVE" : "INACTIVE");
@@ -416,35 +242,25 @@ public class StaffAccountManagement extends JFrame {
             }
         } catch (Exception ex) {
             setMessage("Error: " + ex.getMessage(), false);
-            ex.printStackTrace();
         }
     }
 
     private void updateStaff() {
-        String staffId = staffIdField.getText().trim();
-        if (staffId.isEmpty()) {
-            setMessage("Load a staff account first.", false);
-            return;
-        }
-
+        String id = staffIdField.getText().trim();
+        if (id.isEmpty()) { setMessage("Load a staff account first.", false); return; }
         try {
-            Staff existingStaff = accountService.loadStaff(staffId);
-            if (existingStaff == null) {
-                setMessage("Staff not found.", false);
-                return;
-            }
+            Staff existing = accountService.loadStaff(id);
+            if (existing == null) { setMessage("Staff not found.", false); return; }
 
-            Staff staff = new Staff(
-                    staffId,
+            Staff staff = new Staff(id,
                     usernameField.getText().trim(),
                     firstNameField.getText().trim(),
                     surNameField.getText().trim(),
                     emailField.getText().trim(),
                     phoneField.getText().trim(),
                     addressField.getText().trim(),
-                    selectedRole
-            );
-            staff.setActive(existingStaff.isActive());
+                    selectedRole);
+            staff.setActive(existing.isActive());
 
             if (accountService.updateStaff(staff)) {
                 setMessage("Staff updated successfully.", true);
@@ -452,27 +268,22 @@ public class StaffAccountManagement extends JFrame {
             } else {
                 setMessage("Failed to update staff.", false);
             }
-
         } catch (Exception ex) {
             setMessage("Error: " + ex.getMessage(), false);
-            ex.printStackTrace();
         }
     }
 
     private void deactivateStaff() {
-        String staffId = staffIdField.getText().trim();
-        if (staffId.isEmpty()) {
-            setMessage("Load a staff account first.", false);
-            return;
-        }
+        String id = staffIdField.getText().trim();
+        if (id.isEmpty()) { setMessage("Load a staff account first.", false); return; }
 
         int confirm = JOptionPane.showConfirmDialog(this,
-                "Are you sure you want to delete staff account " + staffId + "?",
-                "Confirm deletion", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+                "Are you sure you want to delete staff account " + id + "?",
+                "Confirm Deletion", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
 
         if (confirm == JOptionPane.YES_OPTION) {
             try {
-                if (accountService.deleteStaff(staffId)) {
+                if (accountService.deleteStaff(id)) {
                     statusLabel.setText("INACTIVE");
                     setMessage("Staff deleted successfully.", true);
                 } else {
@@ -480,12 +291,11 @@ public class StaffAccountManagement extends JFrame {
                 }
             } catch (Exception ex) {
                 setMessage("Error: " + ex.getMessage(), false);
-                ex.printStackTrace();
             }
         }
     }
 
-    // Helper Methods
+    // ── HELPERS ──────────────────────────────────────────────
     private void populateForm(Staff staff) {
         staffIdField.setText(staff.getStaffId());
         usernameField.setText(staff.getUsername());
@@ -507,7 +317,7 @@ public class StaffAccountManagement extends JFrame {
         phoneField.setText("");
         addressField.setText("");
         roleDropdown.setSelectedIndex(0);
-        selectedRole = "Administrator";
+        selectedRole = "administrator";
         statusLabel.setText("--");
         setMessage("", true);
     }
@@ -517,7 +327,6 @@ public class StaffAccountManagement extends JFrame {
         messageLabel.setForeground(success ? new Color(0, 97, 0) : new Color(200, 80, 80));
     }
 
-    // UI Helper Methods
     private JTextField createTextField() {
         JTextField field = new JTextField();
         field.setFont(new Font("Segoe UI", Font.PLAIN, 13));
@@ -528,25 +337,32 @@ public class StaffAccountManagement extends JFrame {
         return field;
     }
 
+    private JPanel row(int cols) {
+        JPanel p = new JPanel(new GridLayout(1, cols, 12, 0));
+        p.setBackground(Color.WHITE);
+        p.setMaximumSize(new Dimension(Integer.MAX_VALUE, 60));
+        return p;
+    }
+
     private JPanel fieldWrapper(String label, JTextField field) {
         JPanel wrapper = new JPanel(new BorderLayout(0, 4));
         wrapper.setBackground(Color.WHITE);
         JLabel lbl = new JLabel(label);
         lbl.setFont(new Font("Segoe UI", Font.BOLD, 10));
         lbl.setForeground(new Color(107, 114, 128));
-        wrapper.add(lbl, BorderLayout.NORTH);
+        wrapper.add(lbl,   BorderLayout.NORTH);
         wrapper.add(field, BorderLayout.CENTER);
         return wrapper;
     }
 
-    private JPanel fieldWrapper(String label, JComboBox<String> comboBox) {
+    private JPanel fieldWrapper(String label, JComboBox<String> combo) {
         JPanel wrapper = new JPanel(new BorderLayout(0, 4));
         wrapper.setBackground(Color.WHITE);
         JLabel lbl = new JLabel(label);
         lbl.setFont(new Font("Segoe UI", Font.BOLD, 10));
         lbl.setForeground(new Color(107, 114, 128));
-        wrapper.add(lbl, BorderLayout.NORTH);
-        wrapper.add(comboBox, BorderLayout.CENTER);
+        wrapper.add(lbl,   BorderLayout.NORTH);
+        wrapper.add(combo, BorderLayout.CENTER);
         return wrapper;
     }
 
@@ -560,133 +376,5 @@ public class StaffAccountManagement extends JFrame {
         btn.setAlignmentX(Component.LEFT_ALIGNMENT);
         btn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 34));
         return btn;
-    }
-
-    private void addExpandableNavItem(JPanel nav, String label, String[] subItems) {
-        JButton mainBtn = new JButton(label);
-        mainBtn.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-        mainBtn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 36));
-        mainBtn.setAlignmentX(Component.LEFT_ALIGNMENT);
-        mainBtn.setHorizontalAlignment(SwingConstants.LEFT);
-        mainBtn.setFocusPainted(false);
-        mainBtn.setBorderPainted(false);
-        mainBtn.setBackground(new Color(14, 37, 48));
-        mainBtn.setForeground(new Color(160, 190, 210));
-
-        JPanel subPanel = new JPanel();
-        subPanel.setLayout(new BoxLayout(subPanel, BoxLayout.Y_AXIS));
-        subPanel.setBackground(new Color(10, 28, 38));
-        subPanel.setVisible(false);
-
-        for (String sub : subItems) {
-            JButton subBtn = new JButton("    › " + sub);
-            subBtn.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-            subBtn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 30));
-            subBtn.setAlignmentX(Component.LEFT_ALIGNMENT);
-            subBtn.setHorizontalAlignment(SwingConstants.LEFT);
-            subBtn.setFocusPainted(false);
-            subBtn.setBorderPainted(false);
-            subBtn.setBackground(new Color(10, 28, 38));
-            subBtn.setForeground(new Color(120, 160, 185));
-
-            subBtn.addMouseListener(new java.awt.event.MouseAdapter() {
-                public void mouseEntered(java.awt.event.MouseEvent e) {
-                    subBtn.setForeground(Color.WHITE);
-                    subBtn.setBackground(new Color(20, 50, 65));
-                }
-                public void mouseExited(java.awt.event.MouseEvent e) {
-                    subBtn.setForeground(new Color(120, 160, 185));
-                    subBtn.setBackground(new Color(10, 28, 38));
-                }
-            });
-
-            subBtn.addActionListener(e -> handleSubNavClick(sub));
-            subPanel.add(subBtn);
-            subPanel.add(Box.createVerticalStrut(2));
-        }
-
-        mainBtn.addActionListener(e -> {
-            boolean showing = subPanel.isVisible();
-            subPanel.setVisible(!showing);
-            mainBtn.setForeground(showing ? new Color(160, 190, 210) : Color.WHITE);
-            mainBtn.setBackground(showing ? new Color(14, 37, 48) : new Color(20, 45, 60));
-            nav.revalidate();
-            nav.repaint();
-        });
-
-        nav.add(mainBtn);
-        nav.add(subPanel);
-        nav.add(Box.createVerticalStrut(4));
-    }
-
-    private void handleSubNavClick(String label) {
-        switch (label) {
-            case "View All Merchants":
-                dispose();
-                new MerchantList(fullname, role);
-                break;
-            case "Manage Merchant Accounts":
-                dispose();
-                new AccountManagement(fullname, role, "MANAGE");
-                break;
-            case "Create Merchant Account":
-                dispose();
-                new AccountManagement(fullname, role, "CREATE");
-                break;
-            case "Commercial Applications":
-                JOptionPane.showMessageDialog(this, "Commercial Applications — coming soon.");
-                break;
-            case "View All Staff":
-                dispose();
-                new StaffList(fullname, role);
-                break;
-            case "Create Staff Account":
-                dispose();
-                new StaffAccountManagement(fullname, role, "CREATE");
-                break;
-            case "Manage Staff Account":
-                dispose();
-                new StaffAccountManagement(fullname, role, "MANAGE");
-                break;
-            case "View Merchant Orders":
-            case "View Merchant Invoices":
-            default:
-                JOptionPane.showMessageDialog(this, label + " — coming soon.");
-                break;
-        }
-    }
-
-    private JButton buildNavButton(String label, boolean active) {
-        JButton btn = new JButton(label);
-        btn.setFont(new Font("Segoe UI", active ? Font.BOLD : Font.PLAIN, 13));
-        btn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 36));
-        btn.setAlignmentX(Component.LEFT_ALIGNMENT);
-        btn.setHorizontalAlignment(SwingConstants.LEFT);
-        btn.setFocusPainted(false);
-        btn.setBorderPainted(false);
-        btn.setBackground(active ? new Color(30, 70, 90) : new Color(14, 37, 48));
-        btn.setForeground(active ? Color.WHITE : new Color(160, 190, 210));
-
-        btn.addActionListener(e -> {
-            dispose();
-            switch (label) {
-                case "Catalogue":
-                    new Catalogue(fullname, role);
-                    break;
-                case "Overview":
-                    new AdminDashboard(fullname, role);
-                    break;
-                case "Reports":
-                    new ReportForm(fullname, role);
-                    break;
-            }
-        });
-
-        return btn;
-    }
-
-    private void handleLogout() {
-        dispose();
-        new LoginForm();
     }
 }

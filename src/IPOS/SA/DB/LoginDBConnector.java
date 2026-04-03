@@ -18,7 +18,7 @@ public class LoginDBConnector {
             PreparedStatement stmt = conn.prepareStatement(sql);
             stmt.setString(1, username);
             stmt.setString(2, hashPassword(password));
-            stmt.setString(3, role.toLowerCase());
+            stmt.setString(3, role);
 
             ResultSet rs = stmt.executeQuery();
             if (rs.next()) {

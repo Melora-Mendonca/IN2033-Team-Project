@@ -1,4 +1,4 @@
-package IPOS.SA.ORD;
+package IPOS.SA.ORD.Model;
 
 public class OrderItem {
 

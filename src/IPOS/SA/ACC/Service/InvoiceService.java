@@ -1,38 +1,49 @@
 package IPOS.SA.ACC.Service;
 
-import java.time.LocalDate;
-
-import IPOS.SA.ACC.Model.Invoice;
+import IPOS.SA.ORD.Model.Invoice;
 import IPOS.SA.ACC.Model.MerchantAccount;
-import IPOS.SA.ORD.Order;
+import IPOS.SA.DB.DBConnection;
+import IPOS.SA.ORD.Model.Order;
+import java.time.LocalDate;
+import java.util.UUID;
 
-/**
- * Service responsible for generating invoices based on orders
- * and applying the merchant's discount rules.
- */
 public class InvoiceService {
+    private DBConnection db;
 
-    /**
-     * Generates an invoice for a given order and merchant account.
-     *
-     * @param order the order from which the invoice is generated
-     * @param account the merchant account containing discount rules
-     * @return a fully constructed Invoice object
-     */
-    public Invoice generateInvoice(Order order, MerchantAccount account) {
-        double grossTotal = order.calculateOrderTotal();
-        double discountAmount = account.getDiscountPlan().calculateDiscount(grossTotal);
-        double finalTotal = grossTotal - discountAmount;
+    public InvoiceService() {
+        this.db = new DBConnection();
+    }
 
-        return new Invoice(
-                "INV-" + order.getOrderId(),
-                order.getOrderId(),
+    public Invoice generateInvoice(Order order, MerchantAccount account, double finalAmount) throws Exception {
+        String invoiceId = "INV-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+        LocalDate invoiceDate = LocalDate.now();
+        LocalDate dueDate = invoiceDate.plusDays(30);
+
+        Invoice invoice = new Invoice(
+                invoiceId,
                 order.getMerchantId(),
-                LocalDate.now(),
-                order.getItems(),
-                grossTotal,
-                discountAmount,
-                finalTotal
+                order.getOrderId(),
+                invoiceDate,
+                dueDate,
+                finalAmount,
+                0.0,
+                "unpaid"
         );
+
+        // Save to database - using your actual Invoice table columns
+        String sql = "INSERT INTO Invoice (invoice_id, order_id, invoice_date, due_date, " +
+                "total_amount, amount_paid, status, days_overdue) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, 0)";
+        db.update(sql,
+                invoice.getInvoiceId(),
+                invoice.getOrderId(),
+                java.sql.Date.valueOf(invoice.getInvoiceDate()),
+                java.sql.Date.valueOf(invoice.getDueDate()),
+                invoice.getTotalAmount(),
+                invoice.getAmountPaid(),
+                invoice.getStatus()
+        );
+
+        return invoice;
     }
 }

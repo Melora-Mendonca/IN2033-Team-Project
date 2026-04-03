@@ -28,18 +28,13 @@ public class StaffAccountService {
      * @throws Exception if a database error occurs
      */
     public boolean createStaff(Staff staff) throws Exception {
-        // Checks if staff ID already exists (using user_id)
-        if (staffExists(staff.getStaffId())) {
-            return false;
-        }
-
-        // Checks if username already exists
+        // Only check username uniqueness
         if (usernameExists(staff.getUsername())) {
             return false;
         }
 
-        // Creates a default password for all staff when creating account
-        String defaultPassword = staff.getUsername() + "123";
+        // Hash the default password to match authentication
+        String defaultPassword = hashPassword(staff.getUsername() + "123");
 
         int rowsAffected = db.update(
                 "INSERT INTO UserLogin (username, password_hash, first_Name, sur_Name, email, role, is_Active) " +
@@ -53,6 +48,20 @@ public class StaffAccountService {
         );
 
         return rowsAffected > 0;
+    }
+
+    // Add this helper method
+    private String hashPassword(String password) {
+        try {
+            java.security.MessageDigest md = java.security.MessageDigest.getInstance("SHA-256");
+            byte[] hash = md.digest(password.getBytes("UTF-8"));
+            StringBuilder sb = new StringBuilder();
+            for (byte b : hash) sb.append(String.format("%02x", b));
+            return sb.toString();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return password;
+        }
     }
 
     /**
@@ -97,24 +106,6 @@ public class StaffAccountService {
         return rowsAffected > 0;
     }
 
-    /**
-     * Updates staff status to active or inactive status.
-     *
-     * @param staffId the staff ID
-     * @param isActive true for active, false for inactive
-     * @return true if update was successful
-     * @throws Exception if a database error occurs
-     */
-    public boolean updateStaffStatus(String staffId, boolean isActive) throws Exception {
-        int activeFlag = isActive ? 1 : 0;
-        int rowsAffected = db.update(
-                "UPDATE UserLogin SET is_Active = ? WHERE user_id = ?",
-                activeFlag, Integer.parseInt(staffId)
-        );
-
-        return rowsAffected > 0;
-    }
-
 
     /**
      * Permanently deletes a staff account.
@@ -130,21 +121,6 @@ public class StaffAccountService {
         );
 
         return rowsAffected > 0;
-    }
-
-    /**
-     * Checks to see if a staff ID exists.
-     *
-     * @param staffId the staff ID
-     * @return true if exists
-     * @throws Exception if a database error occurs
-     */
-    public boolean staffExists(String staffId) throws Exception {
-        ResultSet rs = db.query(
-                "SELECT user_id FROM UserLogin WHERE user_id = ?",
-                Integer.parseInt(staffId)
-        );
-        return rs.next();
     }
 
     /**

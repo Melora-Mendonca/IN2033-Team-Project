@@ -138,7 +138,7 @@ public class AccountService {
      * Updates the status of a merchant account when suspended or reinstated.
      *
      * @param merchantId the merchant ID
-     * @param status the new account status
+     * @param status     the new account status
      * @return true if update was successful
      * @throws Exception if a database error occurs
      */
@@ -271,4 +271,12 @@ public class AccountService {
         }
         return accounts;
     }
+
+    public void addToBalance(String merchantId, double finalTotal) {
+    }
+
+    public boolean canMerchantPlaceOrder(MerchantAccount account, double grossTotal) {
+        return true;
+    }
+
 }

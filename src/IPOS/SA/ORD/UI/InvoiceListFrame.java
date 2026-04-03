@@ -1,6 +1,6 @@
-package IPOS.SA.ACC.UI;
+package IPOS.SA.ORD.UI;
 
-import IPOS.SA.ACC.Model.Invoice;
+import IPOS.SA.ORD.Model.Invoice;
 import IPOS.SA.DB.InvoiceDBConnector;
 
 import javax.swing.*;

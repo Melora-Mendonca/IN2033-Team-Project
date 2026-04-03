@@ -12,40 +12,26 @@
 
 package IPOS.SA.CAT.UI;
 
-import IPOS.SA.ACC.UI.*;
 import IPOS.SA.CAT.Model.CatalogueItem;
 import IPOS.SA.DB.DBConnection;
+import IPOS.SA.UI.BaseFrame;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
+import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
-import java.sql.*;
 
-/**
- * Main Frame that displays the catalogue to all users who are logged into IPOS-SA
- */
-public class Catalogue extends JFrame {
+public class Catalogue extends BaseFrame {
 
-    // List used to store all catalogue items
-    // These items will appear in the catalogue table
     private final List<CatalogueItem> Items = new ArrayList<>();
 
-    // Table used to display catalogue data
     private JTable catalogueTable;
-
-    // Controls the table data
     private DefaultTableModel tableModel;
-
-    // Search field for searching item via item ID or keyword
     private JTextField searchField;
-
-    // Dropdown used to simulate different user roles
     private JComboBox<String> roleComboBox;
-
-    //
     private JLabel statusLabel;
     private JButton addButton;
     private JButton updateButton;
@@ -53,283 +39,27 @@ public class Catalogue extends JFrame {
     private JButton refreshButton;
     private JButton searchButton;
     private JButton deliveryButton;
-    private JPanel MainPanel;
-    private JPanel NavPanel;
-    private JPanel ContentPanel;
-    private JPanel FooterPanel;
-    private JPanel HeaderPanel;
-    private JPanel CenterPanel;
-    private JLabel headerLabel;
-    private JLabel navIcon;
-    private JButton logoutBtn;
-    private JSeparator divider;
-    private String fullname;
-    private String role;
 
-
-    // Constructor that creates the catalogue window and loads the frame
     public Catalogue(String fullname, String role) {
-        this.fullname = fullname;
-        this.role = role;
-        setTitle("Catalogue");
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setContentPane(MainPanel);
-        setSize(1100, 650);
-        // Sets the form size to the size of the display
-        setExtendedState(JFrame.MAXIMIZED_BOTH);
-        // Sets the frame location to the center of the screen
-        setLocationRelativeTo(null);
-
-        createHeaderPanel();
-        createNavPanel();
-        createContentPanel();
+        super(fullname, role, "Catalogue");
+        buildContent();
         loadData();
         updateTableForSelectedRole();
-
-        // Sets the frame to be visible when running
-        setVisible(true);
     }
 
-    private void createHeaderPanel() {
-        HeaderPanel.setLayout(new BoxLayout(HeaderPanel, BoxLayout.X_AXIS));
-        HeaderPanel.setPreferredSize(new Dimension(1000, 54));
-        HeaderPanel.setBackground(new Color(240, 252, 255));
-        HeaderPanel.setBorder(BorderFactory.createEmptyBorder(0, 24, 0, 24));
-
-        JPanel textPanel = new JPanel();
-        textPanel.setLayout(new BoxLayout(textPanel, BoxLayout.Y_AXIS));
-        textPanel.setOpaque(false);
-
-        headerLabel = new JLabel("Catalogue");
-        headerLabel.setForeground(Color.BLACK);
-        headerLabel.setFont(new Font("Segoe UI", Font.BOLD, 18));
-
-        textPanel.add(headerLabel);
-        HeaderPanel.add(textPanel);
+    @Override
+    protected String getHeaderTitle() {
+        return "Catalogue";
     }
 
-    // Creates the Navigation Panel
-    private void createNavPanel() {
-        NavPanel.setLayout(new BoxLayout(NavPanel, BoxLayout.Y_AXIS));
-        NavPanel.setBackground(new Color(14, 37, 48));
-        NavPanel.setBorder(BorderFactory.createEmptyBorder(20, 16, 20, 16));
+    private void buildContent() {
+        CenterPanel.setLayout(new BorderLayout(0, 0));
+        CenterPanel.setBackground(new Color(245, 247, 250));
 
-        // Logo icon
-        ImageIcon Icon = new ImageIcon(new ImageIcon("data/Logo.png")
-                .getImage().getScaledInstance(80, 60, Image.SCALE_SMOOTH));
-        navIcon = new JLabel(Icon);
-
-        // Adds the logo to the navigation panel
-        NavPanel.add(navIcon);
-        NavPanel.add(Box.createVerticalStrut(16));
-
-        // Adds nav buttons to the navigation panel
-        NavPanel.add(buildNavButton("Overview",  false));
-        NavPanel.add(Box.createVerticalStrut(4));
-        NavPanel.add(buildNavButton("Catalogue", false));
-        NavPanel.add(Box.createVerticalStrut(4));
-        NavPanel.add(buildNavButton("Orders",    false));
-        NavPanel.add(Box.createVerticalStrut(4));
-
-        // Expandable sections for certain navigation options
-        addExpandableNavItem(NavPanel, "Merchants", new String[]{
-                "View Merchant Orders",
-                "View Merchant Invoices"
-        });
-
-        addExpandableNavItem(NavPanel, "Accounts", new String[]{
-                "View All Merchants", "Create Merchant Account", "Manage Merchant Accounts", "Commercial Applications"
-        });
-
-        addExpandableNavItem(NavPanel, "Staff", new String[]{
-                "View All Staff",
-                "Create Staff Account",
-                "Manage Staff Account",
-        });
-
-        // Adds remaining option to the navigation panel
-        NavPanel.add(buildNavButton("Reports",  false));  NavPanel.add(Box.createVerticalStrut(4));
-        NavPanel.add(buildNavButton("Settings", false));  NavPanel.add(Box.createVerticalStrut(4));
-
-        // Creates a divider to separate and format the navigation options
-        divider = new JSeparator();
-        divider.setForeground(Color.WHITE);
-        divider.setMaximumSize(new Dimension(Integer.MAX_VALUE, 1));
-        NavPanel.add(divider);
-        NavPanel.add(Box.createVerticalGlue());
-
-        // creates a log Out button at the base of the navigation panel
-        logoutBtn = new JButton("→  Log out");
-        logoutBtn.setFont(new Font("Segoe UI", Font.BOLD, 13));
-        logoutBtn.setForeground(new Color(200, 80, 80));
-        logoutBtn.setBackground(new Color(14, 37, 48));
-        logoutBtn.setBorderPainted(false);
-        logoutBtn.setFocusPainted(false);
-        logoutBtn.setAlignmentX(Component.LEFT_ALIGNMENT);
-        logoutBtn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 36));
-        logoutBtn.setHorizontalAlignment(SwingConstants.LEFT);
-        logoutBtn.addActionListener(e -> handleLogout());
-        // Adds the button to the panel
-        NavPanel.add(logoutBtn);
-    }
-
-    private void addExpandableNavItem(JPanel nav, String label, String[] subItems) {
-        JButton mainBtn = new JButton(label);
-        mainBtn.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-        mainBtn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 36));
-        mainBtn.setAlignmentX(Component.LEFT_ALIGNMENT);
-        mainBtn.setHorizontalAlignment(SwingConstants.LEFT);
-        mainBtn.setFocusPainted(false);
-        mainBtn.setBorderPainted(false);
-        mainBtn.setBackground(new Color(14, 37, 48));
-        mainBtn.setForeground(new Color(160, 190, 210));
-
-        // Sub-items panel — hidden by default
-        JPanel subPanel = new JPanel();
-        subPanel.setLayout(new BoxLayout(subPanel, BoxLayout.Y_AXIS));
-        subPanel.setBackground(new Color(10, 28, 38));
-        subPanel.setVisible(false);
-
-        for (String sub : subItems) {
-            JButton subBtn = new JButton("    › " + sub);
-            subBtn.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-            subBtn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 30));
-            subBtn.setAlignmentX(Component.LEFT_ALIGNMENT);
-            subBtn.setHorizontalAlignment(SwingConstants.LEFT);
-            subBtn.setFocusPainted(false);
-            subBtn.setBorderPainted(false);
-            subBtn.setBackground(new Color(10, 28, 38));
-            subBtn.setForeground(new Color(120, 160, 185));
-
-            subBtn.addMouseListener(new java.awt.event.MouseAdapter() {
-                public void mouseEntered(java.awt.event.MouseEvent e) {
-                    subBtn.setForeground(Color.WHITE);
-                    subBtn.setBackground(new Color(20, 50, 65));
-                }
-                public void mouseExited(java.awt.event.MouseEvent e) {
-                    subBtn.setForeground(new Color(120, 160, 185));
-                    subBtn.setBackground(new Color(10, 28, 38));
-                }
-            });
-
-            subBtn.addActionListener(e -> handleSubNavClick(sub));
-            subPanel.add(subBtn);
-            subPanel.add(Box.createVerticalStrut(2));
-        }
-
-        // Toggle sub-panel on click
-        mainBtn.addActionListener(e -> {
-            boolean showing = subPanel.isVisible();
-            subPanel.setVisible(!showing);
-            mainBtn.setForeground(showing ? new Color(160, 190, 210) : Color.WHITE);
-            mainBtn.setBackground(showing ? new Color(14, 37, 48) : new Color(20, 45, 60));
-            nav.revalidate();
-            nav.repaint();
-        });
-
-        nav.add(mainBtn);
-        nav.add(subPanel);
-        nav.add(Box.createVerticalStrut(4));
-    }
-
-    private void handleSubNavClick(String label) {
-        switch (label) {
-            case "View All Merchants":
-                dispose();
-                new MerchantList(fullname, role);
-                break;
-            case "Manage Merchant Accounts":
-                dispose();
-                new AccountManagement(fullname, role, "MANAGE");
-                break;
-            case "Create Merchant Account":
-                dispose();
-                new AccountManagement(fullname, role,  "CREATE");
-                break;
-            case "Commercial Applications":
-                JOptionPane.showMessageDialog(this, "Commercial Applications — coming soon.");
-                break;
-            case "View All Staff":
-                dispose();
-                new StaffList(fullname, role);
-                break;
-            case "Create Staff Account":
-                dispose();
-                new StaffAccountManagement(fullname, role, "CREATE");
-            case "Manage Staff Account":
-                dispose();
-                new StaffAccountManagement(fullname, role, "MANAGE");
-                break;
-            case "View Merchant Orders":
-            case "View Merchant Invoices":
-            default:
-                JOptionPane.showMessageDialog(this, label + " — coming soon.");
-                break;
-        }
-    }
-
-    // Creates the button functionality for the items in the navigation panel
-    private JButton buildNavButton(String label, boolean active) {
-        JButton btn = new JButton(label);
-        btn.setFont(new Font("Segoe UI", active ? Font.BOLD : Font.PLAIN, 13));
-        btn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 36));
-        btn.setAlignmentX(Component.LEFT_ALIGNMENT);
-        btn.setHorizontalAlignment(SwingConstants.LEFT);
-        btn.setFocusPainted(false);
-        btn.setBorderPainted(false);
-        btn.setBackground(active ? new Color(30, 70, 90) : new Color(14, 37, 48));
-        btn.setForeground(active ? Color.WHITE : new Color(160, 190, 210));
-
-        btn.addActionListener(e -> {
-            dispose();
-            switch (label) {
-                case "Catalogue":
-                    new Catalogue(fullname, role);
-                    dispose();
-                    break;
-                case "Overview":
-                    new AdminDashboard(fullname, role);
-                    dispose();
-                    break;
-            }
-        });
-
-        return btn;
-    }
-
-    // Manages the logout functionality for the logout button
-    private void handleLogout() {
-        dispose();
-        new LoginForm();
-    }
-
-    private void createContentPanel() {
-        ContentPanel.setLayout(new BorderLayout(0, 0));
-        ContentPanel.setBackground(new Color(245, 247, 250));
-
-        // Top Panel — search and role selector
+        // ── TOP BAR ──────────────────────────────────────────
         JPanel topControlPanel = new JPanel(new BorderLayout());
         topControlPanel.setBackground(new Color(17, 24, 39));
         topControlPanel.setBorder(new EmptyBorder(10, 16, 10, 16));
-
-        JPanel rolePanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
-        rolePanel.setBackground(new Color(17, 24, 39));
-
-        JLabel roleLabel = new JLabel("Role:");
-        roleLabel.setForeground(Color.WHITE);
-        roleLabel.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-
-        // In createContentPanel(), update the roleComboBox:
-        if (role.equals("Administrator")) {
-            roleComboBox = new JComboBox<>(new String[]{"Admin", "Merchant", "Director"});
-            roleComboBox.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-            roleComboBox.addActionListener(e -> updateTableForSelectedRole());
-            rolePanel.add(roleLabel);
-            rolePanel.add(roleComboBox);
-        } else {
-            // Non-admins don't see the dropdown at all
-            roleComboBox = new JComboBox<>(new String[]{role});
-        }
 
         JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
         searchPanel.setBackground(new Color(17, 24, 39));
@@ -338,19 +68,15 @@ public class Catalogue extends JFrame {
         searchLabel.setForeground(Color.WHITE);
         searchLabel.setFont(new Font("Segoe UI", Font.PLAIN, 12));
 
-        topControlPanel.add(searchPanel, BorderLayout.WEST);
-        topControlPanel.add(rolePanel, BorderLayout.EAST);
-
-
-        searchField = new JTextField(20);
+        searchField   = new JTextField(20);
         searchField.setFont(new Font("Segoe UI", Font.PLAIN, 12));
 
         searchButton  = new JButton("Search");
         refreshButton = new JButton("Refresh");
-        styleButton(searchButton);
-        styleButton(refreshButton);
+        styleBtn(searchButton);
+        styleBtn(refreshButton);
 
-        searchButton.addActionListener(e -> searchCatalogue());
+        searchButton.addActionListener(e  -> searchCatalogue());
         refreshButton.addActionListener(e -> {
             searchField.setText("");
             updateTableForSelectedRole();
@@ -360,11 +86,29 @@ public class Catalogue extends JFrame {
         searchPanel.add(searchField);
         searchPanel.add(searchButton);
         searchPanel.add(refreshButton);
-        rolePanel.add(roleLabel);
-        rolePanel.add(roleComboBox);
 
-        // Table
-        tableModel = new DefaultTableModel();
+        // Role dropdown — admin only
+        JPanel rolePanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
+        rolePanel.setBackground(new Color(17, 24, 39));
+
+        if (role.equals("Administrator")) {
+            JLabel roleLabel = new JLabel("View As:");
+            roleLabel.setForeground(Color.WHITE);
+            roleLabel.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+            roleComboBox = new JComboBox<>(new String[]{"Admin", "Director", "Merchant"});
+            roleComboBox.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+            roleComboBox.addActionListener(e -> updateTableForSelectedRole());
+            rolePanel.add(roleLabel);
+            rolePanel.add(roleComboBox);
+        } else {
+            roleComboBox = new JComboBox<>(new String[]{role});
+        }
+
+        topControlPanel.add(searchPanel, BorderLayout.WEST);
+        topControlPanel.add(rolePanel,   BorderLayout.EAST);
+
+        // ── TABLE ─────────────────────────────────────────────
+        tableModel     = new DefaultTableModel();
         catalogueTable = new JTable(tableModel);
         catalogueTable.setFont(new Font("Segoe UI", Font.PLAIN, 12));
         catalogueTable.setRowHeight(30);
@@ -378,7 +122,7 @@ public class Catalogue extends JFrame {
         JScrollPane scrollPane = new JScrollPane(catalogueTable);
         scrollPane.setBorder(BorderFactory.createEmptyBorder());
 
-        // Bottom buttons
+        // ── BOTTOM BUTTONS ────────────────────────────────────
         JPanel bottomPanel = new JPanel(new BorderLayout());
         bottomPanel.setBackground(new Color(17, 24, 39));
         bottomPanel.setBorder(new EmptyBorder(10, 12, 10, 12));
@@ -386,39 +130,25 @@ public class Catalogue extends JFrame {
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
         buttonPanel.setBackground(new Color(17, 24, 39));
 
-        addButton = new JButton("Add Item");
-        updateButton = new JButton("Update Item");
-        deleteButton = new JButton("Delete Item");
+        addButton      = new JButton("Add Item");
+        updateButton   = new JButton("Update Item");
+        deleteButton   = new JButton("Delete Item");
         deliveryButton = new JButton("Record Delivery");
 
-        styleButton(addButton);
-        styleButton(updateButton);
-        styleButton(deleteButton);
-        styleButton(deliveryButton);
+        styleBtn(addButton);
+        styleBtn(updateButton);
+        styleBtn(deleteButton);
+        styleBtn(deliveryButton);
+
+        addButton.addActionListener(e      -> { dispose(); new ManageItem(fullname, role, "ADD"); });
+        updateButton.addActionListener(e   -> { dispose(); new ManageItem(fullname, role, "EDIT"); });
+        deleteButton.addActionListener(e   -> { dispose(); new ManageItem(fullname, role, "DELETE"); });
+        deliveryButton.addActionListener(e -> { dispose(); new ManageItem(fullname, role, "DELIVERY"); });
 
         buttonPanel.add(addButton);
-        addButton.addActionListener(e    -> {
-                    dispose();
-                    new ManageItem(fullname, role, "ADD");
-                });
-
         buttonPanel.add(updateButton);
-        updateButton.addActionListener(e    -> {
-            dispose();
-            new ManageItem(fullname, role, "EDIT");
-        });
-
         buttonPanel.add(deleteButton);
-        deleteButton.addActionListener(e    -> {
-            dispose();
-            new ManageItem(fullname, role, "DELETE");
-        });
-
         buttonPanel.add(deliveryButton);
-        deliveryButton.addActionListener(e    -> {
-            dispose();
-            new ManageItem(fullname, role, "DELIVERY");
-        });
 
         statusLabel = new JLabel("Ready");
         statusLabel.setFont(new Font("Segoe UI", Font.PLAIN, 11));
@@ -427,26 +157,18 @@ public class Catalogue extends JFrame {
         bottomPanel.add(buttonPanel, BorderLayout.WEST);
         bottomPanel.add(statusLabel, BorderLayout.EAST);
 
-        ContentPanel.add(topControlPanel, BorderLayout.NORTH);
-        ContentPanel.add(scrollPane, BorderLayout.CENTER);
-        ContentPanel.add(bottomPanel, BorderLayout.SOUTH);
-
-        updateTableForSelectedRole();
+        CenterPanel.add(topControlPanel, BorderLayout.NORTH);
+        CenterPanel.add(scrollPane,      BorderLayout.CENTER);
+        CenterPanel.add(bottomPanel,     BorderLayout.SOUTH);
     }
 
-    private void styleButton(JButton btn) {
-        btn.setBackground(new Color(30, 70, 90));
-        btn.setForeground(Color.WHITE);
-        btn.setFocusPainted(false);
-        btn.setBorderPainted(false);
-        btn.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-    }
-
+    // ── DATA METHODS ─────────────────────────────────────────
     private void loadData() {
         Items.clear();
         try {
             DBConnection db = new DBConnection();
-            ResultSet rs = db.query("SELECT * FROM Catalogue WHERE is_active = 1 ORDER BY item_id");
+            ResultSet rs = db.query(
+                    "SELECT * FROM catalogue WHERE is_active = 1 ORDER BY item_id");
             while (rs.next()) {
                 Items.add(new CatalogueItem(
                         rs.getString("item_id"),
@@ -462,32 +184,28 @@ public class Catalogue extends JFrame {
             statusLabel.setText(Items.size() + " items loaded");
         } catch (Exception e) {
             e.printStackTrace();
-            JOptionPane.showMessageDialog(this, "Error loading catalogue: " + e.getMessage());
+            JOptionPane.showMessageDialog(this,
+                    "Error loading catalogue: " + e.getMessage());
         }
     }
 
-    // Updates the catalogue table depending on which role is selected
     private void updateTableForSelectedRole() {
         String selectedRole;
 
         if (role.equals("Administrator")) {
-            // Get the selected value from dropdown and convert to lowercase
-            selectedRole = roleComboBox.getSelectedItem().toString().toLowerCase();
-            System.out.println("Dropdown selection: " + selectedRole); // For debugging
+            selectedRole = roleComboBox.getSelectedItem().toString();
         } else {
             selectedRole = role;
-            System.out.println("Non-admin role: " + selectedRole); // For debugging
         }
 
         switch (selectedRole) {
-            case "admin":
+            case "Admin":
+            case "Administrator":
                 setAdminView();
                 break;
-            case "director":
+            case "Director":
+            case "Director of Operations":
                 setManagerView();
-                break;
-            case "merchant":
-                setMerchantView();
                 break;
             default:
                 setMerchantView();
@@ -495,50 +213,40 @@ public class Catalogue extends JFrame {
         }
     }
 
-    // Admin users can see the full catalogue including stock limits
     private void setAdminView() {
         String[] columns = {
                 "Item ID", "Description", "Package Type", "Unit",
                 "Units in a pack", "Package Cost (£)", "Availability (packs)", "Stock Limit (packs)"
         };
-
         buildTable(columns, true, true, true, true, Items);
-        statusLabel.setText("Admin view: full catalogue access");
+        statusLabel.setText("Admin view — " + Items.size() + " items");
     }
-    // Merchants can see catalogue items but stock limit is hidden
-    private void setMerchantView() {
-        String[] columns = {
-                "Item ID", "Description", "Package Type", "Unit",
-                "Units in a pack", "Package Cost (£)", "Availability (packs)"
-        };
 
-        buildTable(columns, false, false, false, false, Items);
-        statusLabel.setText("Merchant view: stock limit hidden");
-    }
-    // Manager role does not maintain catalogue in this prototype, but has read only access
     private void setManagerView() {
         String[] columns = {
                 "Item ID", "Description", "Package Type", "Unit",
                 "Units in a pack", "Package Cost (£)", "Availability (packs)", "Stock Limit (packs)"
         };
-
         buildTable(columns, false, false, false, false, Items);
-        statusLabel.setText("Manager view: Read-Only Access");
-
-        addButton.setEnabled(false);
-        updateButton.setEnabled(false);
-        deleteButton.setEnabled(false);
-        deliveryButton.setEnabled(false);
-
+        statusLabel.setText("Manager view — read only");
     }
 
-    private void buildTable(String[] columns, boolean canAdd, boolean canUpdate, boolean canDelete, boolean canRecord, List<CatalogueItem> items) {
+    private void setMerchantView() {
+        String[] columns = {
+                "Item ID", "Description", "Package Type", "Unit",
+                "Units in a pack", "Package Cost (£)", "Availability (packs)"
+        };
+        buildTable(columns, false, false, false, false, Items);
+        statusLabel.setText("Merchant view — stock limit hidden");
+    }
+
+    private void buildTable(String[] columns, boolean canAdd, boolean canUpdate,
+                            boolean canDelete, boolean canRecord,
+                            List<CatalogueItem> items) {
         tableModel.setRowCount(0);
         tableModel.setColumnCount(0);
 
-        for (String column : columns) {
-            tableModel.addColumn(column);
-        }
+        for (String col : columns) tableModel.addColumn(col);
 
         boolean showStockLimit = columns.length == 8;
 
@@ -572,46 +280,55 @@ public class Catalogue extends JFrame {
         deleteButton.setEnabled(canDelete);
         deliveryButton.setEnabled(canRecord);
     }
-    // Searches catalogue items by item ID or desciption keyword
-    private void searchCatalogue() {
-        String role = roleComboBox.getSelectedItem().toString();
-        String searchText = searchField.getText().trim().toLowerCase();
 
-        if (role.equals("Manager")) {
-            System.out.println("Manager role does not search catalogue in this prototype.");
-            return;
-        }
+    private void searchCatalogue() {
+        String searchText = searchField.getText().trim().toLowerCase();
 
         if (searchText.isEmpty()) {
             updateTableForSelectedRole();
             return;
         }
 
-        List<CatalogueItem> filteredItems = new ArrayList<>();
-
+        List<CatalogueItem> filtered = new ArrayList<>();
         for (CatalogueItem item : Items) {
-            if (item.getItemId().toLowerCase().contains(searchText)
-                    || item.getDescription().toLowerCase().contains(searchText)) {
-                filteredItems.add(item);
+            if (item.getItemId().toLowerCase().contains(searchText) ||
+                    item.getDescription().toLowerCase().contains(searchText)) {
+                filtered.add(item);
             }
         }
 
-        if (role.equals("Admin")) {
+        String selectedRole = roleComboBox.getSelectedItem().toString();
+
+        if (selectedRole.equals("Admin") || selectedRole.equals("Administrator")) {
             String[] columns = {
                     "Item ID", "Description", "Package Type", "Unit",
                     "Units in a pack", "Package Cost (£)", "Availability (packs)", "Stock Limit (packs)"
             };
-            buildTable(columns, true, true, true, true, filteredItems);
+            buildTable(columns, true, true, true, true, filtered);
+        } else if (selectedRole.equals("director") ||
+                selectedRole.equals("director_of_operations")) {
+            String[] columns = {
+                    "Item ID", "Description", "Package Type", "Unit",
+                    "Units in a pack", "Package Cost (£)", "Availability (packs)", "Stock Limit (packs)"
+            };
+            buildTable(columns, false, false, false, false, filtered);
         } else {
             String[] columns = {
                     "Item ID", "Description", "Package Type", "Unit",
                     "Units in a pack", "Package Cost (£)", "Availability (packs)"
             };
-            buildTable(columns, false, false, false, false, filteredItems);
+            buildTable(columns, false, false, false, false, filtered);
         }
 
-        statusLabel.setText(filteredItems.size() + " item(s) found");
+        statusLabel.setText(filtered.size() + " item(s) found");
     }
 
-
+    // ── HELPERS ──────────────────────────────────────────────
+    private void styleBtn(JButton btn) {
+        btn.setBackground(new Color(30, 70, 90));
+        btn.setForeground(Color.WHITE);
+        btn.setFocusPainted(false);
+        btn.setBorderPainted(false);
+        btn.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+    }
 }

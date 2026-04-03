@@ -1,20 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="IPOS.SA.ACC.UI.StaffList">
+<form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="IPOS.SA.UI.BaseFrame">
   <grid id="27dc6" binding="MainPanel" layout-manager="BorderLayout" hgap="0" vgap="0">
     <constraints>
-      <xy x="20" y="20" width="1008" height="599"/>
+      <xy x="20" y="20" width="857" height="426"/>
     </constraints>
     <properties/>
     <border type="none"/>
     <children>
-      <grid id="ce53e" binding="ContentPanel" layout-manager="BorderLayout" hgap="0" vgap="0">
+      <grid id="16e9f" binding="ContentPanel" layout-manager="BorderLayout" hgap="0" vgap="0">
         <constraints border-constraint="Center"/>
         <properties>
           <background color="-657416"/>
         </properties>
         <border type="none"/>
         <children>
-          <grid id="98823" binding="HeaderPanel" layout-manager="FlowLayout" hgap="10" vgap="50" flow-align="1">
+          <grid id="85930" binding="HeaderPanel" layout-manager="FlowLayout" hgap="10" vgap="50" flow-align="1">
             <constraints border-constraint="North"/>
             <properties>
               <background color="-983809"/>
@@ -22,7 +22,7 @@
             <border type="none"/>
             <children/>
           </grid>
-          <grid id="da4ea" binding="FooterPanel" layout-manager="GridLayoutManager" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+          <grid id="94920" binding="FooterPanel" layout-manager="GridLayoutManager" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
             <margin top="0" left="0" bottom="0" right="0"/>
             <constraints border-constraint="South"/>
             <properties>
@@ -31,17 +31,9 @@
             <border type="none"/>
             <children/>
           </grid>
-          <grid id="32564" binding="CenterPanel" layout-manager="BorderLayout" hgap="0" vgap="0">
-            <constraints border-constraint="Center"/>
-            <properties>
-              <background color="-657416"/>
-            </properties>
-            <border type="none"/>
-            <children/>
-          </grid>
         </children>
       </grid>
-      <grid id="7cf1f" binding="NavPanel" layout-manager="FlowLayout" hgap="90" vgap="10" flow-align="1">
+      <grid id="d7fe9" binding="NavPanel" layout-manager="FlowLayout" hgap="90" vgap="10" flow-align="1">
         <constraints border-constraint="West"/>
         <properties>
           <background color="-15850192"/>

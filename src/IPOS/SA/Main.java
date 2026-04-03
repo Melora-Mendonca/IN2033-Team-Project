@@ -9,10 +9,10 @@ import javax.swing.SwingUtilities;
  */
 public class Main {
     public static void main(String[] a) {
-        // Launch the login form
+        // Launches the login form by scheduling the code inside to run on the EDT thread
         SwingUtilities.invokeLater(new Runnable() {
             public void run() {
-                // Create new instance of login form, and set it to visible.
+                // Creates a new instance of login form, and sets it to visible.
                 LoginForm loginForm = new LoginForm();
                 loginForm.setVisible(true);
             }

@@ -1,4 +1,4 @@
-//package IPOS.SA.ORD;
+//package IPOS.SA.ORD.UI;
 //
 //import IPOS.SA.ACC.Model.FixedDiscountPlan;
 //import IPOS.SA.ACC.Model.Invoice;
@@ -7,6 +7,8 @@
 //import IPOS.SA.CAT.Model.CatalogueItem;
 //import IPOS.SA.DB.InvoiceDBConnector;
 //import IPOS.SA.DB.OrderDBConnector;
+//import IPOS.SA.ORD.Model.Order;
+//import IPOS.SA.ORD.Model.OrderItem;
 //
 //import javax.swing.*;
 //import javax.swing.table.DefaultTableCellRenderer;

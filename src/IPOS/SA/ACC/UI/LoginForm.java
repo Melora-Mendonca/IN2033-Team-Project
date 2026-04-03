@@ -2,7 +2,6 @@ package IPOS.SA.ACC.UI;
 
 import IPOS.SA.ACC.Model.User;
 import IPOS.SA.ACC.Service.AuthenticationService;
-// No need to import dashboard classes since they're in the same package
 
 import javax.swing.*;
 import java.awt.*;
@@ -181,8 +180,7 @@ public class LoginForm extends JFrame {
         staffDropdown.setPreferredSize(new Dimension(200, 32));
         staffDropdown.addActionListener(e -> {
             selectedRole = staffDropdown.getSelectedItem().toString();
-            selectedRole = convertRoleToDatabaseFormat(selectedRole);
-            subtitleLb1.setText("Sign in as " + formatRoleForDisplay(selectedRole));
+            subtitleLb1.setText("Sign in as " + selectedRole);
         });
 
         staffPanel.add(staffTypeLabel);
@@ -207,8 +205,7 @@ public class LoginForm extends JFrame {
 
         staffBtn.addActionListener(e -> {
             selectedRole = staffDropdown.getSelectedItem().toString();
-            selectedRole = convertRoleToDatabaseFormat(selectedRole);
-            subtitleLb1.setText("Sign in as " + formatRoleForDisplay(selectedRole));
+            subtitleLb1.setText("Sign in as " + selectedRole);
             staffPanel.setVisible(true);
             LoginPanel.revalidate();
             LoginPanel.repaint();
@@ -217,36 +214,6 @@ public class LoginForm extends JFrame {
         LoginPanel.add(roleRow);
         LoginPanel.add(Box.createVerticalStrut(8));
         LoginPanel.add(staffPanel);
-    }
-
-    private String convertRoleToDatabaseFormat(String displayRole) {
-        switch (displayRole) {
-            case "Senior Accountant":
-                return "Senior Accountant";
-            case "Accountant":
-                return "Accountant";
-            case "Warehouse Employee":
-                return "Warehouse Employee";
-            case "Delivery Employee":
-                return "Delivery Employee";
-            default:
-                return displayRole.toLowerCase().replace(" ", "_");
-        }
-    }
-
-    private String formatRoleForDisplay(String role) {
-        if (role == null || role.isEmpty()) return "";
-
-        String[] words = role.split("_");
-        StringBuilder sb = new StringBuilder();
-        for (String word : words) {
-            if (word.length() > 0) {
-                sb.append(Character.toUpperCase(word.charAt(0)))
-                        .append(word.substring(1))
-                        .append(" ");
-            }
-        }
-        return sb.toString().trim();
     }
 
     private void createLoginForm() {
@@ -354,7 +321,7 @@ public class LoginForm extends JFrame {
     private void navigateToDashboard(User user) {
         // Get stock warnings if needed
         List<String> warnings = null;
-        if (user.getRole().equals("administrator") ||
+        if (user.getRole().equals("Administrator") ||
                 user.getRole().equals("Director of Operations")) {
             try {
                 warnings = authService.getStockWarnings();
@@ -370,9 +337,9 @@ public class LoginForm extends JFrame {
             switch (user.getRole()) {
                 case "Administrator":
                     System.out.println("Creating AdminDashboard...");
-                    AdminDashboard dashboard = new AdminDashboard(user.getFullName(), user.getRole());
+                    AdminDashboard adminDashboard = new AdminDashboard(user.getFullName(), user.getRole());
                     if (warnings != null && !warnings.isEmpty()) {
-                        showStockWarning(dashboard, warnings);
+                        showStockWarning(adminDashboard, warnings);
                     }
                     System.out.println("AdminDashboard created successfully");
                     break;
@@ -400,7 +367,6 @@ public class LoginForm extends JFrame {
                     statusLbl.setText("Role not recognised: " + user.getRole());
                     break;
             }
-            System.out.println("=== NAVIGATION COMPLETE ===\n");
         } catch (Exception e) {
             System.err.println("Error creating dashboard: " + e.getMessage());
             e.printStackTrace();

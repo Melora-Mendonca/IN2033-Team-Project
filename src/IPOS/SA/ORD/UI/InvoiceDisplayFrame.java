@@ -1,7 +1,7 @@
-package IPOS.SA.ACC.UI;
+package IPOS.SA.ORD.UI;
 
-import IPOS.SA.ACC.Model.Invoice;
-import IPOS.SA.ORD.OrderItem;
+import IPOS.SA.ORD.Model.Invoice;
+import IPOS.SA.ORD.Model.OrderItem;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -62,14 +62,15 @@ public class InvoiceDisplayFrame extends JFrame {
         panel.add(Box.createVerticalStrut(16));
 
         // Metadata grid
-        JPanel meta = new JPanel(new GridLayout(4, 2, 8, 4));
+        JPanel meta = new JPanel(new GridLayout(5, 2, 8, 4));
         meta.setBackground(Color.WHITE);
-        meta.setMaximumSize(new Dimension(Integer.MAX_VALUE, 100));
+        meta.setMaximumSize(new Dimension(Integer.MAX_VALUE, 120));
         meta.setAlignmentX(Component.LEFT_ALIGNMENT);
-        meta.add(boldLabel("Invoice ID:"));   meta.add(plainLabel(invoice.getInvoiceId()));
-        meta.add(boldLabel("Order ID:"));     meta.add(plainLabel(invoice.getOrderId()));
-        meta.add(boldLabel("Merchant ID:"));  meta.add(plainLabel(invoice.getMerchantId()));
-        meta.add(boldLabel("Date Issued:"));  meta.add(plainLabel(invoice.getIssueDate().toString()));
+        meta.add(boldLabel("Invoice ID:"));    meta.add(plainLabel(invoice.getInvoiceId()));
+        meta.add(boldLabel("Order ID:"));      meta.add(plainLabel(invoice.getOrderId()));
+        meta.add(boldLabel("Merchant ID:"));   meta.add(plainLabel(invoice.getMerchantId()));
+        meta.add(boldLabel("Invoice Date:"));  meta.add(plainLabel(invoice.getInvoiceDate().toString()));
+        meta.add(boldLabel("Due Date:"));      meta.add(plainLabel(invoice.getDueDate().toString()));
         panel.add(meta);
         panel.add(Box.createVerticalStrut(20));
 
@@ -82,17 +83,21 @@ public class InvoiceDisplayFrame extends JFrame {
         panel.add(Box.createVerticalStrut(16));
 
         // Line items table
-        String[] cols = {"Item ID", "Quantity", "Unit Price (£)", "Line Total (£)"};
+        String[] cols = {"Item ID", "Description", "Quantity", "Unit Price (£)", "Line Total (£)"};
         DefaultTableModel model = new DefaultTableModel(cols, 0) {
             public boolean isCellEditable(int r, int c) { return false; }
         };
-        for (OrderItem item : invoice.getItems()) {
-            model.addRow(new Object[]{
-                    item.getItemId(),
-                    item.getQuantity(),
-                    String.format("%.2f", item.getUnitPrice()),
-                    String.format("%.2f", item.getLineTotal())
-            });
+
+        if (invoice.getItems() != null) {
+            for (OrderItem item : invoice.getItems()) {
+                model.addRow(new Object[]{
+                        item.getItemId(),
+                        getItemDescription(item.getItemId()),  // Get description from database
+                        item.getQuantity(),
+                        String.format("%.2f", item.getUnitPrice()),
+                        String.format("%.2f", item.getLineTotal())
+                });
+            }
         }
 
         JTable itemsTable = new JTable(model);
@@ -119,26 +124,68 @@ public class InvoiceDisplayFrame extends JFrame {
         panel.add(sep2);
         panel.add(Box.createVerticalStrut(12));
 
-        JPanel totals = new JPanel(new GridLayout(3, 2, 4, 6));
+        JPanel totals = new JPanel(new GridLayout(4, 2, 4, 6));
         totals.setBackground(Color.WHITE);
-        totals.setMaximumSize(new Dimension(400, 80));
+        totals.setMaximumSize(new Dimension(400, 100));
         totals.setAlignmentX(Component.LEFT_ALIGNMENT);
-        totals.add(boldLabel("Gross Total:"));
-        totals.add(plainLabel(String.format("£%.2f", invoice.getGrossTotal())));
-        totals.add(boldLabel("Discount Applied:"));
-        totals.add(plainLabel(String.format("£%.2f", invoice.getDiscountAmount())));
+        totals.add(boldLabel("Total Amount:"));
+        totals.add(plainLabel(String.format("£%.2f", invoice.getTotalAmount())));
+        totals.add(boldLabel("Amount Paid:"));
+        totals.add(plainLabel(String.format("£%.2f", invoice.getAmountPaid())));
+        totals.add(boldLabel("Outstanding Balance:"));
+        totals.add(plainLabel(String.format("£%.2f", invoice.getOutstandingBalance())));
 
-        JLabel finalKey = new JLabel("Final Total:");
-        finalKey.setFont(new Font("Segoe UI", Font.BOLD, 15));
-        finalKey.setForeground(DARK_NAVY);
-        JLabel finalVal = new JLabel(String.format("£%.2f", invoice.getFinalTotal()));
-        finalVal.setFont(new Font("Segoe UI", Font.BOLD, 15));
-        finalVal.setForeground(ACCENT);
-        totals.add(finalKey);
-        totals.add(finalVal);
+        JLabel statusKey = new JLabel("Status:");
+        statusKey.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        statusKey.setForeground(DARK_NAVY);
+        JLabel statusVal = new JLabel(invoice.getStatus().toUpperCase());
+        statusVal.setFont(new Font("Segoe UI", Font.BOLD, 14));
+
+        // Color code the status
+        switch (invoice.getStatus()) {
+            case "paid":
+                statusVal.setForeground(new Color(0, 120, 0));
+                break;
+            case "overdue":
+                statusVal.setForeground(new Color(200, 50, 50));
+                break;
+            case "partial":
+                statusVal.setForeground(new Color(200, 120, 0));
+                break;
+            default:
+                statusVal.setForeground(DARK_NAVY);
+        }
+
+        totals.add(statusKey);
+        totals.add(statusVal);
+
         panel.add(totals);
 
+        // Add overdue days warning if applicable
+        if (invoice.isOverdue()) {
+            JPanel warningPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+            warningPanel.setBackground(Color.WHITE);
+            JLabel warning = new JLabel("⚠️ This invoice is " + invoice.getDaysOverdue() + " days overdue.");
+            warning.setFont(new Font("Segoe UI", Font.BOLD, 12));
+            warning.setForeground(new Color(200, 50, 50));
+            warningPanel.add(warning);
+            panel.add(warningPanel);
+        }
+
         return panel;
+    }
+
+    private String getItemDescription(String itemId) {
+        try {
+            IPOS.SA.DB.DBConnection db = new IPOS.SA.DB.DBConnection();
+            java.sql.ResultSet rs = db.query("SELECT description FROM Catalogue WHERE item_id = ?", itemId);
+            if (rs.next()) {
+                return rs.getString("description");
+            }
+        } catch (Exception e) {
+            // Return item ID if description not found
+        }
+        return itemId;
     }
 
     private JPanel buildFooter() {
@@ -208,29 +255,41 @@ public class InvoiceDisplayFrame extends JFrame {
 
         panel.add(printRow("Invoice ID:", invoice.getInvoiceId()));
         panel.add(printRow("Order ID:",   invoice.getOrderId()));
-        panel.add(printRow("Merchant:",   invoice.getMerchantId()));
-        panel.add(printRow("Date:",       invoice.getIssueDate().toString()));
+        panel.add(printRow("Merchant ID:", invoice.getMerchantId()));
+        panel.add(printRow("Invoice Date:", invoice.getInvoiceDate().toString()));
+        panel.add(printRow("Due Date:",    invoice.getDueDate().toString()));
         panel.add(Box.createVerticalStrut(10));
 
-        for (OrderItem item : invoice.getItems()) {
-            panel.add(printRow(item.getItemId(),
-                    "Qty: " + item.getQuantity() +
-                    "  Unit: £" + String.format("%.2f", item.getUnitPrice()) +
-                    "  Total: £" + String.format("%.2f", item.getLineTotal())));
+        if (invoice.getItems() != null) {
+            for (OrderItem item : invoice.getItems()) {
+                panel.add(printRow(item.getItemId(),
+                        getItemDescription(item.getItemId()) + " — Qty: " + item.getQuantity() +
+                                "  Unit: £" + String.format("%.2f", item.getUnitPrice()) +
+                                "  Total: £" + String.format("%.2f", item.getLineTotal())));
+            }
         }
         panel.add(Box.createVerticalStrut(10));
-        panel.add(printRow("Gross Total:", String.format("£%.2f", invoice.getGrossTotal())));
-        panel.add(printRow("Discount:",    String.format("£%.2f", invoice.getDiscountAmount())));
-        panel.add(printRow("Final Total:", String.format("£%.2f", invoice.getFinalTotal())));
+        panel.add(printRow("Total Amount:", String.format("£%.2f", invoice.getTotalAmount())));
+        panel.add(printRow("Amount Paid:",  String.format("£%.2f", invoice.getAmountPaid())));
+        panel.add(printRow("Outstanding:",  String.format("£%.2f", invoice.getOutstandingBalance())));
+        panel.add(printRow("Status:",       invoice.getStatus().toUpperCase()));
+
+        if (invoice.isOverdue()) {
+            panel.add(printRow("", "⚠️ OVERDUE — " + invoice.getDaysOverdue() + " days overdue"));
+        }
+
         return panel;
     }
 
     private JPanel printRow(String key, String value) {
         JPanel row = new JPanel(new FlowLayout(FlowLayout.LEFT, 4, 0));
         row.setBackground(Color.WHITE);
-        JLabel k = new JLabel(key); k.setFont(new Font("Segoe UI", Font.BOLD, 11));
-        JLabel v = new JLabel(value); v.setFont(new Font("Segoe UI", Font.PLAIN, 11));
-        row.add(k); row.add(v);
+        JLabel k = new JLabel(key);
+        k.setFont(new Font("Segoe UI", Font.BOLD, 11));
+        JLabel v = new JLabel(value);
+        v.setFont(new Font("Segoe UI", Font.PLAIN, 11));
+        row.add(k);
+        row.add(v);
         return row;
     }
 
