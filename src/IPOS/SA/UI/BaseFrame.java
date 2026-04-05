@@ -7,6 +7,7 @@ import IPOS.SA.ORD.UI.OrderTrackingFrame;
 import IPOS.SA.ORD.UI.PaymentRecording;
 import IPOS.SA.RPT.UI.CommercialAppForm;
 import IPOS.SA.RPT.UI.ReportForm;
+import IPOS.SA.RPT.UI.SettingsForm;
 
 import javax.swing.*;
 import java.awt.*;
@@ -372,7 +373,8 @@ public abstract class BaseFrame extends JFrame {
                     new ReportForm(fullname, role);
                     break;
                 case "Settings":
-                    JOptionPane.showMessageDialog(this, "Settings — coming soon.");
+                    dispose();
+                    new SettingsForm(fullname, role);
                     break;
                 default:
                     JOptionPane.showMessageDialog(this, label + " — coming soon.");
