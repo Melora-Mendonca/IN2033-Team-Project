@@ -233,8 +233,8 @@ public class ManageItem extends BaseFrame {
             if (!validateRequiredFields()) return;
             CatalogueItem item = createItemFromForm();
             if (service.saveItem(item)) {
-                setMessage("Item added successfully.", true);
                 clearForm();
+                setMessage("Item added successfully.", true);
             } else {
                 setMessage("Item ID already exists.", false);
             }
@@ -291,8 +291,8 @@ public class ManageItem extends BaseFrame {
         if (confirm == JOptionPane.YES_OPTION) {
             try {
                 if (service.deactivateItem(id)) {
-                    setMessage("Item deactivated successfully.", true);
                     clearForm();
+                    setMessage("Item deactivated successfully.", true);
                 } else {
                     setMessage("Item not found.", false);
                 }
@@ -311,8 +311,8 @@ public class ManageItem extends BaseFrame {
         if (confirm == JOptionPane.YES_OPTION) {
             try {
                 if (service.reactivateItem(id)) {
-                    setMessage("Item reactivated successfully.", true);
                     clearForm();
+                    setMessage("Item reactivated successfully.", true);
                 } else {
                     setMessage("Item not found.", false);
                 }
@@ -324,7 +324,9 @@ public class ManageItem extends BaseFrame {
 
     private void recordDelivery() {
         String id = itemIdField.getText().trim();
-        if (id.isEmpty())                         { setMessage("Enter an Item ID.", false); return; }
+        if (id.isEmpty()) {
+            setMessage("Enter an Item ID.", false);
+            return; }
         if (quantityField.getText().trim().isEmpty()) { setMessage("Enter a quantity.", false); return; }
         try {
             int qty = Integer.parseInt(quantityField.getText().trim());

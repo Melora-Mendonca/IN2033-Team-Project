@@ -150,6 +150,31 @@ public class catalogueService {
         return rowsAffected > 0;
     }
 
+    // Update Stock after an order
+    public boolean UpdateCatalogue(String itemId, int quantity) throws Exception {
+        if (quantity <= 0) {
+            return false;
+        }
+
+        // Check if item exists and is active
+        if (!isItemActive(itemId)) {
+            return false;
+        }
+
+        try {
+            // Update stock in Catalogue table
+            db.update(
+                    "UPDATE Catalogue SET availability = availability - ? " +
+                            "WHERE item_id = ? AND is_active = 1",
+                    quantity, itemId
+            );
+
+            return true;
+        } catch (Exception e) {
+            throw new Exception("Failed to update stock: " + e.getMessage());
+        }
+
+    }
     // Record a stock delivery - UPDATED to match your StockDelivery table
     public boolean recordDelivery(String itemId, int quantity, int enteredBy) throws Exception {
         if (quantity <= 0) {

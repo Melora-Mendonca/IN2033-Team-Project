@@ -19,8 +19,8 @@ public class StaffDashboard extends BaseFrame {
     private JPanel ordersPanel;
     private JLabel ordersTitle;
 
-    public StaffDashboard(String fullname, String role) {
-        super(fullname, role, "Staff Dashboard");
+    public StaffDashboard(String fullname, String role, String username) {
+        super(fullname, role, username,"Staff Dashboard");
         this.dashboardService = new StaffService();
         createCenterContent();
     }

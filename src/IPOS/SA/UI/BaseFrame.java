@@ -7,7 +7,9 @@ import IPOS.SA.ORD.UI.OrderTrackingFrame;
 import IPOS.SA.ORD.UI.PaymentRecording;
 import IPOS.SA.RPT.UI.CommercialAppForm;
 import IPOS.SA.RPT.UI.ReportForm;
-import IPOS.SA.RPT.UI.SettingsForm;
+import IPOS.SA.ACC.UI.SettingsForm;
+import IPOS.SA.ORD.UI.InvoiceListFrame;
+import IPOS.SA.ORD.UI.OrderManagement;
 
 import javax.swing.*;
 import java.awt.*;
@@ -16,6 +18,7 @@ public abstract class BaseFrame extends JFrame {
 
     protected String fullname;
     protected String role;
+    protected String username;
 
     // Common UI Components
     protected JPanel MainPanel;
@@ -30,9 +33,17 @@ public abstract class BaseFrame extends JFrame {
     protected JButton logoutBtn;
     protected JSeparator divider;
 
+
+    // Old constructor — still works for all existing classes
     public BaseFrame(String fullname, String role, String title) {
+        this(fullname, role, null, title);
+    }
+
+    // New constructor — used when username is needed
+    public BaseFrame(String fullname, String role, String username, String title) {
         this.fullname = fullname;
-        this.role = role;
+        this.role     = role;
+        this.username = username;
 
         setTitle(title);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
@@ -168,14 +179,47 @@ public abstract class BaseFrame extends JFrame {
 
         }
 
-        // ACCOUNTANT - Invoice and payment only
+        // WAREHOUSE STAFF - Order processing only
+        else if (role.equals("Delivery Employee")) {
+            NavPanel.add(buildNavButton("Overview", false));
+            NavPanel.add(Box.createVerticalStrut(4));
+
+            addExpandableNavItem("Orders", new String[]{
+                    "View All Orders",
+                    "Manage Orders"
+            });
+
+            NavPanel.add(buildNavButton("Settings", false));
+            NavPanel.add(Box.createVerticalStrut(4));
+
+        }
+
+        // ACCOUNTANTS - Invoice and payment only
         else if (role.equals("Senior Accountant")) {
             NavPanel.add(buildNavButton("Overview", false));
             NavPanel.add(Box.createVerticalStrut(4));
-            NavPanel.add(buildNavButton("Invoices", false));
+            addExpandableNavItem("Invoices", new String[]{
+                    "View All Invoices"
+            });
+            addExpandableNavItem("Payments", new String[]{
+                    "Record Payments",
+                    "View Debtors List",
+                    "View Payment History"
+
+            });
+            NavPanel.add(buildNavButton("Settings", false));
             NavPanel.add(Box.createVerticalStrut(4));
-            NavPanel.add(buildNavButton("Payments", false));
+        }
+
+        else if (role.equals("Accountant")) {
+            NavPanel.add(buildNavButton("Overview", false));
             NavPanel.add(Box.createVerticalStrut(4));
+            addExpandableNavItem("Invoices", new String[]{
+                    "View All Invoices"
+            });
+            addExpandableNavItem("Payments", new String[]{
+                    "Record Payments"
+            });
             NavPanel.add(buildNavButton("Settings", false));
             NavPanel.add(Box.createVerticalStrut(4));
         }
@@ -302,21 +346,43 @@ public abstract class BaseFrame extends JFrame {
                 dispose();
                 new CommercialAppForm(fullname, role);
                 break;
+            case "View All Orders":
+                dispose();
+                new OrderManagement(fullname, role);
+                break;
             case "Manage Orders":
                 dispose();
                 new OrderProcessingFrame(fullname, role);
-                break;
-            case "View All Orders":
-                dispose();
-                new OrderTrackingFrame(fullname, role);
                 break;
             case "Reports":
                 dispose();
                 new ReportForm(fullname, role);
                 break;
-            case "View Invoices":
+            case "Settings":
+                dispose();
+                new SettingsForm(fullname, role, username);
+                break;
+            case "View All Invoices":
+                dispose();
+                new InvoiceListFrame(fullname, role);
+                break;
+            case "View Merchant Orders":
+                dispose();
+                new MerchantList(fullname, role, "ORDERS");
+                break;
+            case "View Merchant Invoices":
+                dispose();
+                new MerchantList(fullname, role, "INVOICES");
+                break;
+            case "Record Payments":
                 dispose();
                 new PaymentRecording(fullname, role);
+                break;
+            case "View Debtors List":
+                dispose();
+                break;
+            case "View Payment History":
+                dispose();
                 break;
             default:
                 JOptionPane.showMessageDialog(this, label + " — coming soon.");
@@ -345,15 +411,15 @@ public abstract class BaseFrame extends JFrame {
                     // Open appropriate dashboard based on role
                     if (role.equals("Administrator")) {
                         dispose();
-                        new AdminDashboard(fullname, role);
+                        new AdminDashboard(fullname, role, username);
                         break;
                     } else if (role.equals("Director of Operations")) {
                         dispose();
-                        new ManagerDashboard(fullname, role);
+                        new ManagerDashboard(fullname, role, username);
                         break;
                     } else {
                         dispose();
-                        new StaffDashboard(fullname, role);
+                        new StaffDashboard(fullname, role, username);
                         break;
                     }
                 case "Process Orders":
@@ -374,7 +440,7 @@ public abstract class BaseFrame extends JFrame {
                     break;
                 case "Settings":
                     dispose();
-                    new SettingsForm(fullname, role);
+                    new SettingsForm(fullname, role, username);
                     break;
                 default:
                     JOptionPane.showMessageDialog(this, label + " — coming soon.");

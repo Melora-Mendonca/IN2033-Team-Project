@@ -1,11 +1,9 @@
-package IPOS.SA.ACC.Service;
+package IPOS.SA.ORD.Service;
 
-import IPOS.SA.ACC.Model.Payment;
 import IPOS.SA.DB.DBConnection;
 import IPOS.SA.DB.InvoiceDBConnector;
 
 import java.sql.ResultSet;
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -20,8 +18,6 @@ public class PaymentService {
     }
 
     // Records a payment against an invoice
-    // Updates RecordPayment table, Invoice amount_paid/status,
-    // and CommercialMembership outstanding_balance
     public void recordPayment(String invoiceId, double amount,
                               String method, String reference) throws Exception {
 
@@ -57,28 +53,25 @@ public class PaymentService {
         double newAmountPaid = alreadyPaid + amount;
         invoiceDB.updatePayment(invoiceId, newAmountPaid);
 
-        // Update merchant outstanding balance and last payment date
+        // Update merchant outstanding balance in merchant table
         db.update(
-                "UPDATE CommercialMembership SET " +
-                        "outstanding_balance = outstanding_balance - ?, " +
-                        "last_payment_date = CURRENT_DATE() " +
+                "UPDATE merchant SET outstanding_balance = outstanding_balance - ? " +
                         "WHERE merchant_id = ?",
                 amount, merchantId
         );
 
         // Check if account should be restored from suspended/in_default
-        // If balance is now 0 and status is suspended or in_default, restore to normal
         ResultSet merchantRs = db.query(
-                "SELECT outstanding_balance, account_status FROM CommercialMembership WHERE merchant_id = ?",
+                "SELECT outstanding_balance, account_status FROM merchant WHERE merchant_id = ?",
                 merchantId
         );
         if (merchantRs.next()) {
             double newBalance = merchantRs.getDouble("outstanding_balance");
-            String status     = merchantRs.getString("account_status");
-            if (newBalance <= 0 && (status.equals("suspended") || status.equals("in_default"))) {
+            String accountStatus = merchantRs.getString("account_status");
+            if (newBalance <= 0 && (accountStatus.equals("suspended") || accountStatus.equals("in_default"))) {
                 db.update(
-                        "UPDATE CommercialMembership SET account_status = 'normal', " +
-                                "outstanding_balance = 0 WHERE merchant_id = ?",
+                        "UPDATE merchant SET account_status = 'normal', outstanding_balance = 0 " +
+                                "WHERE merchant_id = ?",
                         merchantId
                 );
             }
@@ -94,7 +87,7 @@ public class PaymentService {
                         "i.total_amount, i.amount_paid, i.status, i.days_overdue " +
                         "FROM Invoice i " +
                         "JOIN `Order` o ON i.order_id = o.order_id " +
-                        "JOIN CommercialMembership m ON o.merchant_id = m.merchant_id " +
+                        "JOIN merchant m ON o.merchant_id = m.merchant_id " +
                         "WHERE 1=1";
 
         if (!statusFilter.equals("All")) sql += " AND i.status = '" + statusFilter + "'";
@@ -160,6 +153,7 @@ public class PaymentService {
     // Gets debtors — merchants with overdue invoices for reminders screen
     public List<Object[]> getDebtors() throws Exception {
         List<Object[]> rows = new ArrayList<>();
+
         ResultSet rs = db.query(
                 "SELECT m.merchant_id, m.company_name, m.email, " +
                         "SUM(i.total_amount - i.amount_paid) as outstanding, " +
@@ -167,7 +161,7 @@ public class PaymentService {
                         "m.account_status " +
                         "FROM Invoice i " +
                         "JOIN `Order` o ON i.order_id = o.order_id " +
-                        "JOIN CommercialMembership m ON o.merchant_id = m.merchant_id " +
+                        "JOIN merchant m ON o.merchant_id = m.merchant_id " +
                         "WHERE i.status IN ('unpaid', 'partial', 'overdue') " +
                         "GROUP BY m.merchant_id, m.company_name, m.email, m.account_status " +
                         "ORDER BY max_overdue DESC"

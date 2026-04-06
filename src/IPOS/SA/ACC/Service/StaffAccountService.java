@@ -37,14 +37,16 @@ public class StaffAccountService {
         String defaultPassword = hashPassword(staff.getUsername() + "123");
 
         int rowsAffected = db.update(
-                "INSERT INTO UserLogin (username, password_hash, first_Name, sur_Name, email, role, is_Active) " +
+                "INSERT INTO UserLogin (username, password_hash, first_Name, sur_Name, email, role, is_Active, role, address) " +
                         "VALUES (?, ?, ?, ?, ?, ?, 1)",
                 staff.getUsername(),
                 defaultPassword,
                 staff.getFirstName(),
                 staff.getSurName(),
                 staff.getEmail(),
-                staff.getRole()
+                staff.getRole(),
+                staff.getPhone(),
+                staff.getAddress()
         );
 
         return rowsAffected > 0;
@@ -73,7 +75,7 @@ public class StaffAccountService {
      */
     public Staff loadStaff(String staffId) throws Exception {
         ResultSet rs = db.query(
-                "SELECT user_id, username, first_Name, sur_Name, email, role, is_Active " +
+                "SELECT user_id, username, first_Name, sur_Name, email, role, is_Active, phone, address " +
                         "FROM UserLogin WHERE user_id = ?",
                 staffId
         );
@@ -93,13 +95,15 @@ public class StaffAccountService {
      */
     public boolean updateStaff(Staff staff) throws Exception {
         int rowsAffected = db.update(
-                "UPDATE UserLogin SET username=?, first_Name=?, sur_Name=?, email=?, role=? " +
+                "UPDATE UserLogin SET username=?, first_Name=?, sur_Name=?, email=?, role=?, phone=?, address=?" +
                         "WHERE user_id=?",
                 staff.getUsername(),
                 staff.getFirstName(),
                 staff.getSurName(),
                 staff.getEmail(),
                 staff.getRole(),
+                staff.getPhone(),
+                staff.getAddress(),
                 Integer.parseInt(staff.getStaffId())  // Convert staffId (String) to int for user_id
         );
 
@@ -170,6 +174,8 @@ public class StaffAccountService {
         staff.setEmail(rs.getString("email"));
         staff.setRole(rs.getString("role"));
         staff.setActive(rs.getInt("is_Active") == 1);
+        staff.setPhone(rs.getString("phone"));
+        staff.setAddress(rs.getString("address"));
         return staff;
     }
 }

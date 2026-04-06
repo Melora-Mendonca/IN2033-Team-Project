@@ -337,7 +337,7 @@ public class LoginForm extends JFrame {
             switch (user.getRole()) {
                 case "Administrator":
                     System.out.println("Creating AdminDashboard...");
-                    AdminDashboard adminDashboard = new AdminDashboard(user.getFullName(), user.getRole());
+                    AdminDashboard adminDashboard = new AdminDashboard(user.getFullName(), user.getRole(), user.getUsername());
                     if (warnings != null && !warnings.isEmpty()) {
                         showStockWarning(adminDashboard, warnings);
                     }
@@ -346,7 +346,7 @@ public class LoginForm extends JFrame {
 
                 case "Director of Operations":
                     System.out.println("Creating ManagerDashboard...");
-                    ManagerDashboard managerDashboard = new ManagerDashboard(user.getFullName(), user.getRole());
+                    ManagerDashboard managerDashboard = new ManagerDashboard(user.getFullName(), user.getRole(), user.getUsername());
                     if (warnings != null && !warnings.isEmpty()) {
                         showStockWarning(managerDashboard, warnings);
                     }
@@ -358,7 +358,7 @@ public class LoginForm extends JFrame {
                 case "Warehouse Employee":
                 case "Delivery Employee":
                     System.out.println("Creating StaffDashboard...");
-                    StaffDashboard staffDashboard = new StaffDashboard(user.getFullName(), user.getRole());
+                    StaffDashboard staffDashboard = new StaffDashboard(user.getFullName(), user.getRole(), user.getUsername());
                     System.out.println("StaffDashboard created successfully");
                     break;
 

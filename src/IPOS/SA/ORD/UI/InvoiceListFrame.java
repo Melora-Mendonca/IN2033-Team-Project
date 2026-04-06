@@ -1,89 +1,106 @@
 package IPOS.SA.ORD.UI;
 
+import IPOS.SA.ORD.Service.InvoiceService;
 import IPOS.SA.ORD.Model.Invoice;
-import IPOS.SA.DB.InvoiceDBConnector;
+import IPOS.SA.UI.BaseFrame;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableRowSorter;
 import java.awt.*;
 import java.util.List;
 
-public class InvoiceListFrame extends JFrame {
+public class InvoiceListFrame extends BaseFrame {
 
-    private static final Color DARK_NAVY = new Color(14, 37, 48);
-    private static final Color ACCENT    = new Color(17, 54, 74);
-    private static final Color BG        = new Color(245, 247, 250);
+    private final InvoiceService invoiceService;
+    private final String merchantId;
 
     private JTable invoiceTable;
     private DefaultTableModel tableModel;
     private TableRowSorter<DefaultTableModel> sorter;
     private JTextField searchField;
+    private JComboBox<String> statusFilter;
+    private JLabel messageLabel;
 
-    private final InvoiceDBConnector invoiceDB = new InvoiceDBConnector();
+    // Called from nav — no merchant filter
+    public InvoiceListFrame(String fullname, String role) {
+        this(fullname, role, null);
+    }
 
-    public InvoiceListFrame() {
-        setTitle("Invoices");
-        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        setSize(1000, 600);
-        setLocationRelativeTo(null);
-        buildUI();
+    // Called from MerchantList — filtered by merchant
+    public InvoiceListFrame(String fullname, String role, String merchantId) {
+        super(fullname, role, "Invoice Management");
+        this.merchantId     = merchantId;
+        this.invoiceService = new InvoiceService();
+        buildContent();
         loadInvoices();
-        setVisible(true);
     }
 
-    private void buildUI() {
-        JPanel root = new JPanel(new BorderLayout());
-        root.setBackground(BG);
-
-        root.add(buildHeader(), BorderLayout.NORTH);
-        root.add(buildTablePanel(), BorderLayout.CENTER);
-        root.add(buildFooter(), BorderLayout.SOUTH);
-
-        setContentPane(root);
+    @Override
+    protected String getHeaderTitle() {
+        if (merchantId != null) {
+            return "Invoices — " + merchantId;
+        } else {
+            return "Invoice Management";
+        }
     }
 
-    private JPanel buildHeader() {
-        JPanel header = new JPanel(new BorderLayout());
-        header.setBackground(DARK_NAVY);
-        header.setBorder(BorderFactory.createEmptyBorder(12, 20, 12, 20));
+    private void buildContent() {
+        CenterPanel.setLayout(new BorderLayout(0, 0));
+        CenterPanel.setBackground(new Color(245, 247, 250));
 
-        JLabel title = new JLabel("Invoice Records");
-        title.setFont(new Font("Segoe UI", Font.BOLD, 18));
-        title.setForeground(Color.WHITE);
+        // ── TOP BAR ──────────────────────────────────────────
+        JPanel topBar = new JPanel(new BorderLayout());
+        topBar.setBackground(new Color(17, 24, 39));
+        topBar.setBorder(new EmptyBorder(10, 16, 10, 16));
 
-        // Search bar
-        JPanel searchRow = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
-        searchRow.setOpaque(false);
-        searchField = new JTextField(20);
-        searchField.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-        searchField.setToolTipText("Search by Invoice ID or Merchant ID");
-        searchField.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
-            public void insertUpdate(javax.swing.event.DocumentEvent e)  { applyFilter(); }
-            public void removeUpdate(javax.swing.event.DocumentEvent e)  { applyFilter(); }
-            public void changedUpdate(javax.swing.event.DocumentEvent e) { applyFilter(); }
-        });
+        JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
+        searchPanel.setBackground(new Color(17, 24, 39));
+
         JLabel searchLbl = new JLabel("Search:");
         searchLbl.setForeground(Color.WHITE);
-        searchLbl.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-        searchRow.add(searchLbl);
-        searchRow.add(searchField);
+        searchLbl.setFont(new Font("Segoe UI", Font.PLAIN, 12));
 
-        JButton refreshBtn = styledButton("Refresh");
-        refreshBtn.addActionListener(e -> loadInvoices());
-        searchRow.add(refreshBtn);
+        searchField = new JTextField(16);
+        searchField.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        searchField.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
+            public void insertUpdate(javax.swing.event.DocumentEvent e)  { loadInvoices(); }
+            public void removeUpdate(javax.swing.event.DocumentEvent e)  { loadInvoices(); }
+            public void changedUpdate(javax.swing.event.DocumentEvent e) { loadInvoices(); }
+        });
 
-        header.add(title, BorderLayout.WEST);
-        header.add(searchRow, BorderLayout.EAST);
-        return header;
-    }
+        JLabel filterLbl = new JLabel("Status:");
+        filterLbl.setForeground(Color.WHITE);
+        filterLbl.setFont(new Font("Segoe UI", Font.PLAIN, 12));
 
-    private JPanel buildTablePanel() {
-        JPanel panel = new JPanel(new BorderLayout());
-        panel.setBackground(Color.WHITE);
-        panel.setBorder(BorderFactory.createEmptyBorder(12, 16, 12, 16));
+        statusFilter = new JComboBox<>(new String[]{
+                "All", "unpaid", "partial", "paid", "overdue"
+        });
+        statusFilter.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        statusFilter.addActionListener(e -> loadInvoices());
 
-        String[] cols = {"Invoice ID", "Order ID", "Merchant ID", "Date", "Gross (£)", "Discount (£)", "Final Total (£)"};
+        JButton refreshBtn = new JButton("Refresh");
+        styleBtn(refreshBtn);
+        refreshBtn.addActionListener(e -> {
+            invoiceService.updateOverdueDays();
+            loadInvoices();
+        });
+
+        searchPanel.add(searchLbl);
+        searchPanel.add(searchField);
+        searchPanel.add(filterLbl);
+        searchPanel.add(statusFilter);
+        searchPanel.add(refreshBtn);
+        topBar.add(searchPanel, BorderLayout.WEST);
+
+        // ── TABLE ─────────────────────────────────────────────
+        String[] cols = {
+                "Invoice ID", "Order ID", "Merchant", "Invoice Date",
+                "Due Date", "Total (£)", "Paid (£)", "Status", "Days Overdue"
+        };
+
         tableModel = new DefaultTableModel(cols, 0) {
             public boolean isCellEditable(int r, int c) { return false; }
         };
@@ -92,15 +109,36 @@ public class InvoiceListFrame extends JFrame {
         invoiceTable.setFont(new Font("Segoe UI", Font.PLAIN, 12));
         invoiceTable.setRowHeight(30);
         invoiceTable.setShowGrid(false);
-        invoiceTable.setSelectionBackground(new Color(207, 226, 255));
+        invoiceTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         invoiceTable.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 12));
-        invoiceTable.getTableHeader().setBackground(DARK_NAVY);
+        invoiceTable.getTableHeader().setBackground(new Color(17, 24, 39));
         invoiceTable.getTableHeader().setForeground(Color.WHITE);
+        invoiceTable.getTableHeader().setReorderingAllowed(false);
 
         sorter = new TableRowSorter<>(tableModel);
         invoiceTable.setRowSorter(sorter);
 
-        // Double-click opens display frame
+        // Status colour coding
+        invoiceTable.getColumnModel().getColumn(7).setCellRenderer(
+                new DefaultTableCellRenderer() {
+                    public Component getTableCellRendererComponent(JTable t, Object val,
+                                                                   boolean sel, boolean foc, int row, int col) {
+                        JLabel lbl = new JLabel(val != null ? val.toString() : "", SwingConstants.CENTER);
+                        lbl.setOpaque(true);
+                        lbl.setFont(new Font("Segoe UI", Font.BOLD, 11));
+                        if (val != null) switch (val.toString()) {
+                            case "paid":    lbl.setBackground(new Color(198, 239, 206)); lbl.setForeground(new Color(0, 97, 0));    break;
+                            case "partial": lbl.setBackground(new Color(207, 226, 255)); lbl.setForeground(new Color(10, 64, 168)); break;
+                            case "overdue": lbl.setBackground(new Color(255, 199, 206)); lbl.setForeground(new Color(156, 0, 6));   break;
+                            case "unpaid":  lbl.setBackground(new Color(255, 243, 205)); lbl.setForeground(new Color(133, 100, 4)); break;
+                            default:        lbl.setBackground(Color.WHITE);              lbl.setForeground(Color.BLACK);
+                        }
+                        return lbl;
+                    }
+                }
+        );
+
+        // Double click opens invoice details
         invoiceTable.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent e) {
                 if (e.getClickCount() == 2) openSelectedInvoice();
@@ -109,64 +147,124 @@ public class InvoiceListFrame extends JFrame {
 
         JScrollPane scroll = new JScrollPane(invoiceTable);
         scroll.setBorder(BorderFactory.createEmptyBorder());
-        panel.add(scroll, BorderLayout.CENTER);
-        return panel;
+
+        // ── BOTTOM BUTTONS ────────────────────────────────────
+        JPanel bottomPanel = new JPanel(new BorderLayout());
+        bottomPanel.setBackground(new Color(17, 24, 39));
+        bottomPanel.setBorder(new EmptyBorder(10, 12, 10, 12));
+
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
+        buttonPanel.setBackground(new Color(17, 24, 39));
+
+        JButton viewBtn     = new JButton("View Invoice");
+        JButton generateBtn = new JButton("Generate Invoice");
+        styleBtn(viewBtn);
+        styleBtn(generateBtn);
+
+        viewBtn.addActionListener(e     -> openSelectedInvoice());
+        generateBtn.addActionListener(e -> generateInvoiceForOrder());
+
+        buttonPanel.add(viewBtn);
+        buttonPanel.add(generateBtn);
+
+        messageLabel = new JLabel(" ");
+        messageLabel.setFont(new Font("Segoe UI", Font.PLAIN, 11));
+        messageLabel.setForeground(Color.WHITE);
+
+        bottomPanel.add(buttonPanel,  BorderLayout.WEST);
+        bottomPanel.add(messageLabel, BorderLayout.EAST);
+
+        CenterPanel.add(topBar,      BorderLayout.NORTH);
+        CenterPanel.add(scroll,      BorderLayout.CENTER);
+        CenterPanel.add(bottomPanel, BorderLayout.SOUTH);
     }
 
-    private JPanel buildFooter() {
-        JPanel footer = new JPanel(new FlowLayout(FlowLayout.RIGHT, 12, 8));
-        footer.setBackground(Color.WHITE);
-        footer.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, new Color(220, 220, 220)));
-
-        JButton viewBtn = styledButton("View Invoice");
-        viewBtn.addActionListener(e -> openSelectedInvoice());
-        footer.add(viewBtn);
-
-        return footer;
-    }
-
+    // ── DATA METHODS ─────────────────────────────────────────
     private void loadInvoices() {
         tableModel.setRowCount(0);
-        List<Object[]> rows = invoiceDB.getInvoicesForDisplay();
-        for (Object[] row : rows) {
-            tableModel.addRow(row);
-        }
-    }
+        try {
+            String search = searchField != null ? searchField.getText().trim() : "";
+            String status = statusFilter != null
+                    ? statusFilter.getSelectedItem().toString() : "All";
 
-    private void applyFilter() {
-        String text = searchField.getText().trim();
-        if (text.isEmpty()) {
-            sorter.setRowFilter(null);
-        } else {
-            // Filter on Invoice ID (col 0) or Merchant ID (col 2)
-            sorter.setRowFilter(RowFilter.regexFilter("(?i)" + text, 0, 2));
+            List<Object[]> rows;
+            if (merchantId != null) {
+                rows = invoiceService.getMerchantInvoices(merchantId, status, search);
+            } else {
+                rows = invoiceService.getAllInvoices(status, search);
+            }
+
+            for (Object[] row : rows) tableModel.addRow(row);
+
+            if (messageLabel != null)
+                messageLabel.setText(tableModel.getRowCount() + " invoices loaded");
+        } catch (Exception e) {
+            if (messageLabel != null)
+                messageLabel.setText("Error: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
     private void openSelectedInvoice() {
         int row = invoiceTable.getSelectedRow();
         if (row < 0) {
-            JOptionPane.showMessageDialog(this, "Please select an invoice to view.", "No Selection", JOptionPane.WARNING_MESSAGE);
+            setMsg("Select an invoice to view.", false);
             return;
         }
-        int modelRow   = invoiceTable.convertRowIndexToModel(row);
-        String invoiceId = (String) tableModel.getValueAt(modelRow, 0);
-        Invoice invoice = invoiceDB.getInvoiceById(invoiceId);
-        if (invoice != null) {
-            new InvoiceDisplayFrame(invoice);
-        } else {
-            JOptionPane.showMessageDialog(this, "Could not load invoice details.", "Error", JOptionPane.ERROR_MESSAGE);
+        int modelRow  = invoiceTable.convertRowIndexToModel(row);
+        String invoiceId = tableModel.getValueAt(modelRow, 0).toString();
+
+        try {
+            Invoice invoice = invoiceService.getInvoiceById(invoiceId);
+            if (invoice != null) {
+                new InvoiceDisplayFrame(invoice);
+            } else {
+                setMsg("Could not load invoice details.", false);
+            }
+        } catch (Exception e) {
+            setMsg("Error: " + e.getMessage(), false);
         }
     }
 
-    private JButton styledButton(String text) {
-        JButton btn = new JButton(text);
-        btn.setFont(new Font("Segoe UI", Font.BOLD, 12));
-        btn.setBackground(ACCENT);
+    private void generateInvoiceForOrder() {
+        String orderId = JOptionPane.showInputDialog(this,
+                "Enter Order ID to generate invoice for:",
+                "Generate Invoice", JOptionPane.PLAIN_MESSAGE);
+
+        if (orderId == null || orderId.trim().isEmpty()) return;
+
+        try {
+            // Check invoice doesn't already exist
+            List<Object[]> existing = invoiceService.getAllInvoices("All", orderId.trim());
+            for (Object[] row : existing) {
+                if (row[1].toString().equals(orderId.trim())) {
+                    setMsg("Invoice already exists for order " + orderId + ".", false);
+                    return;
+                }
+            }
+
+            invoiceService.generateInvoiceForOrder(orderId.trim());
+            loadInvoices();
+            setMsg("Invoice generated for order " + orderId + ".", true);
+
+        } catch (Exception e) {
+            setMsg("Error: " + e.getMessage(), false);
+        }
+    }
+
+    // ── HELPERS ──────────────────────────────────────────────
+    private void styleBtn(JButton btn) {
+        btn.setBackground(new Color(30, 70, 90));
         btn.setForeground(Color.WHITE);
         btn.setFocusPainted(false);
         btn.setBorderPainted(false);
-        btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        return btn;
+        btn.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+    }
+
+    private void setMsg(String text, boolean success) {
+        messageLabel.setText(text);
+        messageLabel.setForeground(success
+                ? new Color(0, 200, 100)
+                : new Color(255, 100, 100));
     }
 }

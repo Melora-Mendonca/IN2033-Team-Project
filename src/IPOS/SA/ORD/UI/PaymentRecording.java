@@ -1,6 +1,6 @@
 package IPOS.SA.ORD.UI;
 
-import IPOS.SA.ACC.Service.PaymentService;
+import IPOS.SA.ORD.Service.PaymentService;
 import IPOS.SA.DB.InvoiceDBConnector;
 import IPOS.SA.UI.BaseFrame;
 
@@ -138,7 +138,13 @@ public class PaymentRecording extends BaseFrame {
 
         buttonPanel.add(recordPaymentBtn);
         buttonPanel.add(viewDetailsBtn);
-        buttonPanel.add(debtorsBtn);
+
+// Only senior accountant, admin and director can view debtors
+        if (role.equals("Senior Accountant") ||
+                role.equals("Administrator") ||
+                role.equals("Director of Operations")) {
+            buttonPanel.add(debtorsBtn);
+        }
 
         messageLabel = new JLabel(" ");
         messageLabel.setFont(new Font("Segoe UI", Font.PLAIN, 11));
@@ -160,11 +166,41 @@ public class PaymentRecording extends BaseFrame {
         try {
             String search = searchField != null ? searchField.getText().trim() : "";
             String status = statusFilter != null ? statusFilter.getSelectedItem().toString() : "All";
+
+            // DEBUG: Print to console
+            System.out.println("=== LOADING INVOICES ===");
+            System.out.println("Search: '" + search + "'");
+            System.out.println("Status filter: '" + status + "'");
+
             List<Object[]> rows = paymentService.getAllInvoices(status, search);
-            for (Object[] row : rows) tableModel.addRow(row);
+
+            // DEBUG: Check if rows is null or empty
+            System.out.println("Rows returned: " + (rows == null ? "null" : rows.size()));
+
+            if (rows != null) {
+                for (Object[] row : rows) {
+                    tableModel.addRow(row);
+                    // DEBUG: Print first row
+                    if (tableModel.getRowCount() == 1) {
+                        System.out.println("First row data: ");
+                        for (Object obj : row) {
+                            System.out.print(obj + " | ");
+                        }
+                        System.out.println();
+                    }
+                }
+            }
+
             if (messageLabel != null)
                 messageLabel.setText(tableModel.getRowCount() + " invoices loaded");
+
+            // If no rows, show message
+            if (tableModel.getRowCount() == 0) {
+                System.out.println("WARNING: No invoices found in database!");
+            }
+
         } catch (Exception e) {
+            e.printStackTrace();  // This will show the actual error
             if (messageLabel != null)
                 messageLabel.setText("Error: " + e.getMessage());
         }
@@ -198,6 +234,21 @@ public class PaymentRecording extends BaseFrame {
         JTextField referenceField = new JTextField();
         JComboBox<String> methodCombo = new JComboBox<>(new String[]{
                 "bank_transfer", "cheque", "cash", "card"
+        });
+
+        JLabel referenceLabel = fieldLabel("Reference No:");
+
+        methodCombo.addActionListener(e -> {
+            String method = methodCombo.getSelectedItem().toString();
+            if (method.equals("cheque")) {
+                referenceLabel.setText("Cheque Number:");
+            } else if (method.equals("bank_transfer")) {
+                referenceLabel.setText("Bank Reference:");
+            } else if (method.equals("card")) {
+                referenceLabel.setText("Transaction ID:");
+            } else {
+                referenceLabel.setText("Receipt Number:");
+            }
         });
 
         form.add(fieldLabel("Invoice ID:"));     form.add(new JLabel(invoiceId));

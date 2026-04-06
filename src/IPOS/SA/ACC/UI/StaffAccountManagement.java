@@ -71,7 +71,7 @@ public class StaffAccountManagement extends BaseFrame {
         grid.setLayout(new BoxLayout(grid, BoxLayout.Y_AXIS));
         grid.setBackground(Color.WHITE);
 
-        staffIdField    = createTextField();
+        staffIdField = createTextField();
         usernameField   = createTextField();
         firstNameField  = createTextField();
         surNameField    = createTextField();
@@ -80,32 +80,34 @@ public class StaffAccountManagement extends BaseFrame {
         addressField    = createTextField();
 
         roleDropdown = new JComboBox<>(new String[]{
-                "administrator",
-                "director_of_operations",
-                "senior_accountant",
-                "accountant",
-                "warehouse_employee",
-                "delivery_employee"
+                "Administrator",
+                "Director of Operations",
+                "Senior Accountant",
+                "Accountant",
+                "Warehouse Employee",
+                "Delivery Employee"
         });
         roleDropdown.setFont(new Font("Segoe UI", Font.PLAIN, 12));
         roleDropdown.setMaximumSize(new Dimension(Integer.MAX_VALUE, 38));
         roleDropdown.addActionListener(e ->
                 selectedRole = roleDropdown.getSelectedItem().toString());
 
-        JPanel row1 = row(1); row1.add(fieldWrapper("ROLE",       roleDropdown));
-        JPanel row2 = row(2); row2.add(fieldWrapper("STAFF ID",   staffIdField));
-        row2.add(fieldWrapper("USERNAME",   usernameField));
-        JPanel row3 = row(2); row3.add(fieldWrapper("FIRST NAME", firstNameField));
-        row3.add(fieldWrapper("SURNAME",    surNameField));
-        JPanel row4 = row(2); row4.add(fieldWrapper("EMAIL",      emailField));
-        row4.add(fieldWrapper("PHONE",      phoneField));
-        JPanel row5 = row(1); row5.add(fieldWrapper("ADDRESS",    addressField));
+        JPanel row1 = row(1);
+        row1.add(fieldWrapper("ROLE",       roleDropdown));
+        row1.add(fieldWrapper("USERNAME",   usernameField));
+        JPanel row2 = row(2);
+        row2.add(fieldWrapper("FIRST NAME", firstNameField));
+        row2.add(fieldWrapper("SURNAME",    surNameField));
+        JPanel row3 = row(2);
+        row3.add(fieldWrapper("EMAIL",      emailField));
+        row3.add(fieldWrapper("PHONE",      phoneField));
+        JPanel row4 = row(1); row4.add(fieldWrapper("ADDRESS",    addressField));
 
         grid.add(row1); grid.add(Box.createVerticalStrut(12));
         grid.add(row2); grid.add(Box.createVerticalStrut(12));
         grid.add(row3); grid.add(Box.createVerticalStrut(12));
-        grid.add(row4); grid.add(Box.createVerticalStrut(12));
-        grid.add(row5);
+        grid.add(row4);
+
 
         messageLabel = new JLabel(" ");
         messageLabel.setFont(new Font("Segoe UI", Font.PLAIN, 11));
@@ -174,7 +176,7 @@ public class StaffAccountManagement extends BaseFrame {
 
         createBtn.addActionListener(e -> createStaff());
         clearBtn.addActionListener(e  -> clearForm());
-        backBtn.addActionListener(e   -> { dispose(); new AdminDashboard(fullname, role); });
+        backBtn.addActionListener(e   -> { dispose(); new AdminDashboard(fullname, role, username); });
 
         actionsCard.add(createBtn); actionsCard.add(Box.createVerticalStrut(8));
         actionsCard.add(clearBtn);  actionsCard.add(Box.createVerticalStrut(8));
@@ -192,7 +194,7 @@ public class StaffAccountManagement extends BaseFrame {
         updateBtn.addActionListener(e -> updateStaff());
         deleteBtn.addActionListener(e -> deactivateStaff());
         clearBtn.addActionListener(e  -> clearForm());
-        backBtn.addActionListener(e   -> { dispose(); new AdminDashboard(fullname, role); });
+        backBtn.addActionListener(e   -> { dispose(); new AdminDashboard(fullname, role, username); });
 
         actionsCard.add(loadBtn);   actionsCard.add(Box.createVerticalStrut(8));
         actionsCard.add(updateBtn); actionsCard.add(Box.createVerticalStrut(8));
@@ -208,18 +210,24 @@ public class StaffAccountManagement extends BaseFrame {
             String firstName  = firstNameField.getText().trim();
             String surName    = surNameField.getText().trim();
 
-            if (username.isEmpty())                      { setMessage("Username is required.", false); return; }
-            if (firstName.isEmpty() || surName.isEmpty()) { setMessage("First name and surname are required.", false); return; }
+            if (username.isEmpty()) {
+                setMessage("Username is required.", false);
+                return;
+            }
+            if (firstName.isEmpty() || surName.isEmpty()) {
+                setMessage("First name and surname are required.", false);
+                return;
+            }
 
-            Staff staff = new Staff("", username, firstName, surName,
-                    emailField.getText().trim(),
-                    phoneField.getText().trim(),
-                    addressField.getText().trim(),
-                    selectedRole);
+            // Pass empty string or null for staffId - it will be auto-generated
+            Staff staff = new Staff("", username, firstName, surName, emailField.getText().trim(), phoneField.getText().trim(), addressField.getText().trim(), selectedRole);
 
             if (accountService.createStaff(staff)) {
-                setMessage("Staff account created successfully.", true);
                 clearForm();
+                setMessage("Staff account created successfully. Staff ID is auto-generated.", true);
+
+                // Optionally, refresh to show the new ID
+                // You could call loadStaff() with the new ID if your service returns it
             } else {
                 setMessage("Username already exists.", false);
             }
@@ -317,7 +325,7 @@ public class StaffAccountManagement extends BaseFrame {
         phoneField.setText("");
         addressField.setText("");
         roleDropdown.setSelectedIndex(0);
-        selectedRole = "administrator";
+        selectedRole = "Administrator";
         statusLabel.setText("--");
         setMessage("", true);
     }

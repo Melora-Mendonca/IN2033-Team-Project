@@ -115,30 +115,6 @@ public class StaffList extends BaseFrame {
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
         buttonPanel.setBackground(new Color(17, 24, 39));
 
-        JButton viewDetailsButton = new JButton("View / Edit Staff");
-        JButton createButton      = new JButton("Create Staff Account");
-        styleBtn(viewDetailsButton);
-        styleBtn(createButton);
-
-        viewDetailsButton.addActionListener(e -> {
-            int row = staffTable.getSelectedRow();
-            if (row >= 0) {
-                String staffId = tableModel.getValueAt(row, 0).toString();
-                dispose();
-                new StaffAccountManagement(fullname, role, "MANAGE", staffId);
-            } else {
-                JOptionPane.showMessageDialog(this, "Please select a staff member to view details.");
-            }
-        });
-
-        createButton.addActionListener(e -> {
-            dispose();
-            new StaffAccountManagement(fullname, role, "CREATE");
-        });
-
-        buttonPanel.add(viewDetailsButton);
-        buttonPanel.add(createButton);
-
         statusLabel = new JLabel("Ready");
         statusLabel.setFont(new Font("Segoe UI", Font.PLAIN, 11));
         statusLabel.setForeground(Color.WHITE);
@@ -149,6 +125,33 @@ public class StaffList extends BaseFrame {
         CenterPanel.add(topBar,      BorderLayout.NORTH);
         CenterPanel.add(scroll,      BorderLayout.CENTER);
         CenterPanel.add(bottomPanel, BorderLayout.SOUTH);
+
+        if (role.equals("Administrator")) {
+            JButton createButton = new JButton("Create Account");
+            styleBtn(createButton);
+            createButton.addActionListener(e -> {
+                dispose();
+                new StaffAccountManagement(fullname, role, "CREATE");
+            });
+            buttonPanel.add(createButton);
+
+            JButton viewDetailsButton = new JButton("Manage Staff");
+            styleBtn(viewDetailsButton);
+
+            viewDetailsButton.addActionListener(e -> {
+                int row = staffTable.getSelectedRow();
+                if (row >= 0) {
+                    String staffId = tableModel.getValueAt(row, 0).toString();
+                    dispose();
+                    new StaffAccountManagement(fullname, role, "MANAGE", staffId);
+                } else {
+                    JOptionPane.showMessageDialog(this, "Please select a staff member to view details.");
+                }
+            });
+
+            buttonPanel.add(viewDetailsButton);
+
+        }
     }
 
     // DATA METHODS

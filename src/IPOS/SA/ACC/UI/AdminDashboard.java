@@ -21,8 +21,8 @@ public class AdminDashboard extends BaseFrame {
     private JTable OrderStatusTable;
     private JTable LowStockTable;
 
-    public AdminDashboard(String fullname, String role) {
-        super(fullname, role, "Admin Dashboard");
+    public AdminDashboard(String fullname, String role, String username) {
+        super(fullname, role, username,"Admin Dashboard");
         this.dashboardService = new AdminService();
 
         loadDashboardData();

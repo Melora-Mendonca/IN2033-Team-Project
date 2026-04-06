@@ -41,7 +41,7 @@ public class InvoiceDBConnector {
                             "i.total_amount, i.amount_paid, i.status, i.days_overdue " +
                             "FROM Invoice i " +
                             "JOIN `Order` o ON i.order_id = o.order_id " +
-                            "JOIN CommercialMembership m ON o.merchant_id = m.merchant_id " +
+                            "JOIN merchant m ON o.merchant_id = m.merchant_id " +
                             "ORDER BY i.invoice_date DESC";
             PreparedStatement stmt = conn.prepareStatement(sql);
             ResultSet rs = stmt.executeQuery();

@@ -19,8 +19,8 @@ public class ManagerDashboard extends BaseFrame {
     private JTable lowStockTable;
     private JLabel headerSubTitle;
 
-    public ManagerDashboard(String fullname, String role) {
-        super(fullname, role, "Manager Dashboard");
+    public ManagerDashboard(String fullname, String role, String username) {
+        super(fullname, role, username, "Manager Dashboard");
         this.dashboardService = new ManagerService();
 
         loadDashboardData();

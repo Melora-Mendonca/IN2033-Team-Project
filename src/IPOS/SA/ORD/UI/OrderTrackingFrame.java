@@ -2,12 +2,11 @@ package IPOS.SA.ORD.UI;
 
 import IPOS.SA.ORD.Service.OrderService;
 import IPOS.SA.ACC.Service.AccountService;
-import IPOS.SA.ACC.Service.InvoiceService;
+import IPOS.SA.ORD.Service.InvoiceService;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
-import javax.swing.table.TableRowSorter;
 import java.awt.*;
 import java.util.List;
 

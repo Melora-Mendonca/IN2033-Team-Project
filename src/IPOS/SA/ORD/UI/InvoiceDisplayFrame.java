@@ -178,7 +178,7 @@ public class InvoiceDisplayFrame extends JFrame {
     private String getItemDescription(String itemId) {
         try {
             IPOS.SA.DB.DBConnection db = new IPOS.SA.DB.DBConnection();
-            java.sql.ResultSet rs = db.query("SELECT description FROM Catalogue WHERE item_id = ?", itemId);
+            java.sql.ResultSet rs = db.query("SELECT description FROM catalogue WHERE item_id = ?", itemId);
             if (rs.next()) {
                 return rs.getString("description");
             }
@@ -219,7 +219,7 @@ public class InvoiceDisplayFrame extends JFrame {
             // Scale to fit the page width
             double pageWidth  = pageFormat.getImageableWidth();
             double panelWidth = 700;
-            double scale      = pageWidth / panelWidth;
+            double scale = pageWidth / panelWidth;
             g2d.scale(scale, scale);
 
             // Build a fresh panel sized for printing
@@ -275,7 +275,7 @@ public class InvoiceDisplayFrame extends JFrame {
         panel.add(printRow("Status:",       invoice.getStatus().toUpperCase()));
 
         if (invoice.isOverdue()) {
-            panel.add(printRow("", "⚠️ OVERDUE — " + invoice.getDaysOverdue() + " days overdue"));
+            panel.add(printRow("", "OVERDUE — " + invoice.getDaysOverdue() + " days overdue"));
         }
 
         return panel;

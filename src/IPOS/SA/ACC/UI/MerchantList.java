@@ -2,6 +2,8 @@ package IPOS.SA.ACC.UI;
 
 import IPOS.SA.ACC.Model.MerchantAccount;
 import IPOS.SA.ACC.Service.AccountService;
+import IPOS.SA.ORD.UI.InvoiceListFrame;
+import IPOS.SA.ORD.UI.OrderManagement;
 import IPOS.SA.UI.BaseFrame;
 
 import javax.swing.*;
@@ -19,12 +21,29 @@ public class MerchantList extends BaseFrame {
     private DefaultTableModel tableModel;
     private JTextField searchField;
     private JLabel statusLabel;
+    private final String callerContext;  // "ORDERS", "INVOICES", or "DEFAULT"
 
+
+    // Original constructor for backward compatibility (defaults to full view)
     public MerchantList(String fullname, String role) {
-        super(fullname, role, "Merchant List");
+        this(fullname, role, "DEFAULT");
+    }
+
+    // New constructor with caller context
+    public MerchantList(String fullname, String role, String callerContext) {
+        super(fullname, role, getTitleForContext(callerContext));
         this.accountService = new AccountService();
+        this.callerContext = callerContext;
         buildContent();
         loadMerchantData();
+    }
+
+    private static String getTitleForContext(String callerContext) {
+        switch (callerContext) {
+            case "ORDERS": return "Select Merchant - View Orders";
+            case "INVOICES": return "Select Merchant - View Invoices";
+            default: return "Merchant List";
+        }
     }
 
     @Override
@@ -36,7 +55,7 @@ public class MerchantList extends BaseFrame {
         CenterPanel.setLayout(new BorderLayout(0, 0));
         CenterPanel.setBackground(new Color(245, 247, 250));
 
-        // TOP BAR
+        // TOP BAR (same as before)
         JPanel topBar = new JPanel(new BorderLayout());
         topBar.setBackground(new Color(17, 24, 39));
         topBar.setBorder(new EmptyBorder(10, 16, 10, 16));
@@ -68,7 +87,7 @@ public class MerchantList extends BaseFrame {
         searchPanel.add(refreshButton);
         topBar.add(searchPanel, BorderLayout.WEST);
 
-        // TABLE
+        // TABLE (same as before)
         String[] columns = {
                 "Merchant ID", "Business Name", "Email", "Phone",
                 "Credit Limit", "Balance", "Status"
@@ -111,7 +130,7 @@ public class MerchantList extends BaseFrame {
         JScrollPane scroll = new JScrollPane(merchantTable);
         scroll.setBorder(BorderFactory.createEmptyBorder());
 
-        // BOTTOM BUTTONS
+        // BOTTOM BUTTONS - MODIFIED BASED ON CONTEXT
         JPanel bottomPanel = new JPanel(new BorderLayout());
         bottomPanel.setBackground(new Color(17, 24, 39));
         bottomPanel.setBorder(new EmptyBorder(10, 12, 10, 12));
@@ -119,30 +138,138 @@ public class MerchantList extends BaseFrame {
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
         buttonPanel.setBackground(new Color(17, 24, 39));
 
-        JButton viewDetailsButton = new JButton("View Details");
-        JButton createButton      = new JButton("Create Account");
-        styleBtn(viewDetailsButton);
-        styleBtn(createButton);
+        // Create buttons based on caller context
+        if ("DEFAULT".equals(callerContext)) {
+            // Full view - show all buttons
+            JButton viewDetailsButton = new JButton("View Details");
+            JButton viewOrdersButton = new JButton("View Orders");
+            JButton viewInvoicesButton = new JButton("View Invoices");
 
-        viewDetailsButton.addActionListener(e -> {
-            int row = merchantTable.getSelectedRow();
-            if (row >= 0) {
-                String merchantId = tableModel.getValueAt(row, 0).toString();
-                dispose();
-                new AccountManagement(fullname, role, "MANAGE", merchantId);
-            } else {
-                JOptionPane.showMessageDialog(this, "Please select a merchant to view details.");
+            styleBtn(viewDetailsButton);
+            styleBtn(viewOrdersButton);
+            styleBtn(viewInvoicesButton);
+
+            viewDetailsButton.addActionListener(e -> {
+                int row = merchantTable.getSelectedRow();
+                if (row >= 0) {
+                    String merchantId = tableModel.getValueAt(row, 0).toString();
+                    dispose();
+                    new AccountManagement(fullname, role, "MANAGE", merchantId);
+                } else {
+                    JOptionPane.showMessageDialog(this, "Please select a merchant to view details.");
+                }
+            });
+
+            viewOrdersButton.addActionListener(e -> {
+                int row = merchantTable.getSelectedRow();
+                if (row >= 0) {
+                    String merchantId = tableModel.getValueAt(row, 0).toString();
+                    dispose();
+                    new OrderManagement(fullname, role, merchantId);
+                } else {
+                    JOptionPane.showMessageDialog(this, "Please select a merchant.");
+                }
+            });
+
+            viewInvoicesButton.addActionListener(e -> {
+                int row = merchantTable.getSelectedRow();
+                if (row >= 0) {
+                    String merchantId = tableModel.getValueAt(row, 0).toString();
+                    dispose();
+                    new InvoiceListFrame(fullname, role, merchantId);
+                } else {
+                    JOptionPane.showMessageDialog(this, "Please select a merchant.");
+                }
+            });
+
+            buttonPanel.add(viewDetailsButton);
+            buttonPanel.add(viewOrdersButton);
+            buttonPanel.add(viewInvoicesButton);
+
+            // ONLY Administrators can create merchant accounts
+            if (role.equals("Administrator")) {
+                JButton createButton = new JButton("Create Account");
+                styleBtn(createButton);
+                createButton.addActionListener(e -> {
+                    dispose();
+                    new AccountManagement(fullname, role, "CREATE");
+                });
+                buttonPanel.add(createButton);
             }
-        });
 
-        buttonPanel.add(viewDetailsButton);
+        } else if ("ORDERS".equals(callerContext)) {
+            // Orders view - only show "View Orders" button and a back button
+            JButton selectButton = new JButton("View Orders");
+            JButton backButton = new JButton("← Back");
+
+            styleBtn(selectButton);
+            styleBtn(backButton);
+
+            selectButton.addActionListener(e -> {
+                int row = merchantTable.getSelectedRow();
+                if (row >= 0) {
+                    String merchantId = tableModel.getValueAt(row, 0).toString();
+                    dispose();
+                    new OrderManagement(fullname, role, merchantId);
+                } else {
+                    JOptionPane.showMessageDialog(this, "Please select a merchant.");
+                }
+            });
+
+            backButton.addActionListener(e -> {
+                dispose();
+                new AdminDashboard(fullname, role, username);
+            });
+
+            buttonPanel.add(selectButton);
+            buttonPanel.add(backButton);
+
+            // Add instruction label
+            JLabel instructionLabel = new JLabel("Select a merchant to view their orders");
+            instructionLabel.setFont(new Font("Segoe UI", Font.ITALIC, 11));
+            instructionLabel.setForeground(new Color(200, 200, 200));
+            bottomPanel.add(instructionLabel, BorderLayout.CENTER);
+
+        } else if ("INVOICES".equals(callerContext)) {
+            // Invoices view - only show "View Invoices" button and a back button
+            JButton selectButton = new JButton("View Invoices");
+            JButton backButton = new JButton("← Back");
+
+            styleBtn(selectButton);
+            styleBtn(backButton);
+
+            selectButton.addActionListener(e -> {
+                int row = merchantTable.getSelectedRow();
+                if (row >= 0) {
+                    String merchantId = tableModel.getValueAt(row, 0).toString();
+                    dispose();
+                    new InvoiceListFrame(fullname, role, merchantId);
+                } else {
+                    JOptionPane.showMessageDialog(this, "Please select a merchant.");
+                }
+            });
+
+            backButton.addActionListener(e -> {
+                dispose();
+                new AdminDashboard(fullname, role, username);
+            });
+
+            buttonPanel.add(selectButton);
+            buttonPanel.add(backButton);
+
+            // Add instruction label
+            JLabel instructionLabel = new JLabel("Select a merchant to view their invoices");
+            instructionLabel.setFont(new Font("Segoe UI", Font.ITALIC, 11));
+            instructionLabel.setForeground(new Color(200, 200, 200));
+            bottomPanel.add(instructionLabel, BorderLayout.CENTER);
+        }
 
         statusLabel = new JLabel("Ready");
         statusLabel.setFont(new Font("Segoe UI", Font.PLAIN, 11));
         statusLabel.setForeground(Color.WHITE);
 
-        bottomPanel.add(buttonPanel,  BorderLayout.WEST);
-        bottomPanel.add(statusLabel,  BorderLayout.EAST);
+        bottomPanel.add(buttonPanel, BorderLayout.WEST);
+        bottomPanel.add(statusLabel, BorderLayout.EAST);
 
         CenterPanel.add(topBar,      BorderLayout.NORTH);
         CenterPanel.add(scroll,      BorderLayout.CENTER);

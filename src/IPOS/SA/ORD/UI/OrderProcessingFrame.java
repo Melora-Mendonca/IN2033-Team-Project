@@ -1,243 +1,233 @@
 package IPOS.SA.ORD.UI;
 
+import IPOS.SA.ORD.Model.Order;
+import IPOS.SA.ORD.Model.OrderItem;
 import IPOS.SA.ORD.OrderStatus;
-import IPOS.SA.ORD.Service.OrderService;
 import IPOS.SA.ACC.Service.AccountService;
-import IPOS.SA.ACC.Service.InvoiceService;
-import IPOS.SA.CAT.UI.Catalogue;
-import IPOS.SA.ACC.UI.*;
+import IPOS.SA.ORD.Service.InvoiceService;
+import IPOS.SA.ORD.Service.OrderService;
+import IPOS.SA.UI.BaseFrame;
+import IPOS.SA.CAT.Service.catalogueService;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.stream.Collectors;
 
-public class OrderProcessingFrame extends JFrame {
+public class OrderProcessingFrame extends BaseFrame {
+
     private final OrderService orderService;
-    private final String fullname;
-    private final String role;
 
     private JTable orderTable;
     private DefaultTableModel tableModel;
+
+    // Dispatch fields (for Delivery Employee)
     private JTextField courierField;
     private JTextField refNoField;
     private JSpinner deliverySpinner;
+    private JPanel dispatchPanel;
 
-    // Navigation components
-    private JPanel MainPanel;
-    private JPanel ContentPanel;
-    private JPanel NavPanel;
-    private JPanel HeaderPanel;
-    private JPanel CenterPanel;
-    private JPanel FooterPanel;
-    private JLabel headerLabel;
-    private JLabel navIcon;
-    private JButton logoutBtn;
-    private JSeparator divider;
+    // Picking fields (for Warehouse Employee)
+    private JTextField quantityPickedField;
+    private JButton markPickedButton;
+    private JPanel pickingPanel;
+
+    // Common components
+    private JButton refreshButton;
 
     public OrderProcessingFrame(String fullname, String role) {
+        super(fullname, role, getTitleByRole(role));
         this.orderService = new OrderService(new AccountService(), new InvoiceService());
-        this.fullname = fullname;
-        this.role = role;
-
-        setTitle("Order Processing");
-        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        setContentPane(MainPanel);
-        setExtendedState(JFrame.MAXIMIZED_BOTH);
-        setLocationRelativeTo(null);
-
-        initializeUI();
+        buildContent();
+        configureByRole();
         loadOrders();
-
-        setVisible(true);
     }
 
-    private void initializeUI() {
-        createHeaderPanel();
-        createNavPanel();
-        createCenterPanel();
-    }
-
-    private void createHeaderPanel() {
-        HeaderPanel.setLayout(new BoxLayout(HeaderPanel, BoxLayout.X_AXIS));
-        HeaderPanel.setPreferredSize(new Dimension(1000, 54));
-        HeaderPanel.setBackground(new Color(240, 252, 255));
-        HeaderPanel.setBorder(BorderFactory.createEmptyBorder(0, 24, 0, 24));
-
-        JPanel textPanel = new JPanel();
-        textPanel.setLayout(new BoxLayout(textPanel, BoxLayout.Y_AXIS));
-        textPanel.setOpaque(false);
-
-        headerLabel = new JLabel("Order Processing");
-        headerLabel.setForeground(Color.BLACK);
-        headerLabel.setFont(new Font("Segoe UI", Font.BOLD, 18));
-
-        textPanel.add(headerLabel);
-        HeaderPanel.add(textPanel);
-    }
-
-    private void createNavPanel() {
-        NavPanel.setLayout(new BoxLayout(NavPanel, BoxLayout.Y_AXIS));
-        NavPanel.setBackground(new Color(14, 37, 48));
-        NavPanel.setBorder(BorderFactory.createEmptyBorder(20, 16, 20, 16));
-        NavPanel.setPreferredSize(new Dimension(220, 0));
-
-        ImageIcon Icon = new ImageIcon(new ImageIcon("data/Logo.png")
-                .getImage().getScaledInstance(80, 60, Image.SCALE_SMOOTH));
-        navIcon = new JLabel(Icon);
-
-        NavPanel.add(navIcon);
-        NavPanel.add(Box.createVerticalStrut(16));
-
-        // Navigation buttons based on role
-        NavPanel.add(buildNavButton("Overview", false));
-        NavPanel.add(Box.createVerticalStrut(4));
-        NavPanel.add(buildNavButton("Catalogue", false));
-        NavPanel.add(Box.createVerticalStrut(4));
-        NavPanel.add(buildNavButton("Orders", false));
-        NavPanel.add(Box.createVerticalStrut(4));
-
-        // Expandable sections based on role
-        if (role.equals("administrator") || role.equals("director_of_operations")) {
-            addExpandableNavItem(NavPanel, "Merchants", new String[]{
-                    "View Merchant Orders", "View Merchant Invoices"
-            });
-
-            addExpandableNavItem(NavPanel, "Accounts", new String[]{
-                    "View All Merchants", "Create Merchant Account", "Manage Merchant Accounts", "Commercial Applications"
-            });
-
-            addExpandableNavItem(NavPanel, "Staff", new String[]{
-                    "View All Staff", "Create Staff Account", "Manage Staff Account",
-            });
+    private static String getTitleByRole(String role) {
+        if (role.equals("Warehouse Employee")) {
+            return "Order Picking & Packing";
+        } else if (role.equals("Delivery Employee")) {
+            return "Order Dispatch";
         }
-
-        NavPanel.add(buildNavButton("Reports", false));
-        NavPanel.add(Box.createVerticalStrut(4));
-        NavPanel.add(buildNavButton("Settings", false));
-        NavPanel.add(Box.createVerticalStrut(4));
-
-        divider = new JSeparator();
-        divider.setForeground(Color.WHITE);
-        divider.setMaximumSize(new Dimension(Integer.MAX_VALUE, 1));
-        NavPanel.add(divider);
-        NavPanel.add(Box.createVerticalGlue());
-
-        logoutBtn = new JButton("→  Log out");
-        logoutBtn.setFont(new Font("Segoe UI", Font.BOLD, 13));
-        logoutBtn.setForeground(new Color(200, 80, 80));
-        logoutBtn.setBackground(new Color(14, 37, 48));
-        logoutBtn.setBorderPainted(false);
-        logoutBtn.setFocusPainted(false);
-        logoutBtn.setAlignmentX(Component.LEFT_ALIGNMENT);
-        logoutBtn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 36));
-        logoutBtn.setHorizontalAlignment(SwingConstants.LEFT);
-        logoutBtn.addActionListener(e -> handleLogout());
-        NavPanel.add(logoutBtn);
+        return "Order Processing";
     }
 
-    private void createCenterPanel() {
-        // Set up MainPanel layout
-        MainPanel.setLayout(new BorderLayout());
+    @Override
+    protected String getHeaderTitle() {
+        if (role.equals("Warehouse Employee")) {
+            return "Order Picking & Packing";
+        } else if (role.equals("Delivery Employee")) {
+            return "Order Dispatch";
+        }
+        return "Order Processing";
+    }
 
-        // Add NavPanel to the left
-        MainPanel.add(NavPanel, BorderLayout.WEST);
-
-        // Add HeaderPanel to the top
-        MainPanel.add(HeaderPanel, BorderLayout.NORTH);
-
-        // Create CenterPanel for main content
-        CenterPanel = new JPanel(new BorderLayout());
+    private void buildContent() {
+        CenterPanel.setLayout(new BorderLayout());
         CenterPanel.setBackground(new Color(245, 247, 250));
-        CenterPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
-        // Orders Table Panel
-        JPanel tablePanel = createTablePanel();
-        CenterPanel.add(tablePanel, BorderLayout.CENTER);
+        CenterPanel.add(createTablePanel(), BorderLayout.CENTER);
 
-        // Dispatch Panel
-        JPanel dispatchPanel = createDispatchPanel();
+        // Create both panels (one will be hidden based on role)
+        pickingPanel = createPickingPanel();
+        dispatchPanel = createDispatchPanel();
+
+        // Start with dispatch panel as default (will be replaced in configureByRole)
         CenterPanel.add(dispatchPanel, BorderLayout.SOUTH);
-
-        ContentPanel = new JPanel(new BorderLayout());
-        ContentPanel.add(CenterPanel, BorderLayout.CENTER);
-
-        // Add ContentPanel to the center of MainPanel
-        MainPanel.add(ContentPanel, BorderLayout.CENTER);
     }
 
+    private void configureByRole() {
+        if (role.equals("Warehouse Employee")) {
+            // Remove dispatch panel, add picking panel
+            CenterPanel.remove(dispatchPanel);
+            CenterPanel.add(pickingPanel, BorderLayout.SOUTH);
+
+            // Hide courier/dispatch fields (already handled by using different panel)
+            // Refresh the view
+            CenterPanel.revalidate();
+            CenterPanel.repaint();
+
+        } else if (role.equals("Delivery Employee")) {
+            // Keep dispatch panel, ensure picking panel not added
+            CenterPanel.remove(pickingPanel);
+            CenterPanel.add(dispatchPanel, BorderLayout.SOUTH);
+            CenterPanel.revalidate();
+            CenterPanel.repaint();
+        }
+        // Admin/Manager would see both (you can add that later)
+    }
+
+    // ── TABLE PANEL (modified with role-based filtering) ──────────
     private JPanel createTablePanel() {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBackground(Color.WHITE);
         panel.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(new Color(221, 225, 231), 1),
-                BorderFactory.createEmptyBorder(16, 16, 16, 16)
-        ));
+                BorderFactory.createEmptyBorder(16, 16, 16, 16)));
 
-        JLabel title = new JLabel("Pending Orders");
+        // Title panel with refresh button
+        JPanel titlePanel = new JPanel(new BorderLayout());
+        titlePanel.setBackground(Color.WHITE);
+        titlePanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 12, 0));
+
+        JLabel title = new JLabel(getTableTitle());
         title.setFont(new Font("Segoe UI", Font.BOLD, 14));
         title.setForeground(new Color(17, 24, 39));
-        title.setBorder(BorderFactory.createEmptyBorder(0, 0, 12, 0));
+
+        refreshButton = new JButton("Refresh");
+        refreshButton.setFont(new Font("Segoe UI", Font.PLAIN, 11));
+        refreshButton.setBackground(new Color(240, 252, 255));
+        refreshButton.setFocusPainted(false);
+        refreshButton.addActionListener(e -> loadOrders());
+
+        titlePanel.add(title, BorderLayout.WEST);
+        titlePanel.add(refreshButton, BorderLayout.EAST);
 
         String[] cols = {"Order ID", "Merchant", "Date", "Status", "Amount"};
         tableModel = new DefaultTableModel(cols, 0) {
             public boolean isCellEditable(int r, int c) { return false; }
         };
+
         orderTable = new JTable(tableModel);
         styleTable(orderTable);
 
-        // Status color renderer
-        orderTable.getColumnModel().getColumn(3).setCellRenderer(new javax.swing.table.DefaultTableCellRenderer() {
-            public Component getTableCellRendererComponent(JTable table, Object value,
-                                                           boolean isSelected, boolean hasFocus,
-                                                           int row, int column) {
-                JLabel label = new JLabel(value.toString(), SwingConstants.CENTER);
-                label.setOpaque(true);
-                label.setFont(new Font("Segoe UI", Font.BOLD, 11));
-
-                String status = value.toString();
-                switch (status.toLowerCase()) {
-                    case "pending":
-                        label.setBackground(new Color(255, 243, 205));
-                        label.setForeground(new Color(133, 100, 4));
-                        break;
-                    case "accepted":
-                        label.setBackground(new Color(207, 226, 255));
-                        label.setForeground(new Color(10, 64, 168));
-                        break;
-                    case "processing":
-                        label.setBackground(new Color(207, 226, 255));
-                        label.setForeground(new Color(10, 64, 168));
-                        break;
-                    case "dispatched":
-                        label.setBackground(new Color(198, 239, 206));
-                        label.setForeground(new Color(0, 97, 0));
-                        break;
-                    default:
-                        label.setBackground(Color.WHITE);
-                        label.setForeground(Color.BLACK);
+        orderTable.getColumnModel().getColumn(3).setCellRenderer(
+                new javax.swing.table.DefaultTableCellRenderer() {
+                    public Component getTableCellRendererComponent(JTable t, Object val,
+                                                                   boolean sel, boolean foc, int row, int col) {
+                        JLabel lbl = new JLabel(val != null ? val.toString() : "", SwingConstants.CENTER);
+                        lbl.setOpaque(true);
+                        lbl.setFont(new Font("Segoe UI", Font.BOLD, 11));
+                        if (val != null) switch (val.toString().toLowerCase()) {
+                            case "pending":    lbl.setBackground(new Color(255, 243, 205)); lbl.setForeground(new Color(133, 100, 4));  break;
+                            case "accepted":   lbl.setBackground(new Color(207, 226, 255)); lbl.setForeground(new Color(10, 64, 168)); break;
+                            case "processing": lbl.setBackground(new Color(207, 226, 255)); lbl.setForeground(new Color(10, 64, 168)); break;
+                            case "dispatched": lbl.setBackground(new Color(198, 239, 206)); lbl.setForeground(new Color(0, 97, 0));    break;
+                            default:           lbl.setBackground(Color.WHITE);              lbl.setForeground(Color.BLACK);
+                        }
+                        return lbl;
+                    }
                 }
-                return label;
+        );
+
+        // Add selection listener to clear fields when row changes
+        orderTable.getSelectionModel().addListSelectionListener(e -> {
+            if (!e.getValueIsAdjusting()) {
+                clearInputFields();
             }
         });
 
         JScrollPane scroll = new JScrollPane(orderTable);
         scroll.setBorder(BorderFactory.createEmptyBorder());
 
-        panel.add(title, BorderLayout.NORTH);
+        panel.add(titlePanel, BorderLayout.NORTH);
         panel.add(scroll, BorderLayout.CENTER);
-
         return panel;
     }
 
+    private String getTableTitle() {
+        if (role.equals("Warehouse Employee")) {
+            return "Orders Ready for Picking";
+        } else if (role.equals("Delivery Employee")) {
+            return "Orders Ready for Dispatch";
+        }
+        return "All Orders";
+    }
+
+    // ── PICKING PANEL (for Warehouse Employee) ────────────────────
+    private JPanel createPickingPanel() {
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.setBackground(Color.WHITE);
+        panel.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(221, 225, 231), 1),
+                BorderFactory.createEmptyBorder(16, 16, 16, 16)));
+
+        JLabel title = new JLabel("Pick & Pack Order");
+        title.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        title.setForeground(new Color(17, 24, 39));
+        title.setBorder(BorderFactory.createEmptyBorder(0, 0, 12, 0));
+
+        JPanel fieldsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 12, 0));
+        fieldsPanel.setBackground(Color.WHITE);
+
+        JLabel quantityLbl = new JLabel("Quantity Picked:");
+        quantityLbl.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        quantityPickedField = new JTextField(10);
+        quantityPickedField.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        quantityPickedField.setToolTipText("Enter the quantity picked from stock");
+
+        JLabel infoLbl = new JLabel("(Stock will be reduced automatically)");
+        infoLbl.setFont(new Font("Segoe UI", Font.ITALIC, 10));
+        infoLbl.setForeground(new Color(107, 114, 128));
+
+        markPickedButton = new JButton("✓ Mark as Picked & Packed");
+        markPickedButton.setBackground(new Color(21, 128, 61));
+        markPickedButton.setForeground(Color.WHITE);
+        markPickedButton.setFocusPainted(false);
+        markPickedButton.setBorderPainted(false);
+        markPickedButton.setFont(new Font("Segoe UI", Font.BOLD, 12));
+        markPickedButton.addActionListener(e -> markAsPicked());
+
+        fieldsPanel.add(quantityLbl);
+        fieldsPanel.add(quantityPickedField);
+        fieldsPanel.add(infoLbl);
+        fieldsPanel.add(Box.createHorizontalStrut(20));
+        fieldsPanel.add(markPickedButton);
+
+        panel.add(title, BorderLayout.NORTH);
+        panel.add(fieldsPanel, BorderLayout.CENTER);
+        return panel;
+    }
+
+    // ── DISPATCH PANEL (for Delivery Employee) ────────────────────
     private JPanel createDispatchPanel() {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBackground(Color.WHITE);
         panel.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(new Color(221, 225, 231), 1),
-                BorderFactory.createEmptyBorder(16, 16, 16, 16)
-        ));
+                BorderFactory.createEmptyBorder(16, 16, 16, 16)));
 
         JLabel title = new JLabel("Dispatch Order");
         title.setFont(new Font("Segoe UI", Font.BOLD, 14));
@@ -247,87 +237,250 @@ public class OrderProcessingFrame extends JFrame {
         JPanel fieldsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 12, 0));
         fieldsPanel.setBackground(Color.WHITE);
 
-        fieldsPanel.add(new JLabel("Courier:"));
+        JLabel courierLbl = new JLabel("Courier:*");
+        courierLbl.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        courierLbl.setForeground(Color.RED);
         courierField = new JTextField(15);
-        fieldsPanel.add(courierField);
+        courierField.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        courierField.setToolTipText("Required - Name of courier service");
 
-        fieldsPanel.add(new JLabel("Ref No:"));
+        JLabel refLbl = new JLabel("Ref No:*");
+        refLbl.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        refLbl.setForeground(Color.RED);
         refNoField = new JTextField(15);
-        fieldsPanel.add(refNoField);
+        refNoField.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        refNoField.setToolTipText("Required - Courier tracking/reference number");
 
-        fieldsPanel.add(new JLabel("Est. Delivery:"));
+        JLabel dateLbl = new JLabel("Est. Delivery:*");
+        dateLbl.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        dateLbl.setForeground(Color.RED);
         deliverySpinner = new JSpinner(new SpinnerDateModel());
         JSpinner.DateEditor editor = new JSpinner.DateEditor(deliverySpinner, "yyyy-MM-dd");
         deliverySpinner.setEditor(editor);
-        deliverySpinner.setValue(java.util.Date.from(LocalDate.now().plusDays(3).atStartOfDay(java.time.ZoneId.systemDefault()).toInstant()));
+        deliverySpinner.setValue(java.util.Date.from(
+                LocalDate.now().plusDays(3)
+                        .atStartOfDay(java.time.ZoneId.systemDefault()).toInstant()));
         deliverySpinner.setPreferredSize(new Dimension(110, 28));
-        fieldsPanel.add(deliverySpinner);
 
         JButton dispatchBtn = new JButton("Mark as Dispatched");
         dispatchBtn.setBackground(new Color(30, 70, 90));
         dispatchBtn.setForeground(Color.WHITE);
         dispatchBtn.setFocusPainted(false);
         dispatchBtn.setBorderPainted(false);
+        dispatchBtn.setFont(new Font("Segoe UI", Font.BOLD, 12));
         dispatchBtn.addActionListener(e -> dispatchOrder());
+
+        fieldsPanel.add(courierLbl);
+        fieldsPanel.add(courierField);
+        fieldsPanel.add(refLbl);
+        fieldsPanel.add(refNoField);
+        fieldsPanel.add(dateLbl);
+        fieldsPanel.add(deliverySpinner);
         fieldsPanel.add(dispatchBtn);
 
         panel.add(title, BorderLayout.NORTH);
         panel.add(fieldsPanel, BorderLayout.CENTER);
-
         return panel;
     }
 
+    // ── BUSINESS LOGIC with ROLE-BASED FILTERING ──────────────────
     private void loadOrders() {
         try {
-            List<Object[]> orders = orderService.getAllOrders();
+            List<Object[]> allOrders = orderService.getAllOrders();
             tableModel.setRowCount(0);
-            for (Object[] order : orders) {
+
+            List<Object[]> filteredOrders;
+
+            if (role.equals("Warehouse Employee")) {
+                // Warehouse sees: pending, accepted, or processing (not yet picked)
+                filteredOrders = allOrders.stream()
+                        .filter(order -> {
+                            String status = order[3].toString().toLowerCase();
+                            return status.equals("pending") ||
+                                    status.equals("accepted") ||
+                                    status.equals("processing");
+                        })
+                        .collect(Collectors.toList());
+            }
+            else if (role.equals("Delivery Employee")) {
+                // Delivery sees: only orders that are 'processing' (ready for dispatch)
+                filteredOrders = allOrders.stream()
+                        .filter(order -> order[3].toString().toLowerCase().equals("processing"))
+                        .collect(Collectors.toList());
+            }
+            else {
+                // Admin/Manager sees all
+                filteredOrders = allOrders;
+            }
+
+            for (Object[] order : filteredOrders) {
                 tableModel.addRow(order);
             }
+
+            // Show message if no orders available for this role
+            if (filteredOrders.isEmpty()) {
+                String message = role.equals("Warehouse Employee") ?
+                        "No orders ready for picking." :
+                        "No orders ready for dispatch.";
+                JOptionPane.showMessageDialog(this, message);
+            }
+
         } catch (Exception e) {
             e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Error loading orders: " + e.getMessage());
+        }
+    }
+
+    private void markAsPicked() {
+        int row = orderTable.getSelectedRow();
+        if (row < 0) {
+            JOptionPane.showMessageDialog(this, "Please select an order to mark as picked.");
+            return;
+        }
+
+        String orderId = tableModel.getValueAt(row, 0).toString();
+        String status = tableModel.getValueAt(row, 3).toString();
+
+        if (!status.equalsIgnoreCase("pending") && !status.equalsIgnoreCase("accepted")) {
+            JOptionPane.showMessageDialog(this,
+                    "Only 'pending' or 'accepted' orders can be picked.");
+            return;
+        }
+
+        String quantityText = quantityPickedField.getText().trim();
+        if (quantityText.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Please enter the quantity picked.");
+            return;
+        }
+
+        int quantityPicked;
+        try {
+            quantityPicked = Integer.parseInt(quantityText);
+            if (quantityPicked <= 0) {
+                throw new NumberFormatException();
+            }
+        } catch (NumberFormatException e) {
+            JOptionPane.showMessageDialog(this, "Please enter a valid positive quantity.");
+            return;
+        }
+
+        try {
+            // Get full order details with items
+            Order order = orderService.getOrderDetails(orderId);
+
+            if (order == null) {
+                throw new Exception("Order not found: " + orderId);
+            }
+
+            // Reduce stock for each item in the order
+            catalogueService catService = new catalogueService();
+            for (OrderItem item : order.getItems()) {
+                String productId = item.getItemId();
+                int orderedQuantity = item.getQuantity();
+
+                // Use your existing UpdateCatalogue method
+                boolean updated = catService.UpdateCatalogue(productId, orderedQuantity);
+
+                if (!updated) {
+                    throw new Exception("Failed to update stock for product: " + productId);
+                }
+            }
+
+            // Update order status to "processing" (being processed)
+            orderService.updateStatus(orderId, "processing");
+
+            // Update the table
+            tableModel.setValueAt("processing", row, 3);
+
+            JOptionPane.showMessageDialog(this,
+                    "Order " + orderId + " has been picked and packed.\n" +
+                            "Stock has been reduced for " + order.getItems().size() + " product(s).");
+
+            // Clear input and refresh
+            quantityPickedField.setText("");
+            loadOrders(); // This will refresh and remove the order from view if it no longer matches filter
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this,
+                    "Error processing order: " + e.getMessage(),
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE);
         }
     }
 
     private void dispatchOrder() {
         int row = orderTable.getSelectedRow();
         if (row < 0) {
-            JOptionPane.showMessageDialog(this, "Select an order to dispatch.");
+            JOptionPane.showMessageDialog(this, "Please select an order to dispatch.");
             return;
         }
 
-        String orderId = (String) tableModel.getValueAt(row, 0);
-        String status = (String) tableModel.getValueAt(row, 3);
+        String orderId = tableModel.getValueAt(row, 0).toString();
+        String status = tableModel.getValueAt(row, 3).toString();
 
-        if (!status.equalsIgnoreCase("processing") && !status.equalsIgnoreCase("accepted")) {
-            JOptionPane.showMessageDialog(this, "Order must be 'accepted' or 'processing' to dispatch.");
+        // Only allow dispatch of orders that are 'processing'
+        if (!status.equalsIgnoreCase("processing")) {
+            JOptionPane.showMessageDialog(this,
+                    "Only orders with status 'processing' can be dispatched.\n" +
+                            "Warehouse must pick and pack the order first.");
             return;
         }
 
         String courier = courierField.getText().trim();
         String refNo = refNoField.getText().trim();
-        java.util.Date deliveryDate = (java.util.Date) deliverySpinner.getValue();
 
         if (courier.isEmpty() || refNo.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Please enter courier details.");
+            JOptionPane.showMessageDialog(this,
+                    "Please enter all courier details (marked with *).");
             return;
         }
+
+        java.util.Date deliveryDate = (java.util.Date) deliverySpinner.getValue();
 
         try {
             orderService.updateOrderStatus(orderId, OrderStatus.DISPATCHED,
                     fullname, courier, refNo,
-                    deliveryDate.toInstant().atZone(java.time.ZoneId.systemDefault()).toLocalDate());
+                    deliveryDate.toInstant()
+                            .atZone(java.time.ZoneId.systemDefault()).toLocalDate());
 
             tableModel.setValueAt("dispatched", row, 3);
-            JOptionPane.showMessageDialog(this, "Order " + orderId + " marked as dispatched.");
+            JOptionPane.showMessageDialog(this,
+                    "Order " + orderId + " marked as dispatched.\n" +
+                            "Courier: " + courier + "\n" +
+                            "Tracking Ref: " + refNo);
 
-            courierField.setText("");
-            refNoField.setText("");
+            clearInputFields();
+
+            // Refresh orders (remove this order from view)
+            loadOrders();
+
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this, "Error: " + e.getMessage());
         }
     }
 
+    private void clearInputFields() {
+        if (role.equals("Warehouse Employee")) {
+            if (quantityPickedField != null) {
+                quantityPickedField.setText("");
+            }
+        } else if (role.equals("Delivery Employee")) {
+            if (courierField != null) {
+                courierField.setText("");
+            }
+            if (refNoField != null) {
+                refNoField.setText("");
+            }
+            if (deliverySpinner != null) {
+                deliverySpinner.setValue(java.util.Date.from(
+                        LocalDate.now().plusDays(3)
+                                .atStartOfDay(java.time.ZoneId.systemDefault()).toInstant()));
+            }
+        }
+    }
+
+    // ── HELPERS ──────────────────────────────────────────────
     private void styleTable(JTable table) {
         table.setFont(new Font("Segoe UI", Font.PLAIN, 12));
         table.setRowHeight(30);
@@ -337,131 +490,5 @@ public class OrderProcessingFrame extends JFrame {
         table.getTableHeader().setBackground(new Color(17, 24, 39));
         table.getTableHeader().setForeground(Color.WHITE);
         table.getTableHeader().setReorderingAllowed(false);
-    }
-
-    private void addExpandableNavItem(JPanel nav, String label, String[] subItems) {
-        JButton mainBtn = new JButton(label);
-        mainBtn.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-        mainBtn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 36));
-        mainBtn.setAlignmentX(Component.LEFT_ALIGNMENT);
-        mainBtn.setHorizontalAlignment(SwingConstants.LEFT);
-        mainBtn.setFocusPainted(false);
-        mainBtn.setBorderPainted(false);
-        mainBtn.setBackground(new Color(14, 37, 48));
-        mainBtn.setForeground(new Color(160, 190, 210));
-
-        JPanel subPanel = new JPanel();
-        subPanel.setLayout(new BoxLayout(subPanel, BoxLayout.Y_AXIS));
-        subPanel.setBackground(new Color(10, 28, 38));
-        subPanel.setVisible(false);
-
-        for (String sub : subItems) {
-            JButton subBtn = new JButton("    › " + sub);
-            subBtn.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-            subBtn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 30));
-            subBtn.setAlignmentX(Component.LEFT_ALIGNMENT);
-            subBtn.setHorizontalAlignment(SwingConstants.LEFT);
-            subBtn.setFocusPainted(false);
-            subBtn.setBorderPainted(false);
-            subBtn.setBackground(new Color(10, 28, 38));
-            subBtn.setForeground(new Color(120, 160, 185));
-
-            subBtn.addMouseListener(new java.awt.event.MouseAdapter() {
-                public void mouseEntered(java.awt.event.MouseEvent e) {
-                    subBtn.setForeground(Color.WHITE);
-                    subBtn.setBackground(new Color(20, 50, 65));
-                }
-                public void mouseExited(java.awt.event.MouseEvent e) {
-                    subBtn.setForeground(new Color(120, 160, 185));
-                    subBtn.setBackground(new Color(10, 28, 38));
-                }
-            });
-
-            subBtn.addActionListener(e -> handleSubNavClick(sub));
-            subPanel.add(subBtn);
-            subPanel.add(Box.createVerticalStrut(2));
-        }
-
-        mainBtn.addActionListener(e -> {
-            boolean showing = subPanel.isVisible();
-            subPanel.setVisible(!showing);
-            mainBtn.setForeground(showing ? new Color(160, 190, 210) : Color.WHITE);
-            mainBtn.setBackground(showing ? new Color(14, 37, 48) : new Color(20, 45, 60));
-            nav.revalidate();
-            nav.repaint();
-        });
-
-        nav.add(mainBtn);
-        nav.add(subPanel);
-        nav.add(Box.createVerticalStrut(4));
-    }
-
-    private void handleSubNavClick(String label) {
-        switch (label) {
-            case "View All Merchants":
-                dispose();
-                new MerchantList(fullname, role);
-                break;
-            case "Manage Merchant Accounts":
-                dispose();
-                new AccountManagement(fullname, role, "MANAGE");
-                break;
-            case "Create Merchant Account":
-                dispose();
-                new AccountManagement(fullname, role, "CREATE");
-                break;
-            case "Commercial Applications":
-                JOptionPane.showMessageDialog(this, "Commercial Applications — coming soon.");
-                break;
-            case "View All Staff":
-                dispose();
-                new StaffList(fullname, role);
-                break;
-            case "Create Staff Account":
-                dispose();
-                new StaffAccountManagement(fullname, role, "CREATE");
-                break;
-            case "Manage Staff Account":
-                dispose();
-                new StaffAccountManagement(fullname, role, "MANAGE");
-                break;
-            default:
-                JOptionPane.showMessageDialog(this, label + " — coming soon.");
-                break;
-        }
-    }
-
-    private JButton buildNavButton(String label, boolean active) {
-        JButton btn = new JButton(label);
-        btn.setFont(new Font("Segoe UI", active ? Font.BOLD : Font.PLAIN, 13));
-        btn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 36));
-        btn.setAlignmentX(Component.LEFT_ALIGNMENT);
-        btn.setHorizontalAlignment(SwingConstants.LEFT);
-        btn.setFocusPainted(false);
-        btn.setBorderPainted(false);
-        btn.setBackground(active ? new Color(30, 70, 90) : new Color(14, 37, 48));
-        btn.setForeground(active ? Color.WHITE : new Color(160, 190, 210));
-
-        btn.addActionListener(e -> {
-            dispose();
-            switch (label) {
-                case "Catalogue":
-                    new Catalogue(fullname, role);
-                    break;
-                case "Overview":
-                    new AdminDashboard(fullname, role);
-                    break;
-                default:
-                    JOptionPane.showMessageDialog(this, label + " — coming soon.");
-                    break;
-            }
-        });
-
-        return btn;
-    }
-
-    private void handleLogout() {
-        dispose();
-        new LoginForm();
     }
 }

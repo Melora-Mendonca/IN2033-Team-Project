@@ -202,7 +202,7 @@ public class AccountManagement extends BaseFrame {
 
         createBtn.addActionListener(e -> createAccount());
         clearBtn.addActionListener(e  -> clearForm());
-        backBtn.addActionListener(e   -> { dispose(); new AdminDashboard(fullname, role); });
+        backBtn.addActionListener(e   -> { dispose(); new AdminDashboard(fullname, role, username); });
 
         actionsCard.add(createBtn); actionsCard.add(Box.createVerticalStrut(8));
         actionsCard.add(clearBtn);  actionsCard.add(Box.createVerticalStrut(8));
@@ -228,7 +228,7 @@ public class AccountManagement extends BaseFrame {
         clearBtn.addActionListener(e          -> clearForm());
         backBtn.addActionListener(e           -> {
             dispose();
-            new AdminDashboard(fullname, role);
+            new AdminDashboard(fullname, role, username);
         });
 
         actionsCard.add(loadBtn);
