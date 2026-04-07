@@ -18,7 +18,7 @@ public class DBConnection {
         System.out.println("About to create a connection");
         Connection con = null;
         String userName   = "root";
-        String pwd        = "Karkala1998?";
+        String pwd        = "Karkala1998?";       // your MySQL root password here
         String dbName     = "ipos_sa";
         String serverName = "localhost";
         int portNumber    = 3306;

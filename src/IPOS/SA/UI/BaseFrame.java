@@ -383,6 +383,7 @@ public abstract class BaseFrame extends JFrame {
                 break;
             case "View Payment History":
                 new PaymentRecording(fullname, role).showPaymentHistoryDialog();
+                dispose();
                 break;
             default:
                 JOptionPane.showMessageDialog(this, label + " — coming soon.");

@@ -260,6 +260,10 @@ public class LoginForm extends JFrame {
         statusLbl.setForeground(new Color(218, 30, 40));
         statusLbl.setAlignmentX(Component.LEFT_ALIGNMENT);
 
+        // Allow pressing Enter from either field to trigger login
+        userField.addActionListener(e -> handleLogin());
+        passField.addActionListener(e -> handleLogin());
+
         // Login button
         createLoginButton();
 
