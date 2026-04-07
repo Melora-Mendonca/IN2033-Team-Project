@@ -364,7 +364,55 @@ public class PaymentRecording extends BaseFrame {
         }
     }
 
-    private void showDebtorsDialog() {
+    public void showPaymentHistoryDialog() {
+        String invoiceId = JOptionPane.showInputDialog(this,
+                "Enter Invoice ID to view payment history:",
+                "Payment History",
+                JOptionPane.QUESTION_MESSAGE);
+
+        if (invoiceId == null || invoiceId.trim().isEmpty()) {
+            return;
+        }
+
+        try {
+            List<Object[]> payments = paymentService.getPaymentHistory(invoiceId.trim());
+
+            if (payments.isEmpty()) {
+                JOptionPane.showMessageDialog(this,
+                        "No payment history found for Invoice: " + invoiceId,
+                        "No Records",
+                        JOptionPane.INFORMATION_MESSAGE);
+                return;
+            }
+
+            String[] cols = {"Payment Date", "Amount (£)", "Payment Method", "Reference Number"};
+            DefaultTableModel model = new DefaultTableModel(cols, 0) {
+                public boolean isCellEditable(int r, int c) { return false; }
+            };
+            for (Object[] payment : payments) {
+                model.addRow(payment);
+            }
+
+            JTable table = new JTable(model);
+            table.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+            table.setRowHeight(25);
+            table.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 12));
+            table.getTableHeader().setBackground(new Color(17, 24, 39));
+            table.getTableHeader().setForeground(Color.WHITE);
+
+            JScrollPane scrollPane = new JScrollPane(table);
+            scrollPane.setPreferredSize(new Dimension(600, 300));
+
+            JOptionPane.showMessageDialog(this, scrollPane,
+                    "Payment History - Invoice: " + invoiceId,
+                    JOptionPane.INFORMATION_MESSAGE);
+
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Error loading payment history: " + e.getMessage());
+        }
+    }
+
+    public void showDebtorsDialog() {
         try {
             List<Object[]> debtors = paymentService.getDebtors();
 

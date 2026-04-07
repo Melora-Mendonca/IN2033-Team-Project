@@ -30,7 +30,7 @@ public class SettingsForm extends BaseFrame {
     public SettingsForm(String fullname, String role, String username) {
         super(fullname, role, username,"Settings");
         this.staffService = new StaffAccountService();
-        this.username     = username;
+        this.username  = username;
         buildContent();
         loadProfile();
     }
@@ -107,18 +107,33 @@ public class SettingsForm extends BaseFrame {
     private void loadProfile() {
         try {
             DBConnection db = new DBConnection();
+
+            // Split fullname into first and last name
+            String[] nameParts = fullname.split(" ");
+            String firstName = nameParts[0];
+            String lastName = nameParts.length > 1 ? nameParts[1] : "";
+
+            // Find user by first and last name
             ResultSet rs = db.query(
                     "SELECT username, first_Name, sur_Name, email, role " +
-                            "FROM userlogin WHERE username = ?", username);
+                            "FROM userlogin WHERE first_Name = ? AND sur_Name = ?",
+                    firstName, lastName);
 
             if (rs.next()) {
                 usernameValue.setText(rs.getString("username"));
                 fullNameValue.setText(rs.getString("first_Name") + " " + rs.getString("sur_Name"));
                 roleValue.setText(rs.getString("role"));
                 emailValue.setText(rs.getString("email") != null ? rs.getString("email") : "—");
+            } else {
+                // Fallback to what was passed
+                usernameValue.setText(username != null ? username : "Unknown");
+                fullNameValue.setText(fullname);
+                roleValue.setText(role);
+                emailValue.setText("—");
             }
         } catch (Exception e) {
             e.printStackTrace();
+            usernameValue.setText("Error loading profile");
         }
     }
 
@@ -148,11 +163,28 @@ public class SettingsForm extends BaseFrame {
         }
 
         try {
-            // Verify current password by checking against DB
             DBConnection db = new DBConnection();
+
+            // Get the actual username from database using fullname
+            String[] nameParts = fullname.split(" ");
+            String firstName = nameParts[0];
+            String lastName = nameParts.length > 1 ? nameParts[1] : "";
+
+            ResultSet userRs = db.query(
+                    "SELECT username FROM userlogin WHERE first_Name = ? AND sur_Name = ?",
+                    firstName, lastName);
+
+            if (!userRs.next()) {
+                setMsg("User not found. Please log out and log in again.", false);
+                return;
+            }
+
+            String actualUsername = userRs.getString("username");
+
+            // Verify current password
             ResultSet rs = db.query(
                     "SELECT user_id FROM userlogin WHERE username = ? AND password_hash = ?",
-                    username, hashPassword(current));
+                    actualUsername, hashPassword(current));
 
             if (!rs.next()) {
                 setMsg("Current password is incorrect.", false);
@@ -160,8 +192,6 @@ public class SettingsForm extends BaseFrame {
             }
 
             String userId = rs.getString("user_id");
-
-            // Update with hashed new password
             boolean success = staffService.resetPassword(userId, hashPassword(newPass));
 
             if (success) {

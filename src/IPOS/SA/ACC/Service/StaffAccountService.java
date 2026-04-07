@@ -37,8 +37,8 @@ public class StaffAccountService {
         String defaultPassword = hashPassword(staff.getUsername() + "123");
 
         int rowsAffected = db.update(
-                "INSERT INTO UserLogin (username, password_hash, first_Name, sur_Name, email, role, is_Active, role, address) " +
-                        "VALUES (?, ?, ?, ?, ?, ?, 1)",
+                "INSERT INTO UserLogin (username, password_hash, first_Name, sur_Name, email, role, is_Active, phone, address) " +
+                        "VALUES (?, ?, ?, ?, ?, ?, 1, ?, ?)",
                 staff.getUsername(),
                 defaultPassword,
                 staff.getFirstName(),

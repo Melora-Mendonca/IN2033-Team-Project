@@ -248,7 +248,7 @@ public class AccountManagement extends BaseFrame {
         actionsCard.add(backBtn);
         actionsCard.add(Box.createVerticalStrut(8));
 
-        if (role.equals("Director of operations")) {
+        if (role.equals("Director of Operations")) {
             JButton restoreBtn = actionButton("Restore from Default", new Color(20, 83, 45));
             restoreBtn.addActionListener(e -> restoreFromDefault());
             actionsCard.add(restoreBtn);
@@ -259,22 +259,29 @@ public class AccountManagement extends BaseFrame {
     // ── BUSINESS LOGIC ───────────────────────────────────────
     private void createAccount() {
         try {
-            String id     = merchantIdField.getText().trim();
-            String name   = companyNameField.getText().trim();
+            String id = merchantIdField.getText().trim();
+            String name = companyNameField.getText().trim();
+            String email = emailField.getText().trim();
             double credit = Double.parseDouble(creditLimitField.getText().trim());
             double discount = Double.parseDouble(discountValueField.getText().trim());
 
-            if (id.isEmpty())   { setMessage("Merchant ID is required.", false); return; }
+            if (id.isEmpty()) { setMessage("Merchant ID is required.", false); return; }
             if (name.isEmpty()) { setMessage("Company name is required.", false); return; }
-            if (credit < 0)     { setMessage("Credit limit cannot be negative.", false); return; }
-            if (discount < 0)   { setMessage("Discount cannot be negative.", false); return; }
+            if (email.isEmpty()) { setMessage("Email is required for login details.", false); return; }
+            if (credit < 0) { setMessage("Credit limit cannot be negative.", false); return; }
+            if (discount < 0) { setMessage("Discount cannot be negative.", false); return; }
 
             DiscountPlan plan = new FixedDiscountPlan("Fixed Plan", discount);
+
+            // Generate temporary password
+            String tempPassword = generateTemporaryPassword();
+            String hashedPassword = hashPassword(tempPassword);
+
             MerchantAccount account = new MerchantAccount(
                     id, name,
                     businessTypeField.getText().trim(),
                     registrationNumberField.getText().trim(),
-                    emailField.getText().trim(),
+                    email,
                     phoneField.getText().trim(),
                     faxField.getText().trim(),
                     addressField.getText().trim(),
@@ -282,7 +289,10 @@ public class AccountManagement extends BaseFrame {
             );
 
             if (accountService.addAccount(account)) {
-                setMessage("Account created successfully.", true);
+                // Send email with login details
+                sendLoginCredentials(email, id, tempPassword, name, "Merchant");
+
+                setMessage("Account created successfully. Login details sent to " + email, true);
                 clearForm();
             } else {
                 setMessage("Account ID already exists.", false);
@@ -499,4 +509,52 @@ public class AccountManagement extends BaseFrame {
         btn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 34));
         return btn;
     }
+
+    private String generateTemporaryPassword() {
+        String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+        StringBuilder password = new StringBuilder();
+        for (int i = 0; i < 8; i++) {
+            int index = (int) (Math.random() * chars.length());
+            password.append(chars.charAt(index));
+        }
+        return password.toString();
+    }
+
+    private String hashPassword(String password) {
+        try {
+            java.security.MessageDigest md = java.security.MessageDigest.getInstance("SHA-256");
+            byte[] hash = md.digest(password.getBytes("UTF-8"));
+            StringBuilder sb = new StringBuilder();
+            for (byte b : hash) {
+                sb.append(String.format("%02x", b));
+            }
+            return sb.toString();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return password;
+        }
+    }
+
+    private void sendLoginCredentials(String email, String username, String password, String name, String accountType) {
+        IPOS.SA.Interfaces.EmailService emailService = new IPOS.SA.Interfaces.EmailService();
+
+        String subject = "Your IPOS-SA " + accountType + " Account Login Details";
+
+        String body = "Dear " + name + ",\n\n" +
+                "A " + accountType + " account has been created for you in the IPOS-SA system.\n\n" +
+                "Your login details are:\n" +
+                "----------------------------------------\n" +
+                "Username: " + username + "\n" +
+                "Temporary Password: " + password + "\n" +
+                "----------------------------------------\n\n" +
+                "Please log in and change your password immediately.\n\n" +
+                "Regards,\n" +
+                "IPOS-SA Administrator";
+
+        boolean sent = emailService.sendEmail(email, subject, body);
+        if (!sent) {
+            System.out.println("WARNING: Failed to send login email to " + email);
+        }
+    }
+
 }

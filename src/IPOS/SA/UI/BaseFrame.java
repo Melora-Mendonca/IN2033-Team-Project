@@ -379,10 +379,10 @@ public abstract class BaseFrame extends JFrame {
                 new PaymentRecording(fullname, role);
                 break;
             case "View Debtors List":
-                dispose();
+                new PaymentRecording(fullname, role).showDebtorsDialog();
                 break;
             case "View Payment History":
-                dispose();
+                new PaymentRecording(fullname, role).showPaymentHistoryDialog();
                 break;
             default:
                 JOptionPane.showMessageDialog(this, label + " — coming soon.");
