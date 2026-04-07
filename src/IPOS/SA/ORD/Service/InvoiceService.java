@@ -28,8 +28,8 @@ public class InvoiceService {
 
         Invoice invoice = new Invoice(
                 invoiceId,
-                order.getMerchantId(),
                 order.getOrderId(),
+                order.getMerchantId(),
                 invoiceDate,
                 dueDate,
                 finalAmount,

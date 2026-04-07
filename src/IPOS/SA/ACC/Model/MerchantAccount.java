@@ -42,7 +42,8 @@ public class MerchantAccount {
         this.creditLimit = creditLimit;
         this.discountPlan = discountPlan;
         this.outstandingBalance = 0.0;
-        this.status = AccountStatus.NORMAL;
+        this.status       = AccountStatus.NORMAL;
+        this.accountStatus = "normal";
         this.lastPaymentDate = Date.valueOf(LocalDate.now());
 
         // Extract discount percentage
