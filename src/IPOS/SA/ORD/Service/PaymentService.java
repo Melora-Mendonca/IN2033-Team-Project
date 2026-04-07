@@ -178,4 +178,18 @@ public class PaymentService {
         }
         return rows;
     }
+
+    /**
+     * Returns {merchantId, orderId} for a given invoice, used by the card payment API.
+     * Index 0 = merchant_id, index 1 = order_id.
+     */
+    public String[] getMerchantAndOrderForInvoice(String invoiceId) throws Exception {
+        ResultSet rs = db.query(
+                "SELECT o.merchant_id, i.order_id " +
+                        "FROM Invoice i JOIN `Order` o ON i.order_id = o.order_id " +
+                        "WHERE i.invoice_id = ?", invoiceId
+        );
+        if (!rs.next()) throw new Exception("Invoice not found: " + invoiceId);
+        return new String[]{rs.getString("merchant_id"), rs.getString("order_id")};
+    }
 }

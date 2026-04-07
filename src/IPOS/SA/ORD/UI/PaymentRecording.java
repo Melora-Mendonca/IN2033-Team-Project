@@ -1,5 +1,6 @@
 package IPOS.SA.ORD.UI;
 
+import IPOS.SA.Comms.CommsClient;
 import IPOS.SA.ORD.Service.PaymentService;
 import IPOS.SA.DB.InvoiceDBConnector;
 import IPOS.SA.UI.BaseFrame;
@@ -211,6 +212,7 @@ public class PaymentRecording extends BaseFrame {
         if (row == -1) { setMessage("Select an invoice to record a payment.", false); return; }
 
         String invoiceId = tableModel.getValueAt(row, 0).toString();
+        String orderId   = tableModel.getValueAt(row, 1).toString();
         String merchant  = tableModel.getValueAt(row, 2).toString();
         double total     = Double.parseDouble(tableModel.getValueAt(row, 5).toString());
         double paid      = Double.parseDouble(tableModel.getValueAt(row, 6).toString());
@@ -222,13 +224,14 @@ public class PaymentRecording extends BaseFrame {
         }
 
         JDialog dialog = new JDialog(this, "Record Payment — " + invoiceId, true);
-        dialog.setSize(420, 300);
+        dialog.setSize(460, 420);
         dialog.setLocationRelativeTo(this);
         dialog.setLayout(new BorderLayout());
 
-        JPanel form = new JPanel(new GridLayout(6, 2, 8, 8));
-        form.setBorder(BorderFactory.createEmptyBorder(16, 16, 16, 16));
-        form.setBackground(new Color(245, 247, 250));
+        // Fixed fields (top)
+        JPanel fixedForm = new JPanel(new GridLayout(5, 2, 8, 8));
+        fixedForm.setBorder(BorderFactory.createEmptyBorder(16, 16, 4, 16));
+        fixedForm.setBackground(new Color(245, 247, 250));
 
         JTextField amountField    = new JTextField();
         JTextField referenceField = new JTextField();
@@ -238,8 +241,41 @@ public class PaymentRecording extends BaseFrame {
 
         JLabel referenceLabel = fieldLabel("Reference No:");
 
+        fixedForm.add(fieldLabel("Invoice ID:"));     fixedForm.add(new JLabel(invoiceId));
+        fixedForm.add(fieldLabel("Merchant:"));       fixedForm.add(new JLabel(merchant));
+        fixedForm.add(fieldLabel("Remaining (£):"));  fixedForm.add(new JLabel(String.format("%.2f", remaining)));
+        fixedForm.add(fieldLabel("Amount (£):"));     fixedForm.add(amountField);
+        fixedForm.add(fieldLabel("Payment Method:")); fixedForm.add(methodCombo);
+
+        // Card-only fields panel (shown/hidden dynamically)
+        JPanel cardPanel = new JPanel(new GridLayout(5, 2, 8, 8));
+        cardPanel.setBorder(BorderFactory.createEmptyBorder(0, 16, 4, 16));
+        cardPanel.setBackground(new Color(245, 247, 250));
+        cardPanel.setVisible(false);
+
+        JTextField fullNameField    = new JTextField();
+        JTextField addressField     = new JTextField();
+        JTextField cardFirstField   = new JTextField(4);
+        JTextField cardLastField    = new JTextField(4);
+
+        cardPanel.add(fieldLabel("Cardholder Name:")); cardPanel.add(fullNameField);
+        cardPanel.add(fieldLabel("Billing Address:")); cardPanel.add(addressField);
+        cardPanel.add(fieldLabel("Card First 4:"));    cardPanel.add(cardFirstField);
+        cardPanel.add(fieldLabel("Card Last 4:"));     cardPanel.add(cardLastField);
+        cardPanel.add(new JLabel(""));                 cardPanel.add(new JLabel(""));
+
+        // Reference row
+        JPanel refPanel = new JPanel(new GridLayout(1, 2, 8, 8));
+        refPanel.setBorder(BorderFactory.createEmptyBorder(0, 16, 8, 16));
+        refPanel.setBackground(new Color(245, 247, 250));
+        refPanel.add(referenceLabel);
+        refPanel.add(referenceField);
+
         methodCombo.addActionListener(e -> {
             String method = methodCombo.getSelectedItem().toString();
+            cardPanel.setVisible(method.equals("card"));
+            dialog.pack();
+            dialog.setLocationRelativeTo(this);
             if (method.equals("cheque")) {
                 referenceLabel.setText("Cheque Number:");
             } else if (method.equals("bank_transfer")) {
@@ -251,13 +287,6 @@ public class PaymentRecording extends BaseFrame {
             }
         });
 
-        form.add(fieldLabel("Invoice ID:"));     form.add(new JLabel(invoiceId));
-        form.add(fieldLabel("Merchant:"));       form.add(new JLabel(merchant));
-        form.add(fieldLabel("Remaining (£):"));  form.add(new JLabel(String.format("%.2f", remaining)));
-        form.add(fieldLabel("Amount (£):"));     form.add(amountField);
-        form.add(fieldLabel("Payment Method:")); form.add(methodCombo);
-        form.add(fieldLabel("Reference No:"));   form.add(referenceField);
-
         JButton saveBtn = new JButton("Record Payment");
         styleActionButton(saveBtn);
 
@@ -266,6 +295,38 @@ public class PaymentRecording extends BaseFrame {
                 double amount    = Double.parseDouble(amountField.getText().trim());
                 String method    = methodCombo.getSelectedItem().toString();
                 String reference = referenceField.getText().trim();
+
+                // For card payments, call the comms payment API first
+                if (method.equals("card")) {
+                    String cardFirst = cardFirstField.getText().trim();
+                    String cardLast  = cardLastField.getText().trim();
+                    String name      = fullNameField.getText().trim();
+                    String address   = addressField.getText().trim();
+
+                    if (cardFirst.length() != 4 || cardLast.length() != 4) {
+                        JOptionPane.showMessageDialog(dialog, "Card digits must be exactly 4 characters each.");
+                        return;
+                    }
+                    if (name.isEmpty() || address.isEmpty()) {
+                        JOptionPane.showMessageDialog(dialog, "Cardholder name and billing address are required.");
+                        return;
+                    }
+
+                    // Look up merchant ID for this invoice
+                    String[] ids = paymentService.getMerchantAndOrderForInvoice(invoiceId);
+                    String merchantId = ids[0];
+
+                    try {
+                        CommsClient.processPayment(merchantId, orderId, name, address,
+                                cardFirst, cardLast, amount);
+                    } catch (Exception commsEx) {
+                        int confirm = JOptionPane.showConfirmDialog(dialog,
+                                "Card payment API unavailable: " + commsEx.getMessage()
+                                + "\n\nRecord payment locally anyway?",
+                                "Comms Warning", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+                        if (confirm != JOptionPane.YES_OPTION) return;
+                    }
+                }
 
                 paymentService.recordPayment(invoiceId, amount, method, reference);
 
@@ -284,8 +345,17 @@ public class PaymentRecording extends BaseFrame {
         bottom.setBackground(new Color(245, 247, 250));
         bottom.add(saveBtn);
 
-        dialog.add(form,   BorderLayout.CENTER);
+        JPanel body = new JPanel();
+        body.setLayout(new BoxLayout(body, BoxLayout.Y_AXIS));
+        body.setBackground(new Color(245, 247, 250));
+        body.add(fixedForm);
+        body.add(cardPanel);
+        body.add(refPanel);
+
+        dialog.add(body,   BorderLayout.CENTER);
         dialog.add(bottom, BorderLayout.SOUTH);
+        dialog.pack();
+        dialog.setLocationRelativeTo(this);
         dialog.setVisible(true);
     }
 
@@ -399,15 +469,50 @@ public class PaymentRecording extends BaseFrame {
             );
 
             JScrollPane scroll = new JScrollPane(debtorTable);
-            scroll.setPreferredSize(new Dimension(700, 350));
+            scroll.setPreferredSize(new Dimension(700, 300));
 
             JLabel legend = new JLabel(
-                    "  🔴 30+ days overdue (in default)   🟡 15+ days (suspended)   ⚪ Active debt");
+                    "  \uD83D\uDD34 30+ days overdue (in default)   \uD83D\uDFE1 15+ days (suspended)   \u26AA Active debt");
             legend.setFont(new Font("Segoe UI", Font.PLAIN, 11));
 
+            JButton reminderBtn = new JButton("Send Email Reminder to Selected");
+            styleActionButton(reminderBtn);
+            reminderBtn.addActionListener(ev -> {
+                int sel = debtorTable.getSelectedRow();
+                if (sel < 0) {
+                    JOptionPane.showMessageDialog(null, "Select a merchant first.");
+                    return;
+                }
+                String companyName  = debtorModel.getValueAt(sel, 1).toString();
+                String email        = debtorModel.getValueAt(sel, 2).toString();
+                String outstanding  = debtorModel.getValueAt(sel, 3).toString();
+                String daysOverdue  = debtorModel.getValueAt(sel, 4).toString();
+
+                String subject = "Payment Reminder — Outstanding Balance";
+                String body    = "Dear " + companyName + ",\n\n"
+                        + "This is a reminder that your account has an outstanding balance of £" + outstanding
+                        + ", which is now " + daysOverdue + " day(s) overdue.\n\n"
+                        + "Please contact us at your earliest convenience to arrange settlement.\n\n"
+                        + "Kind regards,\nIPOS Sales Administration";
+
+                try {
+                    CommsClient.sendEmail(email, subject, body);
+                    JOptionPane.showMessageDialog(null,
+                            "Reminder sent to " + email, "Sent", JOptionPane.INFORMATION_MESSAGE);
+                } catch (Exception commsEx) {
+                    JOptionPane.showMessageDialog(null,
+                            "Could not send reminder: " + commsEx.getMessage(),
+                            "Comms Error", JOptionPane.ERROR_MESSAGE);
+                }
+            });
+
+            JPanel btnRow = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+            btnRow.add(reminderBtn);
+
             JPanel panel = new JPanel(new BorderLayout(0, 8));
-            panel.add(legend, BorderLayout.NORTH);
-            panel.add(scroll, BorderLayout.CENTER);
+            panel.add(legend,  BorderLayout.NORTH);
+            panel.add(scroll,  BorderLayout.CENTER);
+            panel.add(btnRow,  BorderLayout.SOUTH);
 
             JOptionPane.showMessageDialog(this, panel,
                     "Debtors — " + debtors.size() + " merchant(s) with outstanding balances",
