@@ -310,6 +310,24 @@ public class LoginForm extends JFrame {
             return;
         }
 
+        // Length checks
+        if (username.length() < 3){
+            statusLbl.setText("Username must be atleast 3 characters.");
+        }
+
+        if (password.length() < 6){
+            statusLbl.setText("Password must be atleast 6 characters.");
+        }
+
+        // Invalid Input checks
+        if (username.contains(" ")){
+            statusLbl.setText("Username cannot contain spaces.");
+        }
+
+        if (password.contains(" ")){
+            statusLbl.setText("Password cannot contain spaces.");
+        }
+        
         // Authenticate using service layer
         User user = authService.authenticate(username, password, selectedRole);
 

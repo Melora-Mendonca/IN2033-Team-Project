@@ -279,6 +279,9 @@ public class AccountManagement extends BaseFrame {
             String username = usernameField.getText().trim();
             String name = companyNameField.getText().trim();
             String email = emailField.getText().trim();
+            String regNo = registrationNumberField.getText().trim();
+            String phone = phoneField.getText().trim();
+
             double credit = Double.parseDouble(creditLimitField.getText().trim());
             double discount = Double.parseDouble(discountValueField.getText().trim());
 
@@ -286,32 +289,74 @@ public class AccountManagement extends BaseFrame {
             if (username.isEmpty()) { setMessage("Username is required.", false); return; }
             if (name.isEmpty()) { setMessage("Company name is required.", false); return; }
             if (email.isEmpty()) { setMessage("Email is required.", false); return; }
+            if (regNo.isEmpty()) { setMessage("Registration number is required.", false); return; }
             if (credit < 0) { setMessage("Credit limit cannot be negative.", false); return; }
             if (discount < 0) { setMessage("Discount cannot be negative.", false); return; }
+
+            // Merchant ID format — no spaces allowed
+            if (id.contains(" ")) {
+                setMessage("Merchant ID cannot contain spaces.", false); return;
+            }
+
+            // Username format — no spaces allowed
+            if (username.contains(" ")) {
+                setMessage("Username cannot contain spaces.", false); return;
+            }
+
+            // Email format check
+            if (!email.contains("@") || !email.contains(".")) {
+                setMessage("Please enter a valid email address.", false); return;
+            }
+
+            // Phone format — digits only if provided
+            if (!phone.isEmpty() && !phone.matches("[0-9+\\-\\s()]+")) {
+                setMessage("Phone number contains invalid characters.", false); return;
+            }
+
+            // Credit limit validation
+            if (creditLimitField.getText().trim().isEmpty()) {
+                setMessage("Credit limit is required.", false); return;
+            }
+
+            if (credit < 0) {
+                setMessage("Credit limit cannot be negative.", false); return;
+            }
+
+            // Discount validation
+            if (discountValueField.getText().trim().isEmpty()) {
+                setMessage("Discount value is required.", false); return;
+            }
+
+            if (discount < 0) {
+                setMessage("Discount cannot be negative.", false); return;
+            }
+            if (discount > 100) {
+                setMessage("Discount cannot exceed 100%.", false); return;
+            }
 
             String defaultPassword = username + "123";
             String hashedPassword = hashPassword(defaultPassword);
 
             // Using the 18-parameter constructor
             MerchantAccount account = new MerchantAccount(
-                    id,                                    // merchantId
-                    name,                                  // businessName
-                    businessTypeField.getText().trim(),    // businessType
-                    registrationNumberField.getText().trim(), // registrationNumber
-                    email,                                 // email
-                    phoneField.getText().trim(),           // phone
-                    faxField.getText().trim(),             // fax
-                    addressField.getText().trim(),         // address
-                    credit,                                // creditLimit
-                    0.0,                                   // outstandingBalance
-                    "normal",                              // accountStatus
-                    "fixed",                               // discountType
-                    discount,                              // fixedDiscountRate
-                    0.0,                                   // flexibleDiscountRate
-                    Date.valueOf(LocalDate.now()),         // registrationDate
-                    true,                                  // isActive
-                    Date.valueOf(LocalDate.now()),         // lastPaymentDate
-                    username                               // username
+                    id,
+                    name,
+                    businessTypeField.getText().trim(),
+                    registrationNumberField.getText().trim(),
+                    email,
+                    phoneField.getText().trim(),
+                    faxField.getText().trim(),
+                    addressField.getText().trim(),
+                    credit,
+                    0.0,
+                    "normal",
+                    "fixed",
+                    discount,
+                    0.0,
+                    Date.valueOf(LocalDate.now()),
+                    true,
+                    Date.valueOf(LocalDate.now()),
+                    username
             );
 
             // Set password separately (since this constructor doesn't have password)
@@ -351,7 +396,49 @@ public class AccountManagement extends BaseFrame {
     private void updateAccount() {
         String id = merchantIdField.getText().trim();
         if (id.isEmpty()) { setMessage("Load an account first.", false); return; }
+
+        String name = companyNameField.getText().trim();
+        String email = emailField.getText().trim();
+        String phone = phoneField.getText().trim();
+
+
+        // Required field checks
+        if (name.isEmpty())  { setMessage("Company name is required.", false); return; }
+        if (email.isEmpty()) { setMessage("Email is required.", false); return; }
+
+        // Email format check
+        if (!email.contains("@") || !email.contains(".")) {
+            setMessage("Please enter a valid email address.", false); return;
+        }
+
+        // Phone format check
+        if (!phone.isEmpty() && !phone.matches("[0-9+\\-\\s()]+")) {
+            setMessage("Phone number contains invalid characters.", false); return;
+        }
+
+        // Credit limit validation
+        if (creditLimitField.getText().trim().isEmpty()) {
+            setMessage("Credit limit is required.", false); return;
+        }
+
+        // Discount validation
+        if (discountValueField.getText().trim().isEmpty()) {
+            setMessage("Discount value is required.", false); return;
+        }
+
         try {
+            double credit = Double.parseDouble(creditLimitField.getText().trim());
+            double discount = Double.parseDouble(discountValueField.getText().trim());
+
+            if (credit < 0) {
+                setMessage("Credit limit cannot be negative.", false);
+                return;
+            }
+            if (discount < 0 || discount > 100) {
+                setMessage("Discount must be between 0 and 100.", false);
+                return;
+            }
+
             MerchantAccount existing = accountService.getAccount(id);
             if (existing == null) { setMessage("Account not found.", false); return; }
 

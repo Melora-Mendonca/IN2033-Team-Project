@@ -17,29 +17,32 @@ public class DBConnection {
     private Connection getConnection() {
         System.out.println("About to create a connection");
         Connection con = null;
-        String userName   = "root";
-        String pwd        = "Karkala1998?";       // your MySQL root password here
-        String dbName     = "ipos_sa";
-        String serverName = "localhost";
-        int portNumber    = 3306;
+
+        // Read from environment variables (Docker) or use defaults (local development)
+        String userName = System.getenv().getOrDefault("DB_USER", "root");
+        String pwd = System.getenv().getOrDefault("DB_PASSWORD", "Karkala1998?");
+        String dbName = System.getenv().getOrDefault("DB_NAME", "ipos_sa");
+        String serverName = System.getenv().getOrDefault("DB_HOST", "localhost");
+        String portNumber = System.getenv().getOrDefault("DB_PORT", "3306");
 
         try {
             Properties connectionProps = new Properties();
             connectionProps.put("user", userName);
             connectionProps.put("password", pwd);
+            connectionProps.put("useSSL", "false");
+            connectionProps.put("allowPublicKeyRetrieval", "true");
 
-            con = DriverManager.getConnection(
-                    "jdbc:mysql://" + serverName + ":" + portNumber + "/" + dbName,
-                    connectionProps
-            );
+            String url = "jdbc:mysql://" + serverName + ":" + portNumber + "/" + dbName;
+            System.out.println("Connecting to: " + url);
 
+            con = DriverManager.getConnection(url, connectionProps);
             System.out.println("Successfully connected to database");
 
         } catch (SQLException sqle) {
+            System.err.println("Database connection failed!");
             sqle.printStackTrace();
-        } finally {
-            return con;
         }
+        return con;
     }
 
     public ResultSet query(String sql, Object... params) throws SQLException {

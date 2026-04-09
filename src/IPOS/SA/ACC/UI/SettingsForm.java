@@ -142,21 +142,37 @@ public class SettingsForm extends BaseFrame {
         String newPass  = new String(newPassField.getPassword());
         String confirm  = new String(confirmPassField.getPassword());
 
+        // Check all fields filled
         if (current.isEmpty() || newPass.isEmpty() || confirm.isEmpty()) {
             setMsg("Please fill in all password fields.", false);
             return;
         }
 
-        if (!newPass.equals(confirm)) {
-            setMsg("New passwords do not match.", false);
-            return;
-        }
-
+        // Minimum length check
         if (newPass.length() < 6) {
             setMsg("New password must be at least 6 characters.", false);
             return;
         }
 
+        // Maximum length check
+        if (newPass.length() > 50) {
+            setMsg("New password cannot exceed 50 characters.", false);
+            return;
+        }
+
+        // No spaces allowed
+        if (newPass.contains(" ")) {
+            setMsg("Password cannot contain spaces.", false);
+            return;
+        }
+
+        // New passwords must match
+        if (!newPass.equals(confirm)) {
+            setMsg("New passwords do not match.", false);
+            return;
+        }
+
+        // New password must differ from current
         if (newPass.equals(current)) {
             setMsg("New password must be different from current password.", false);
             return;
@@ -168,7 +184,7 @@ public class SettingsForm extends BaseFrame {
             // Get the actual username from database using fullname
             String[] nameParts = fullname.split(" ");
             String firstName = nameParts[0];
-            String lastName = nameParts.length > 1 ? nameParts[1] : "";
+            String lastName  = nameParts.length > 1 ? nameParts[1] : "";
 
             ResultSet userRs = db.query(
                     "SELECT username FROM userlogin WHERE first_Name = ? AND sur_Name = ?",
@@ -181,13 +197,15 @@ public class SettingsForm extends BaseFrame {
 
             String actualUsername = userRs.getString("username");
 
-            // Verify current password
+            // Verify current password is correct
             ResultSet rs = db.query(
                     "SELECT user_id FROM userlogin WHERE username = ? AND password_hash = ?",
                     actualUsername, hashPassword(current));
 
             if (!rs.next()) {
                 setMsg("Current password is incorrect.", false);
+                // Clear current password field on failed attempt
+                currentPassField.setText("");
                 return;
             }
 

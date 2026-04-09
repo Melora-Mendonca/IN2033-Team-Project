@@ -8,7 +8,6 @@ import IPOS.SA.ACC.Service.AccountService;
 import IPOS.SA.ORD.Service.OrderService;
 import IPOS.SA.ORD.Service.InvoiceService;
 import IPOS.SA.DB.DBConnection;
-
 import java.io.*;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
@@ -93,7 +92,7 @@ public class IPOSAPIServer {
         os.close();
     }
 
-    // ==================== INVENTORY HANDLERS ====================
+    // INVENTORY HANDLERS METHODS
 
     class GetCatalogueHandler implements HttpHandler {
         @Override
@@ -146,7 +145,7 @@ public class IPOSAPIServer {
         }
     }
 
-    // ==================== ORDER HANDLERS ====================
+    // ORDER HANDLER METHODS
 
     class PlaceOrderHandler implements HttpHandler {
         @Override
@@ -277,7 +276,7 @@ public class IPOSAPIServer {
         }
     }
 
-    // ==================== MEMBERSHIP HANDLER ====================
+    // MEMBERSHIP HANDLER METHOD
 
     class RequestMembershipHandler implements HttpHandler {
         @Override
@@ -317,8 +316,6 @@ public class IPOSAPIServer {
             }
         }
     }
-
-    // ==================== HELPER METHODS ====================
 
     private String extractValue(String json, String key) {
         String search = "\"" + key + "\":";

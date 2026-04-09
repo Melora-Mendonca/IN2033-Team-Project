@@ -324,12 +324,26 @@ public class ManageItem extends BaseFrame {
 
     private void recordDelivery() {
         String id = itemIdField.getText().trim();
-        if (id.isEmpty()) {
-            setMessage("Enter an Item ID.", false);
-            return; }
-        if (quantityField.getText().trim().isEmpty()) { setMessage("Enter a quantity.", false); return; }
+        if (id.isEmpty()) { setMessage("Enter an Item ID.", false); return; }
+
+        String qtyText = quantityField.getText().trim();
+        if (qtyText.isEmpty()) { setMessage("Quantity is required.", false); return; }
+
         try {
-            int qty = Integer.parseInt(quantityField.getText().trim());
+            int qty = Integer.parseInt(qtyText);
+
+            // Quantity must be positive
+            if (qty <= 0) {
+                setMessage("Quantity must be greater than zero.", false);
+                return;
+            }
+
+            // Quantity reasonable upper limit
+            if (qty > 10000) {
+                setMessage("Quantity seems too large. Please check.", false);
+                return;
+            }
+
             if (service.recordDelivery(id, qty, currentUserId)) {
                 setMessage("Delivery recorded. Stock updated by " + qty + " packs.", true);
                 quantityField.setText("");
@@ -340,7 +354,7 @@ public class ManageItem extends BaseFrame {
                 setMessage("Failed to record delivery. Item may be inactive.", false);
             }
         } catch (NumberFormatException ex) {
-            setMessage("Please enter a valid quantity.", false);
+            setMessage("Quantity must be a whole number.", false);
         } catch (Exception ex) {
             setMessage("Error: " + ex.getMessage(), false);
         }
@@ -378,6 +392,30 @@ public class ManageItem extends BaseFrame {
         }
         if (descriptionField.getText().trim().isEmpty()) {
             setMessage("Description is required.", false);
+            return false;
+        }
+        if (unitField.getText().trim().isEmpty()) {
+            setMessage("Unit is required.", false);
+            return false;
+        }
+        if (costField.getText().trim().isEmpty()){
+            setMessage("Cost is required.", false);
+            return false;
+        }
+        if (units_per_packField.getText().trim().isEmpty()){
+            setMessage("Units per pack is required.", false);
+            return false;
+        }
+        if (availabilityField.getText().trim().isEmpty()){
+            setMessage("Stock Availability is required.", false);
+            return false;
+        }
+        if (stock_limitField.getText().trim().isEmpty()){
+            setMessage("Stock limit is required.", false);
+            return false;
+        }
+        if (packageField.getText().trim().isEmpty()){
+            setMessage("Package is required.", false);
             return false;
         }
         return true;

@@ -207,30 +207,126 @@ public class StaffAccountManagement extends BaseFrame {
     // ── BUSINESS LOGIC ───────────────────────────────────────
     private void createStaff() {
         try {
-            String username   = usernameField.getText().trim();
-            String firstName  = firstNameField.getText().trim();
-            String surName    = surNameField.getText().trim();
+            String username  = usernameField.getText().trim();
+            String firstName = firstNameField.getText().trim();
+            String surName   = surNameField.getText().trim();
+            String email     = emailField.getText().trim();
+            String phone     = phoneField.getText().trim();
 
+            // Required field checks
             if (username.isEmpty()) {
-                setMessage("Username is required.", false);
-                return;
+                setMessage("Username is required.", false); return;
             }
-            if (firstName.isEmpty() || surName.isEmpty()) {
-                setMessage("First name and surname are required.", false);
-                return;
+            if (firstName.isEmpty()) {
+                setMessage("First name is required.", false); return;
+            }
+            if (surName.isEmpty()) {
+                setMessage("Surname is required.", false); return;
             }
 
-            // Pass empty string or null for staffId - it will be auto-generated
-            Staff staff = new Staff("", username, firstName, surName, emailField.getText().trim(), phoneField.getText().trim(), addressField.getText().trim(), selectedRole);
+            // Username format — no spaces
+            if (username.contains(" ")) {
+                setMessage("Username cannot contain spaces.", false); return;
+            }
+
+            // Username minimum length
+            if (username.length() < 3) {
+                setMessage("Username must be at least 3 characters.", false); return;
+            }
+
+            // First name — letters only
+            if (!firstName.matches("[a-zA-Z\\s-]+")) {
+                setMessage("First name can only contain letters.", false); return;
+            }
+
+            // Surname — letters only
+            if (!surName.matches("[a-zA-Z\\s-]+")) {
+                setMessage("Surname can only contain letters.", false); return;
+            }
+
+            // Email format check if provided
+            if (!email.isEmpty() && (!email.contains("@") || !email.contains("."))) {
+                setMessage("Please enter a valid email address.", false); return;
+            }
+
+            // Phone format check if provided
+            if (!phone.isEmpty() && !phone.matches("[0-9+\\-\\s()]+")) {
+                setMessage("Phone number contains invalid characters.", false); return;
+            }
+
+            Staff staff = new Staff("", username, firstName, surName,
+                    email, phone, addressField.getText().trim(), selectedRole);
 
             if (accountService.createStaff(staff)) {
                 clearForm();
-                setMessage("Staff account created successfully. Staff ID is auto-generated.", true);
-
-                // Optionally, refresh to show the new ID
-                // You could call loadStaff() with the new ID if your service returns it
+                setMessage("Staff account created. Default password: " + username + "123", true);
             } else {
                 setMessage("Username already exists.", false);
+            }
+        } catch (Exception ex) {
+            setMessage("Error: " + ex.getMessage(), false);
+        }
+    }
+
+    private void updateStaff() {
+        String id = staffIdField.getText().trim();
+        if (id.isEmpty()) { setMessage("Load a staff account first.", false); return; }
+
+        String username  = usernameField.getText().trim();
+        String firstName = firstNameField.getText().trim();
+        String surName   = surNameField.getText().trim();
+        String email     = emailField.getText().trim();
+        String phone     = phoneField.getText().trim();
+
+        // Required field checks
+        if (username.isEmpty()) {
+            setMessage("Username is required.", false); return;
+        }
+        if (firstName.isEmpty()) {
+            setMessage("First name is required.", false); return;
+        }
+        if (surName.isEmpty()) {
+            setMessage("Surname is required.", false); return;
+        }
+
+        // Username format — no spaces
+        if (username.contains(" ")) {
+            setMessage("Username cannot contain spaces.", false); return;
+        }
+
+        // First name — letters only
+        if (!firstName.matches("[a-zA-Z\\s-]+")) {
+            setMessage("First name can only contain letters.", false); return;
+        }
+
+        // Surname — letters only
+        if (!surName.matches("[a-zA-Z\\s-]+")) {
+            setMessage("Surname can only contain letters.", false); return;
+        }
+
+        // Email format check if provided
+        if (!email.isEmpty() && (!email.contains("@") || !email.contains("."))) {
+            setMessage("Please enter a valid email address.", false); return;
+        }
+
+        // Phone format check if provided
+        if (!phone.isEmpty() && !phone.matches("[0-9+\\-\\s()]+")) {
+            setMessage("Phone number contains invalid characters.", false); return;
+        }
+
+        try {
+            Staff existing = accountService.loadStaff(id);
+            if (existing == null) { setMessage("Staff not found.", false); return; }
+
+            Staff staff = new Staff(id, username, firstName, surName,
+                    email, phone, addressField.getText().trim(), selectedRole);
+            staff.setActive(existing.isActive());
+
+            if (accountService.updateStaff(staff)) {
+                setMessage("Staff updated successfully.", true);
+                loadStaff();
+            } else {
+                setMessage("Failed to update staff.", false);
             }
         } catch (Exception ex) {
             setMessage("Error: " + ex.getMessage(), false);
@@ -254,33 +350,6 @@ public class StaffAccountManagement extends BaseFrame {
         }
     }
 
-    private void updateStaff() {
-        String id = staffIdField.getText().trim();
-        if (id.isEmpty()) { setMessage("Load a staff account first.", false); return; }
-        try {
-            Staff existing = accountService.loadStaff(id);
-            if (existing == null) { setMessage("Staff not found.", false); return; }
-
-            Staff staff = new Staff(id,
-                    usernameField.getText().trim(),
-                    firstNameField.getText().trim(),
-                    surNameField.getText().trim(),
-                    emailField.getText().trim(),
-                    phoneField.getText().trim(),
-                    addressField.getText().trim(),
-                    selectedRole);
-            staff.setActive(existing.isActive());
-
-            if (accountService.updateStaff(staff)) {
-                setMessage("Staff updated successfully.", true);
-                loadStaff();
-            } else {
-                setMessage("Failed to update staff.", false);
-            }
-        } catch (Exception ex) {
-            setMessage("Error: " + ex.getMessage(), false);
-        }
-    }
 
     private void deactivateStaff() {
         String id = staffIdField.getText().trim();
