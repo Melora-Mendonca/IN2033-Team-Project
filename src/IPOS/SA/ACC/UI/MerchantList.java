@@ -4,6 +4,7 @@ import IPOS.SA.ACC.Model.MerchantAccount;
 import IPOS.SA.ACC.Service.AccountService;
 import IPOS.SA.ORD.UI.InvoiceListFrame;
 import IPOS.SA.ORD.UI.OrderManagement;
+import IPOS.SA.UI.AdminDashboard;
 import IPOS.SA.UI.BaseFrame;
 
 import javax.swing.*;

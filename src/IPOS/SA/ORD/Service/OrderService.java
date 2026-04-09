@@ -297,6 +297,7 @@ public class OrderService {
 
     // Simple status update
     public boolean updateStatus(String orderId, String newStatus) throws Exception {
+        System.out.println("Updating order " + orderId + " to status: " + newStatus);
         int rows = db.update(
                 "UPDATE `order` SET status = ? WHERE order_id = ?", newStatus, orderId);
         return rows > 0;
@@ -341,18 +342,5 @@ public class OrderService {
             );
         }
         return null;
-    }
-
-    /**
-     * Get pending orders count for dashboard
-     */
-    public int getPendingOrdersCount() throws Exception {
-        ResultSet rs = db.query(
-                "SELECT COUNT(*) as count FROM `Order` WHERE status IN ('pending', 'accepted', 'processing')"
-        );
-        if (rs.next()) {
-            return rs.getInt("count");
-        }
-        return 0;
     }
 }

@@ -1,11 +1,13 @@
 package IPOS.SA.ORD.Service;
 
+import IPOS.SA.Comms.PUClient.IPOSPUEmailClient;
 import IPOS.SA.DB.InvoiceDBConnector;
 import IPOS.SA.ORD.Model.Invoice;
 import IPOS.SA.ACC.Model.MerchantAccount;
 import IPOS.SA.DB.DBConnection;
 import IPOS.SA.ORD.Model.Order;
 
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -137,21 +139,103 @@ public class InvoiceService {
     public void generateInvoiceForOrder(String orderId) throws Exception {
         DBConnection db = new DBConnection();
 
-        // Check order exists
+        // Check order exists and get merchant details for email
         ResultSet rs = db.query(
-                "SELECT final_amount FROM `order` WHERE order_id = ?", orderId);
+                "SELECT o.final_amount, o.merchant_id, o.order_date, m.email, m.company_name " +
+                        "FROM `order` o " +
+                        "JOIN merchant m ON o.merchant_id = m.merchant_id " +
+                        "WHERE o.order_id = ?", orderId);
 
         if (!rs.next()) throw new Exception("Order not found: " + orderId);
 
         double finalAmount = rs.getDouble("final_amount");
-        String invoiceId   = "INV-" + java.util.UUID.randomUUID()
+        String merchantEmail = rs.getString("email");
+        String companyName = rs.getString("company_name");
+        String merchantId = rs.getString("merchant_id");
+        java.sql.Date orderDate = rs.getDate("order_date");
+
+        // Generate unique invoice ID
+        String invoiceId = "INV-" + java.util.UUID.randomUUID()
                 .toString().substring(0, 8).toUpperCase();
 
-        db.update(
+        int rowsAffected = db.update(
                 "INSERT INTO invoice (invoice_id, order_id, invoice_date, due_date, " +
                         "total_amount, amount_paid, status, days_overdue) " +
                         "VALUES (?, ?, CURDATE(), DATE_ADD(CURDATE(), INTERVAL 30 DAY), ?, 0.00, 'unpaid', 0)",
                 invoiceId, orderId, finalAmount);
+
+        // Calls the emailService API to send an invoice email to the merchant
+        if (rowsAffected > 0) {
+            sendInvoiceEmail(merchantEmail, companyName, merchantId, invoiceId, orderId, finalAmount, orderDate);
+        }
     }
 
+    // Add this method to send invoice email
+    private void sendInvoiceEmail(String merchantEmail, String companyName, String merchantId,
+                                  String invoiceId, String orderId, double amount, java.sql.Date orderDate) {
+        String emailContent = buildInvoiceEmailContent(companyName, merchantId, invoiceId, orderId, amount, orderDate);
+
+        try {
+            // Using IPOS-PU email API
+            boolean emailSent = IPOSPUEmailClient.produceEmail(
+                    merchantEmail,                           // recipient
+                    emailContent,                            // email body
+                    invoiceId,                               // reference (invoice ID)
+                    "IPOS-SA",                               // sender
+                    "Invoicing"                              // subsystem
+            );
+
+            if (emailSent) {
+                System.out.println("Invoice " + invoiceId + " sent to " + merchantEmail);
+            } else {
+                System.err.println("Failed to send invoice email to " + merchantEmail);
+            }
+        } catch (IOException e) {
+            System.err.println("Email service error for invoice " + invoiceId + ": " + e.getMessage());
+        }
+    }
+
+    // Add this method to build the invoice email content
+    private String buildInvoiceEmailContent(String companyName, String merchantId,
+                                            String invoiceId, String orderId,
+                                            double amount, java.sql.Date orderDate) {
+        // Calculate due date (30 days from now)
+        java.text.SimpleDateFormat dateFormat = new java.text.SimpleDateFormat("yyyy-MM-dd");
+        java.util.Calendar cal = java.util.Calendar.getInstance();
+        String invoiceDate = dateFormat.format(cal.getTime());
+        cal.add(java.util.Calendar.DAY_OF_MONTH, 30);
+        String dueDate = dateFormat.format(cal.getTime());
+
+        return "Dear " + companyName + ",\n\n"
+                + "An invoice has been generated for your order.\n\n"
+                + "Order Details:\n"
+                + "Order ID: " + orderId + "\n"
+                + "Order Date: " + orderDate + "\n"
+                + "Merchant ID: " + merchantId + "\n\n"
+                + "Invoice Details:\n"
+                + "Invoice ID: " + invoiceId + "\n"
+                + "Invoice Date: " + invoiceDate + "\n"
+                + "Due Date: " + dueDate + "\n"
+                + "Total Amount: $" + String.format("%.2f", amount) + "\n"
+                + "Amount Paid: $0.00\n"
+                + "Status: Unpaid\n\n"
+                + "Please make payment by the due date to avoid late fees.\n\n"
+                + "If you have already made payment, please disregard this notice.\n\n"
+                + "Regards,\nIPOS System Administrator";
+    }
+
+    public String getInvoiceAsString(String orderId) {
+        try {
+            ResultSet rs = db.query("SELECT * FROM Invoice WHERE order_id = ?", orderId);
+            if (rs.next()) {
+                return "Invoice ID: " + rs.getString("invoice_id") +
+                        ", Total: £" + rs.getDouble("total_amount") +
+                        ", Paid: £" + rs.getDouble("amount_paid") +
+                        ", Status: " + rs.getString("status");
+            }
+            return "Invoice not found for order: " + orderId;
+        } catch (Exception e) {
+            return "Error: " + e.getMessage();
+        }
+    }
 }

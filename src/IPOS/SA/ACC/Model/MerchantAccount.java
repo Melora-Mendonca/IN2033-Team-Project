@@ -18,7 +18,6 @@ public class MerchantAccount {
     private DiscountPlan discountPlan;
     private AccountStatus status;
     private double discountPercentage; // For database storage
-
     private String businessType;
     private String registrationNumber;
     private String accountStatus;
@@ -28,31 +27,58 @@ public class MerchantAccount {
     private java.sql.Date registrationDate;
     private boolean isActive;
     private java.sql.Date lastPaymentDate;
+    private String username;
+    private String password;
 
     // Original constructor
-    public MerchantAccount(String merchantId, String businessName, String businessType, String registrationNumber, String email, String phone, String address, String fax, double creditLimit, DiscountPlan discountPlan) {
+    public MerchantAccount(String merchantId,
+                           String businessName,
+                           String businessType,
+                           String registrationNumber,
+                           String email,
+                           String phone,
+                           String fax,
+                           String address,
+                           double creditLimit,
+                           double outstandingBalance,
+                           String accountStatus,
+                           String discountType,
+                           double fixedDiscountRate,
+                           double flexibleDiscountRate,
+                           Date registrationDate,
+                           boolean isActive,
+                           Date lastPaymentDate,
+                           String username) {
         this.merchantId = merchantId;
+        this.username = username;  // ← Set username
         this.businessName = businessName;
         this.businessType = businessType;
         this.registrationNumber = registrationNumber;
         this.email = email;
         this.phone = phone;
-        this.address = address;
         this.fax = fax;
+        this.address = address;
         this.creditLimit = creditLimit;
-        this.discountPlan = discountPlan;
-        this.outstandingBalance = 0.0;
-        this.status       = AccountStatus.NORMAL;
-        this.accountStatus = "normal";
-        this.lastPaymentDate = Date.valueOf(LocalDate.now());
+        this.outstandingBalance = outstandingBalance;
+        this.accountStatus = accountStatus;
+        this.discountType = discountType;
+        this.fixedDiscountRate = fixedDiscountRate;
+        this.flexibleDiscountRate = flexibleDiscountRate;
+        this.registrationDate = registrationDate;
+        this.isActive = isActive;
+        this.lastPaymentDate = lastPaymentDate;
 
-        // Extract discount percentage
-        if (discountPlan instanceof FixedDiscountPlan) {
-            this.discountPercentage = ((FixedDiscountPlan) discountPlan).getPercentage();
+        // Set discount percentage based on discount type
+        if ("fixed".equals(discountType)) {
+            this.discountPercentage = fixedDiscountRate;  // ← This sets the discount
+            this.discountPlan = new FixedDiscountPlan("Fixed Plan", fixedDiscountRate);
+        } else {
+            this.discountPercentage = flexibleDiscountRate;
+            this.discountPlan = new FixedDiscountPlan("Flexible Plan", flexibleDiscountRate);
         }
     }
 
-    // Constructor for database loading
+        // Constructor for database loading
     public MerchantAccount(String merchantId,
                            String businessName,
                            String businessType,
@@ -122,7 +148,9 @@ public class MerchantAccount {
                            double creditLimit,
                            double outstandingBalance,
                            String accountStatus,
-                           double fixedDiscountRate) {
+                           double fixedDiscountRate,
+                           String username,
+                           String password) {
         this.merchantId = merchantId;
         this.businessName = businessName;
         this.email = email;
@@ -135,6 +163,8 @@ public class MerchantAccount {
         this.fixedDiscountRate = fixedDiscountRate;
         this.discountPercentage = fixedDiscountRate;
         this.discountPlan = new FixedDiscountPlan("Fixed Plan", fixedDiscountRate);
+        this.username = username;
+        this.password = password;
 
         if (accountStatus != null) {
             this.status = AccountStatus.valueOf(accountStatus.toUpperCase());
@@ -167,6 +197,12 @@ public class MerchantAccount {
     public double getFlexibleDiscountRate() { return flexibleDiscountRate; }
     public java.sql.Date getRegistrationDate() { return registrationDate; }
     public boolean isActive() { return isActive; }
+    public String getPassword() {
+        return password;
+    }
+    public String getUsername() {
+        return username;
+    }
 
     // Setters
     public void setBusinessName(String businessName) { this.businessName = businessName; }
@@ -180,6 +216,12 @@ public class MerchantAccount {
         if (discountPlan instanceof FixedDiscountPlan) {
             this.discountPercentage = ((FixedDiscountPlan) discountPlan).getPercentage();
         }
+    }
+    public void setUsername(String username) {
+        this.username = username;
+    }
+    public void setPassword(String password) {
+        this.password = password;
     }
     public void setStatus(AccountStatus status) { this.status = status; }
     public void setOutstandingBalance(double amount) { this.outstandingBalance = amount; }

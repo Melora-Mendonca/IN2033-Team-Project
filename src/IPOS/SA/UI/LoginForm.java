@@ -1,6 +1,7 @@
-package IPOS.SA.ACC.UI;
+package IPOS.SA.UI;
 
 import IPOS.SA.ACC.Model.User;
+import IPOS.SA.ACC.Service.AccountService;
 import IPOS.SA.ACC.Service.AuthenticationService;
 
 import javax.swing.*;
@@ -328,6 +329,8 @@ public class LoginForm extends JFrame {
         if (user.getRole().equals("Administrator") ||
                 user.getRole().equals("Director of Operations")) {
             try {
+                AccountService accountService = new AccountService();
+                accountService.AutoUpdateStatus();
                 warnings = authService.getStockWarnings();
                 System.out.println("Stock warnings count: " + (warnings != null ? warnings.size() : 0));
             } catch (Exception e) {

@@ -1,10 +1,11 @@
 package IPOS.SA.ACC.Service;
 
 import IPOS.SA.ACC.Model.Staff;
+import IPOS.SA.Comms.PUClient.IPOSPUEmailClient;
 import IPOS.SA.DB.DBConnection;
+
+import java.io.IOException;
 import java.sql.ResultSet;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Service responsible for managing staff accounts,
@@ -33,8 +34,21 @@ public class StaffAccountService {
             return false;
         }
 
+        // Generate plain text password for email
+        String originalPassword = staff.getUsername() + "123";
+
         // Hash the default password to match authentication
         String defaultPassword = hashPassword(staff.getUsername() + "123");
+
+        // Checks if account already exists
+        ResultSet checkRs = db.query(
+                "SELECT user_id FROM userLogin WHERE user_id = ?",
+                staff.getStaffId()
+        );
+
+        if (checkRs.next()) {
+            return false; // Account already exists
+        }
 
         int rowsAffected = db.update(
                 "INSERT INTO UserLogin (username, password_hash, first_Name, sur_Name, email, role, is_Active, phone, address) " +
@@ -49,7 +63,49 @@ public class StaffAccountService {
                 staff.getAddress()
         );
 
-        return rowsAffected > 0;
+        // Calls the emailService API to send an email to the staff with credentials
+        if (rowsAffected > 0) {
+            sendStaffEmail(staff, originalPassword);
+            return true;
+        }
+
+        return false;
+    }
+
+    private void sendStaffEmail(Staff staff, String plainTextPassword) {
+        String emailContent = buildStaffAccountEmail(staff, plainTextPassword);
+
+        try {
+            // Call IPOS-PU email API
+            boolean emailSent = IPOSPUEmailClient.produceEmail(
+                    staff.getEmail(),                           // recipient
+                    emailContent,                               // email body
+                    staff.getUsername(),                        // reference (username)
+                    "IPOS-SA",                                  // sender
+                    "StaffManagement"                           // subsystem
+            );
+
+            if (emailSent) {
+                System.out.println("Login details sent to " + staff.getEmail());
+            } else {
+                System.err.println("Failed to send email to " + staff.getEmail());
+            }
+        } catch (IOException e) {
+            // Log error but don't throw exception - staff was already created
+            System.err.println("Email service error for " + staff.getEmail() + ": " + e.getMessage());
+            // Optionally: store failed email in a queue for retry
+        }
+    }
+
+    private String buildStaffAccountEmail(Staff staff, String plainTextPassword) {
+        return "Dear " + staff.getFirstName() + " " + staff.getSurName() + ",\n\n"
+                + "Your staff account has been created in IPOS system.\n\n"
+                + "Login Details:\n"
+                + "Username: " + staff.getUsername() + "\n"
+                + "Password: " + plainTextPassword + "\n\n"
+                + "Role: " + staff.getRole() + "\n\n"
+                + "Please login and change your password after first access.\n\n"
+                + "Regards,\nIPOS System Administrator";
     }
 
     // Add this helper method

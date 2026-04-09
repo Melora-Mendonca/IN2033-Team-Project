@@ -75,7 +75,7 @@ public class OrderManagement extends BaseFrame {
         filterLbl.setFont(new Font("Segoe UI", Font.PLAIN, 12));
 
         statusFilter = new JComboBox<>(new String[]{
-                "All", "pending", "accepted", "being_processed", "dispatched", "delivered"
+                "All", "pending", "accepted", "processing", "dispatched", "delivered"
         });
         statusFilter.setFont(new Font("Segoe UI", Font.PLAIN, 12));
         statusFilter.addActionListener(e -> loadOrders());
@@ -118,13 +118,33 @@ public class OrderManagement extends BaseFrame {
                         JLabel lbl = new JLabel(val != null ? val.toString() : "", SwingConstants.CENTER);
                         lbl.setOpaque(true);
                         lbl.setFont(new Font("Segoe UI", Font.BOLD, 11));
-                        if (val != null) switch (val.toString().toLowerCase()) {
-                            case "pending":         lbl.setBackground(new Color(216, 186, 223)); lbl.setForeground(new Color(90, 4, 133));   break;
-                            case "accepted":        lbl.setBackground(new Color(255, 243, 205)); lbl.setForeground(new Color(133, 100, 4));  break;
-                            case "processing": lbl.setBackground(new Color(207, 226, 255)); lbl.setForeground(new Color(10, 64, 168));  break;
-                            case "dispatched":      lbl.setBackground(new Color(255, 220, 185)); lbl.setForeground(new Color(168, 80, 10));  break;
-                            case "delivered":       lbl.setBackground(new Color(198, 239, 206)); lbl.setForeground(new Color(0, 97, 0));     break;
-                            default:                lbl.setBackground(Color.WHITE);              lbl.setForeground(Color.BLACK);
+                        if (val != null) {
+                            String status = val.toString().toLowerCase();
+                            switch (status) {
+                                case "pending":
+                                    lbl.setBackground(new Color(216, 186, 223));
+                                    lbl.setForeground(new Color(90, 4, 133));
+                                    break;
+                                case "accepted":
+                                    lbl.setBackground(new Color(255, 243, 205));
+                                    lbl.setForeground(new Color(133, 100, 4));
+                                    break;
+                                case "processing":
+                                    lbl.setBackground(new Color(207, 226, 255));
+                                    lbl.setForeground(new Color(10, 64, 168));
+                                    break;
+                                case "dispatched":
+                                    lbl.setBackground(new Color(255, 220, 185));
+                                    lbl.setForeground(new Color(168, 80, 10));
+                                    break;
+                                case "delivered":
+                                    lbl.setBackground(new Color(198, 239, 206));
+                                    lbl.setForeground(new Color(0, 97, 0));
+                                    break;
+                                default:
+                                    lbl.setBackground(Color.WHITE);
+                                    lbl.setForeground(Color.BLACK);
+                            }
                         }
                         return lbl;
                     }
@@ -159,7 +179,7 @@ public class OrderManagement extends BaseFrame {
 
         viewBtn.addActionListener(e    -> viewOrderDetails());
         acceptBtn.addActionListener(e  -> acceptOrder());
-        processBtn.addActionListener(e -> updateStatus("being_processed"));
+        processBtn.addActionListener(e -> updateStatus("processing"));
         deliverBtn.addActionListener(e -> updateStatus("delivered"));
         rejectBtn.addActionListener(e  -> rejectOrder());
 
@@ -168,6 +188,14 @@ public class OrderManagement extends BaseFrame {
         buttonPanel.add(processBtn);
         buttonPanel.add(deliverBtn);
         buttonPanel.add(rejectBtn);
+
+        if (role.equals("Director of Operations")) {
+            acceptBtn.setVisible(false);
+            processBtn.setVisible(false);
+            deliverBtn.setVisible(false);
+            rejectBtn.setVisible(false);
+            // Only keep viewBtn visible
+        }
 
         messageLabel = new JLabel(" ");
         messageLabel.setFont(new Font("Segoe UI", Font.PLAIN, 11));
@@ -237,7 +265,7 @@ public class OrderManagement extends BaseFrame {
         if (row == -1) { setMsg("Select an order first.", false); return; }
 
         String orderId      = tableModel.getValueAt(row, 0).toString();
-        String currentStatus = tableModel.getValueAt(row, 3).toString();
+        String currentStatus = tableModel.getValueAt(row, 3).toString().toLowerCase();
 
         if (!currentStatus.equals("pending")) {
             setMsg("Only pending orders can be accepted.", false);
@@ -261,7 +289,7 @@ public class OrderManagement extends BaseFrame {
         if (row == -1) { setMsg("Select an order first.", false); return; }
 
         String orderId       = tableModel.getValueAt(row, 0).toString();
-        String currentStatus = tableModel.getValueAt(row, 3).toString();
+        String currentStatus = tableModel.getValueAt(row, 3).toString().toLowerCase();
 
         if (!isValidTransition(currentStatus, newStatus)) {
             setMsg("Cannot change from " + currentStatus + " to " + newStatus + ".", false);
@@ -285,7 +313,7 @@ public class OrderManagement extends BaseFrame {
         if (row == -1) { setMsg("Select an order first.", false); return; }
 
         String orderId       = tableModel.getValueAt(row, 0).toString();
-        String currentStatus = tableModel.getValueAt(row, 3).toString();
+        String currentStatus = tableModel.getValueAt(row, 3).toString().toLowerCase();
 
         if (!currentStatus.equals("pending")) {
             setMsg("Only pending orders can be rejected.", false);
@@ -310,12 +338,12 @@ public class OrderManagement extends BaseFrame {
     }
 
     private boolean isValidTransition(String current, String next) {
-        switch (current.toLowerCase()) {
-            case "pending":         return next.equals("accepted");
-            case "accepted":        return next.equals("processing");
+        switch (current) {
+            case "pending":    return next.equals("accepted");
+            case "accepted":   return next.equals("processing");
             case "processing": return next.equals("dispatched") || next.equals("delivered");
-            case "dispatched":      return next.equals("delivered");
-            default:                return false;
+            case "dispatched": return next.equals("delivered");
+            default:           return false;
         }
     }
 

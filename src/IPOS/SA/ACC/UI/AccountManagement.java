@@ -4,11 +4,15 @@ import IPOS.SA.ACC.Model.DiscountPlan;
 import IPOS.SA.ACC.Model.FixedDiscountPlan;
 import IPOS.SA.ACC.Model.MerchantAccount;
 import IPOS.SA.ACC.Service.AccountService;
+import IPOS.SA.Comms.PUClient.EmailService;
+import IPOS.SA.UI.AdminDashboard;
 import IPOS.SA.UI.BaseFrame;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
+import java.sql.Date;
+import java.time.LocalDate;
 
 public class AccountManagement extends BaseFrame {
 
@@ -16,6 +20,7 @@ public class AccountManagement extends BaseFrame {
     private final String mode;
 
     private JTextField merchantIdField;
+    private JTextField usernameField;
     private JTextField companyNameField;
     private JTextField businessTypeField;
     private JTextField registrationNumberField;
@@ -79,6 +84,7 @@ public class AccountManagement extends BaseFrame {
         grid.setLayout(new BoxLayout(grid, BoxLayout.Y_AXIS));
         grid.setBackground(Color.WHITE);
 
+        usernameField = new JTextField();
         merchantIdField = createTextField();
         companyNameField = createTextField();
         businessTypeField = createTextField();
@@ -91,24 +97,34 @@ public class AccountManagement extends BaseFrame {
         creditLimitField = createTextField();
         discountValueField = createTextField();
 
-        JPanel row1 = row(2);
-        row1.add(fieldWrapper("MERCHANT ID", merchantIdField));
-        row1.add(fieldWrapper("COMPANY NAME", companyNameField));
+        if ("CREATE".equals(mode)) {
+            // Show username field only when creating
+            JPanel row1 = row(2);
+            row1.add(fieldWrapper("MERCHANT ID", merchantIdField));
+            row1.add(fieldWrapper("USERNAME", usernameField));
+            grid.add(row1);
+        } else {
+            // For MANAGE mode, just show merchant ID without username
+            JPanel row1 = row(1);
+            row1.add(fieldWrapper("MERCHANT ID", merchantIdField));
+            grid.add(row1);
+        }
+
         JPanel row2 = row(2);
+        row2.add(fieldWrapper("COMPANY NAME", companyNameField));
         row2.add(fieldWrapper("BUSINESS TYPE", businessTypeField));
-        row2.add(fieldWrapper("REGISTRATION NUMBER", registrationNumberField));
-        JPanel row3 = row(1);
-        row3.add(fieldWrapper("ADDRESS", addressField));
-        JPanel row4 = row(2);
-        row4.add(fieldWrapper("EMAIL", emailField));
-        row4.add(fieldWrapper("PHONE", phoneField));
+        JPanel row3 = row(2);
+        row3.add(fieldWrapper("REGISTRATION NUMBER", registrationNumberField));
+        row3.add(fieldWrapper("EMAIL", emailField));
+        JPanel row4 = row(1);
+        row4.add(fieldWrapper("ADDRESS", addressField));
         JPanel row5 = row(2);
+        row5.add(fieldWrapper("PHONE", phoneField));
         row5.add(fieldWrapper("FAX", faxField));
-        row5.add(fieldWrapper("CREDIT LIMIT (£)", creditLimitField));
-        JPanel row6 = row(1);
+        JPanel row6 = row(2);
+        row6.add(fieldWrapper("CREDIT LIMIT (£)", creditLimitField));
         row6.add(fieldWrapper("FIXED DISCOUNT %", discountValueField));
 
-        grid.add(row1);
         grid.add(Box.createVerticalStrut(12));
         grid.add(row2);
         grid.add(Box.createVerticalStrut(12));
@@ -260,42 +276,52 @@ public class AccountManagement extends BaseFrame {
     private void createAccount() {
         try {
             String id = merchantIdField.getText().trim();
+            String username = usernameField.getText().trim();
             String name = companyNameField.getText().trim();
             String email = emailField.getText().trim();
             double credit = Double.parseDouble(creditLimitField.getText().trim());
             double discount = Double.parseDouble(discountValueField.getText().trim());
 
             if (id.isEmpty()) { setMessage("Merchant ID is required.", false); return; }
+            if (username.isEmpty()) { setMessage("Username is required.", false); return; }
             if (name.isEmpty()) { setMessage("Company name is required.", false); return; }
-            if (email.isEmpty()) { setMessage("Email is required for login details.", false); return; }
+            if (email.isEmpty()) { setMessage("Email is required.", false); return; }
             if (credit < 0) { setMessage("Credit limit cannot be negative.", false); return; }
             if (discount < 0) { setMessage("Discount cannot be negative.", false); return; }
 
-            DiscountPlan plan = new FixedDiscountPlan("Fixed Plan", discount);
+            String defaultPassword = username + "123";
+            String hashedPassword = hashPassword(defaultPassword);
 
-            // Generate temporary password
-            String tempPassword = generateTemporaryPassword();
-            String hashedPassword = hashPassword(tempPassword);
-
+            // Using the 18-parameter constructor
             MerchantAccount account = new MerchantAccount(
-                    id, name,
-                    businessTypeField.getText().trim(),
-                    registrationNumberField.getText().trim(),
-                    email,
-                    phoneField.getText().trim(),
-                    faxField.getText().trim(),
-                    addressField.getText().trim(),
-                    credit, plan
+                    id,                                    // merchantId
+                    name,                                  // businessName
+                    businessTypeField.getText().trim(),    // businessType
+                    registrationNumberField.getText().trim(), // registrationNumber
+                    email,                                 // email
+                    phoneField.getText().trim(),           // phone
+                    faxField.getText().trim(),             // fax
+                    addressField.getText().trim(),         // address
+                    credit,                                // creditLimit
+                    0.0,                                   // outstandingBalance
+                    "normal",                              // accountStatus
+                    "fixed",                               // discountType
+                    discount,                              // fixedDiscountRate
+                    0.0,                                   // flexibleDiscountRate
+                    Date.valueOf(LocalDate.now()),         // registrationDate
+                    true,                                  // isActive
+                    Date.valueOf(LocalDate.now()),         // lastPaymentDate
+                    username                               // username
             );
 
-            if (accountService.addAccount(account)) {
-                // Send email with login details
-                sendLoginCredentials(email, id, tempPassword, name, "Merchant");
+            // Set password separately (since this constructor doesn't have password)
+            account.setPassword(hashedPassword);
 
+            if (accountService.addAccount(account)) {
                 setMessage("Account created successfully. Login details sent to " + email, true);
                 clearForm();
             } else {
-                setMessage("Account ID already exists.", false);
+                setMessage("Merchant ID or Username already exists.", false);
             }
         } catch (NumberFormatException ex) {
             setMessage("Please enter valid numbers for Credit Limit and Discount.", false);
@@ -332,20 +358,29 @@ public class AccountManagement extends BaseFrame {
             DiscountPlan plan = new FixedDiscountPlan("Fixed Plan",
                     Double.parseDouble(discountValueField.getText().trim()));
 
+            // Get the existing account to retrieve current password
+            MerchantAccount existingAcc = accountService.getAccount(id);
+
+            // Use constructor #3 (12 parameters) - same as create
             MerchantAccount account = new MerchantAccount(
-                    id, companyNameField.getText().trim(),
-                    businessTypeField.getText().trim(),
-                    registrationNumberField.getText().trim(),
-                    emailField.getText().trim(),
-                    phoneField.getText().trim(),
-                    faxField.getText().trim(),
-                    addressField.getText().trim(),
-                    Double.parseDouble(creditLimitField.getText().trim()),
-                    plan
+                    id,                                           // merchantId
+                    companyNameField.getText().trim(),            // businessName
+                    emailField.getText().trim(),                  // email
+                    phoneField.getText().trim(),                  // phone
+                    faxField.getText().trim(),                    // fax
+                    addressField.getText().trim(),                // address
+                    Double.parseDouble(creditLimitField.getText().trim()), // creditLimit
+                    existingAcc.getOutstandingBalance(),             // outstandingBalance (keep existing)
+                    existingAcc.getAccountStatus(),                  // accountStatus (keep existing)
+                    Double.parseDouble(discountValueField.getText().trim()), // fixedDiscountRate
+                    username,                                     // username
+                    existing.getPassword()                        // password (keep existing)
             );
 
+            // Preserve values that shouldn't be overwritten
             account.setOutstandingBalance(existing.getOutstandingBalance());
             account.setStatus(existing.getStatus());
+            account.setPassword(existing.getPassword());  // Keep existing password
 
             if (accountService.updateAccount(account)) {
                 setMessage("Account updated successfully.", true);
@@ -437,6 +472,7 @@ public class AccountManagement extends BaseFrame {
     // ── HELPERS ──────────────────────────────────────────────
     private void populateForm(MerchantAccount account) {
         merchantIdField.setText(account.getMerchantId());
+        usernameField.setText(account.getUsername());
         companyNameField.setText(account.getBusinessName());
         businessTypeField.setText(account.getBusinessType());
         registrationNumberField.setText(account.getRegistrationNumber());
@@ -450,6 +486,7 @@ public class AccountManagement extends BaseFrame {
 
     private void clearForm() {
         merchantIdField.setText("");
+        usernameField.setText("");
         companyNameField.setText("");
         businessTypeField.setText("");
         registrationNumberField.setText("");
@@ -536,7 +573,7 @@ public class AccountManagement extends BaseFrame {
     }
 
     private void sendLoginCredentials(String email, String username, String password, String name, String accountType) {
-        IPOS.SA.Interfaces.EmailService emailService = new IPOS.SA.Interfaces.EmailService();
+        EmailService emailService = new EmailService();
 
         String subject = "Your IPOS-SA " + accountType + " Account Login Details";
 

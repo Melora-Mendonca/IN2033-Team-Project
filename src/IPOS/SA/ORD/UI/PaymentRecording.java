@@ -1,6 +1,6 @@
 package IPOS.SA.ORD.UI;
 
-import IPOS.SA.Comms.CommsClient;
+import IPOS.SA.Comms.PUClient.CommsClient;
 import IPOS.SA.ORD.Service.PaymentService;
 import IPOS.SA.DB.InvoiceDBConnector;
 import IPOS.SA.UI.BaseFrame;

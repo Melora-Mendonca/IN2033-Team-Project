@@ -2,6 +2,7 @@ package IPOS.SA.ACC.UI;
 
 import IPOS.SA.ACC.Model.Staff;
 import IPOS.SA.ACC.Service.StaffAccountService;
+import IPOS.SA.UI.AdminDashboard;
 import IPOS.SA.UI.BaseFrame;
 
 import javax.swing.*;

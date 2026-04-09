@@ -23,6 +23,11 @@ public class OrderProcessingFrame extends BaseFrame {
     private JTable orderTable;
     private DefaultTableModel tableModel;
 
+    // Order items table (for picking list)
+    private JTable orderItemsTable;
+    private DefaultTableModel itemsTableModel;
+    private JPanel orderDetailsPanel;
+
     // Dispatch fields (for Delivery Employee)
     private JTextField courierField;
     private JTextField refNoField;
@@ -68,38 +73,42 @@ public class OrderProcessingFrame extends BaseFrame {
         CenterPanel.setLayout(new BorderLayout());
         CenterPanel.setBackground(new Color(245, 247, 250));
 
-        CenterPanel.add(createTablePanel(), BorderLayout.CENTER);
+        // Create order details panel FIRST (so itemsTableModel is initialized)
+        orderDetailsPanel = createOrderDetailsPanel();
 
-        // Create both panels (one will be hidden based on role)
+        // Create table panel (which has the selection listener)
+        JPanel tablePanel = createTablePanel();
+
+        // Main content panel that holds orders table and order items
+        JPanel mainContent = new JPanel(new BorderLayout());
+        mainContent.setBackground(Color.WHITE);
+        mainContent.setBorder(BorderFactory.createEmptyBorder(0, 0, 10, 0));
+
+        mainContent.add(tablePanel, BorderLayout.CENTER);
+        mainContent.add(orderDetailsPanel, BorderLayout.SOUTH);
+
+        CenterPanel.add(mainContent, BorderLayout.CENTER);
+
         pickingPanel = createPickingPanel();
         dispatchPanel = createDispatchPanel();
 
-        // Start with dispatch panel as default (will be replaced in configureByRole)
         CenterPanel.add(dispatchPanel, BorderLayout.SOUTH);
     }
 
     private void configureByRole() {
         if (role.equals("Warehouse Employee")) {
-            // Remove dispatch panel, add picking panel
             CenterPanel.remove(dispatchPanel);
             CenterPanel.add(pickingPanel, BorderLayout.SOUTH);
-
-            // Hide courier/dispatch fields (already handled by using different panel)
-            // Refresh the view
             CenterPanel.revalidate();
             CenterPanel.repaint();
-
         } else if (role.equals("Delivery Employee")) {
-            // Keep dispatch panel, ensure picking panel not added
             CenterPanel.remove(pickingPanel);
             CenterPanel.add(dispatchPanel, BorderLayout.SOUTH);
             CenterPanel.revalidate();
             CenterPanel.repaint();
         }
-        // Admin/Manager would see both (you can add that later)
     }
 
-    // ── TABLE PANEL (modified with role-based filtering) ──────────
     private JPanel createTablePanel() {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBackground(Color.WHITE);
@@ -107,7 +116,6 @@ public class OrderProcessingFrame extends BaseFrame {
                 BorderFactory.createLineBorder(new Color(221, 225, 231), 1),
                 BorderFactory.createEmptyBorder(16, 16, 16, 16)));
 
-        // Title panel with refresh button
         JPanel titlePanel = new JPanel(new BorderLayout());
         titlePanel.setBackground(Color.WHITE);
         titlePanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 12, 0));
@@ -120,7 +128,11 @@ public class OrderProcessingFrame extends BaseFrame {
         refreshButton.setFont(new Font("Segoe UI", Font.PLAIN, 11));
         refreshButton.setBackground(new Color(240, 252, 255));
         refreshButton.setFocusPainted(false);
-        refreshButton.addActionListener(e -> loadOrders());
+        refreshButton.addActionListener(e -> {
+            loadOrders();
+            loadItems();
+                }
+        );
 
         titlePanel.add(title, BorderLayout.WEST);
         titlePanel.add(refreshButton, BorderLayout.EAST);
@@ -140,22 +152,39 @@ public class OrderProcessingFrame extends BaseFrame {
                         JLabel lbl = new JLabel(val != null ? val.toString() : "", SwingConstants.CENTER);
                         lbl.setOpaque(true);
                         lbl.setFont(new Font("Segoe UI", Font.BOLD, 11));
-                        if (val != null) switch (val.toString().toLowerCase()) {
-                            case "pending":    lbl.setBackground(new Color(255, 243, 205)); lbl.setForeground(new Color(133, 100, 4));  break;
-                            case "accepted":   lbl.setBackground(new Color(207, 226, 255)); lbl.setForeground(new Color(10, 64, 168)); break;
-                            case "processing": lbl.setBackground(new Color(207, 226, 255)); lbl.setForeground(new Color(10, 64, 168)); break;
-                            case "dispatched": lbl.setBackground(new Color(198, 239, 206)); lbl.setForeground(new Color(0, 97, 0));    break;
-                            default:           lbl.setBackground(Color.WHITE);              lbl.setForeground(Color.BLACK);
+                        if (val != null) {
+                            String status = val.toString().toLowerCase();
+                            switch (status) {
+                                case "pending":
+                                    lbl.setBackground(new Color(255, 243, 205));
+                                    lbl.setForeground(new Color(133, 100, 4));
+                                    break;
+                                case "accepted":
+                                    lbl.setBackground(new Color(207, 226, 255));
+                                    lbl.setForeground(new Color(10, 64, 168));
+                                    break;
+                                case "processing":
+                                    lbl.setBackground(new Color(207, 226, 255));
+                                    lbl.setForeground(new Color(10, 64, 168));
+                                    break;
+                                case "dispatched":
+                                    lbl.setBackground(new Color(198, 239, 206));
+                                    lbl.setForeground(new Color(0, 97, 0));
+                                    break;
+                                default:
+                                    lbl.setBackground(Color.WHITE);
+                                    lbl.setForeground(Color.BLACK);
+                            }
                         }
                         return lbl;
                     }
                 }
         );
 
-        // Add selection listener to clear fields when row changes
         orderTable.getSelectionModel().addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) {
                 clearInputFields();
+                loadItems();
             }
         });
 
@@ -175,8 +204,45 @@ public class OrderProcessingFrame extends BaseFrame {
         }
         return "All Orders";
     }
+    // ── ORDER ITEMS PANEL (Pick List) ───────────────────────────────────
+    private JPanel createOrderDetailsPanel() {
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.setBackground(Color.WHITE);
+        panel.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(221, 225, 231), 1),
+                BorderFactory.createEmptyBorder(16, 16, 16, 16)));
 
-    // ── PICKING PANEL (for Warehouse Employee) ────────────────────
+        JPanel titlePanel = new JPanel(new BorderLayout());
+        titlePanel.setBackground(Color.WHITE);
+        titlePanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 12, 0));
+
+        JLabel title = new JLabel("Order Items - Pick List");
+        title.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        title.setForeground(new Color(17, 24, 39));
+
+        titlePanel.add(title, BorderLayout.WEST);
+
+        String[] cols = {"Product ID", "Description", "Quantity to Pick", "Unit Price"};
+        itemsTableModel = new DefaultTableModel(cols, 0) {
+            public boolean isCellEditable(int r, int c) { return false; }
+        };
+
+        orderItemsTable = new JTable(itemsTableModel);
+        orderItemsTable.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        orderItemsTable.setRowHeight(30);
+        orderItemsTable.setShowGrid(false);
+        orderItemsTable.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 12));
+        orderItemsTable.getTableHeader().setBackground(new Color(17, 24, 39));
+        orderItemsTable.getTableHeader().setForeground(Color.WHITE);
+
+        JScrollPane scroll = new JScrollPane(orderItemsTable);
+        scroll.setPreferredSize(new Dimension(0, 150));
+
+        panel.add(titlePanel, BorderLayout.NORTH);
+        panel.add(scroll, BorderLayout.CENTER);
+        return panel;
+    }
+
     private JPanel createPickingPanel() {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBackground(Color.WHITE);
@@ -192,17 +258,11 @@ public class OrderProcessingFrame extends BaseFrame {
         JPanel fieldsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 12, 0));
         fieldsPanel.setBackground(Color.WHITE);
 
-        JLabel quantityLbl = new JLabel("Quantity Picked:");
-        quantityLbl.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        quantityPickedField = new JTextField(10);
-        quantityPickedField.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        quantityPickedField.setToolTipText("Enter the quantity picked from stock");
-
-        JLabel infoLbl = new JLabel("(Stock will be reduced automatically)");
-        infoLbl.setFont(new Font("Segoe UI", Font.ITALIC, 10));
+        JLabel infoLbl = new JLabel("Use the pick list above to see items and quantities to pick.");
+        infoLbl.setFont(new Font("Segoe UI", Font.ITALIC, 12));
         infoLbl.setForeground(new Color(107, 114, 128));
 
-        markPickedButton = new JButton("✓ Mark as Picked & Packed");
+        markPickedButton = new JButton("Confirm Picked & Packed");
         markPickedButton.setBackground(new Color(21, 128, 61));
         markPickedButton.setForeground(Color.WHITE);
         markPickedButton.setFocusPainted(false);
@@ -210,8 +270,6 @@ public class OrderProcessingFrame extends BaseFrame {
         markPickedButton.setFont(new Font("Segoe UI", Font.BOLD, 12));
         markPickedButton.addActionListener(e -> markAsPicked());
 
-        fieldsPanel.add(quantityLbl);
-        fieldsPanel.add(quantityPickedField);
         fieldsPanel.add(infoLbl);
         fieldsPanel.add(Box.createHorizontalStrut(20));
         fieldsPanel.add(markPickedButton);
@@ -221,7 +279,6 @@ public class OrderProcessingFrame extends BaseFrame {
         return panel;
     }
 
-    // ── DISPATCH PANEL (for Delivery Employee) ────────────────────
     private JPanel createDispatchPanel() {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBackground(Color.WHITE);
@@ -283,7 +340,6 @@ public class OrderProcessingFrame extends BaseFrame {
         return panel;
     }
 
-    // ── BUSINESS LOGIC with ROLE-BASED FILTERING ──────────────────
     private void loadOrders() {
         try {
             List<Object[]> allOrders = orderService.getAllOrders();
@@ -292,7 +348,6 @@ public class OrderProcessingFrame extends BaseFrame {
             List<Object[]> filteredOrders;
 
             if (role.equals("Warehouse Employee")) {
-                // Warehouse sees: pending, accepted, or processing (not yet picked)
                 filteredOrders = allOrders.stream()
                         .filter(order -> {
                             String status = order[3].toString().toLowerCase();
@@ -301,15 +356,11 @@ public class OrderProcessingFrame extends BaseFrame {
                                     status.equals("processing");
                         })
                         .collect(Collectors.toList());
-            }
-            else if (role.equals("Delivery Employee")) {
-                // Delivery sees: only orders that are 'processing' (ready for dispatch)
+            } else if (role.equals("Delivery Employee")) {
                 filteredOrders = allOrders.stream()
                         .filter(order -> order[3].toString().toLowerCase().equals("processing"))
                         .collect(Collectors.toList());
-            }
-            else {
-                // Admin/Manager sees all
+            } else {
                 filteredOrders = allOrders;
             }
 
@@ -317,7 +368,6 @@ public class OrderProcessingFrame extends BaseFrame {
                 tableModel.addRow(order);
             }
 
-            // Show message if no orders available for this role
             if (filteredOrders.isEmpty()) {
                 String message = role.equals("Warehouse Employee") ?
                         "No orders ready for picking." :
@@ -331,6 +381,41 @@ public class OrderProcessingFrame extends BaseFrame {
         }
     }
 
+    private void loadItems() {
+        itemsTableModel.setRowCount(0);
+
+        int row = orderTable.getSelectedRow();
+        if (row < 0) return;
+
+        String orderId = tableModel.getValueAt(row, 0).toString();
+
+        try {
+            Order order = orderService.getOrderDetails(orderId);
+            if (order != null && order.getItems() != null) {
+                for (OrderItem item : order.getItems()) {
+                    itemsTableModel.addRow(new Object[]{
+                            item.getItemId(),
+                            getItemDescription(item.getItemId()),
+                            item.getQuantity(),
+                            String.format("£%.2f", item.getUnitPrice())
+                    });
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private String getItemDescription(String itemId) {
+        try {
+            catalogueService catService = new catalogueService();
+            var item = catService.loadItem(itemId);
+            return item != null ? item.getDescription() : "Unknown";
+        } catch (Exception e) {
+            return "Unknown";
+        }
+    }
+
     private void markAsPicked() {
         int row = orderTable.getSelectedRow();
         if (row < 0) {
@@ -339,66 +424,54 @@ public class OrderProcessingFrame extends BaseFrame {
         }
 
         String orderId = tableModel.getValueAt(row, 0).toString();
-        String status = tableModel.getValueAt(row, 3).toString();
+        String status = tableModel.getValueAt(row, 3).toString().toLowerCase();
 
-        if (!status.equalsIgnoreCase("pending") && !status.equalsIgnoreCase("accepted")) {
+        if (!status.equals("pending") && !status.equals("accepted")) {
             JOptionPane.showMessageDialog(this,
                     "Only 'pending' or 'accepted' orders can be picked.");
             return;
         }
 
-        String quantityText = quantityPickedField.getText().trim();
-        if (quantityText.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Please enter the quantity picked.");
-            return;
-        }
+        // Confirm with warehouse employee
+        int confirm = JOptionPane.showConfirmDialog(this,
+                "Are you sure you have picked ALL items for order " + orderId + "?\n" +
+                        "Check the pick list above to verify quantities.",
+                "Confirm Picking",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.QUESTION_MESSAGE);
 
-        int quantityPicked;
-        try {
-            quantityPicked = Integer.parseInt(quantityText);
-            if (quantityPicked <= 0) {
-                throw new NumberFormatException();
-            }
-        } catch (NumberFormatException e) {
-            JOptionPane.showMessageDialog(this, "Please enter a valid positive quantity.");
+        if (confirm != JOptionPane.YES_OPTION) {
             return;
         }
 
         try {
-            // Get full order details with items
             Order order = orderService.getOrderDetails(orderId);
 
             if (order == null) {
                 throw new Exception("Order not found: " + orderId);
             }
 
-            // Reduce stock for each item in the order
+            // Reduce stock for each item using the quantities from the order
             catalogueService catService = new catalogueService();
             for (OrderItem item : order.getItems()) {
                 String productId = item.getItemId();
-                int orderedQuantity = item.getQuantity();
-
-                // Use your existing UpdateCatalogue method
+                int orderedQuantity = item.getQuantity();  // ← Use the order's quantity
                 boolean updated = catService.UpdateCatalogue(productId, orderedQuantity);
-
                 if (!updated) {
                     throw new Exception("Failed to update stock for product: " + productId);
                 }
             }
 
-            // Update order status to "processing" (being processed)
             orderService.updateStatus(orderId, "processing");
 
-            // Update the table
             tableModel.setValueAt("processing", row, 3);
 
             JOptionPane.showMessageDialog(this,
                     "Order " + orderId + " has been picked and packed.\n" +
                             "Stock has been reduced for " + order.getItems().size() + " product(s).");
 
-            // Clear input and refresh
-            quantityPickedField.setText("");
-            loadOrders(); // This will refresh and remove the order from view if it no longer matches filter
+            loadOrders();
+            loadItems();
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -417,10 +490,9 @@ public class OrderProcessingFrame extends BaseFrame {
         }
 
         String orderId = tableModel.getValueAt(row, 0).toString();
-        String status = tableModel.getValueAt(row, 3).toString();
+        String status = tableModel.getValueAt(row, 3).toString().toLowerCase();
 
-        // Only allow dispatch of orders that are 'processing'
-        if (!status.equalsIgnoreCase("processing")) {
+        if (!status.equals("processing")) {
             JOptionPane.showMessageDialog(this,
                     "Only orders with status 'processing' can be dispatched.\n" +
                             "Warehouse must pick and pack the order first.");
@@ -451,8 +523,6 @@ public class OrderProcessingFrame extends BaseFrame {
                             "Tracking Ref: " + refNo);
 
             clearInputFields();
-
-            // Refresh orders (remove this order from view)
             loadOrders();
 
         } catch (Exception e) {
@@ -480,7 +550,6 @@ public class OrderProcessingFrame extends BaseFrame {
         }
     }
 
-    // ── HELPERS ──────────────────────────────────────────────
     private void styleTable(JTable table) {
         table.setFont(new Font("Segoe UI", Font.PLAIN, 12));
         table.setRowHeight(30);

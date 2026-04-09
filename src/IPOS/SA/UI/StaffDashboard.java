@@ -1,9 +1,8 @@
-package IPOS.SA.ACC.UI;
+package IPOS.SA.UI;
 
 import IPOS.SA.ACC.Model.StaffDashboardData;
 import IPOS.SA.ACC.Service.StaffService;
 import IPOS.SA.ACC.Model.OrderSummary;
-import IPOS.SA.UI.BaseFrame;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;

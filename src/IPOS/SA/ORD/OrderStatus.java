@@ -1,10 +1,11 @@
 package IPOS.SA.ORD;
 
 public enum OrderStatus {
-    ACCEPTED("Accepted"),
-    PROCESSING("Processing"),
-    DISPATCHED("Dispatched"),
-    DELIVERED("Delivered");
+    ACCEPTED("accepted"),
+    PENDING("pending"),
+    PROCESSING("processing"),
+    DISPATCHED("dispatched"),
+    DELIVERED("delivered");
 
     private final String displayName;
 

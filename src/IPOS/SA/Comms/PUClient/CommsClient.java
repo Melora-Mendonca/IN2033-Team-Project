@@ -1,4 +1,4 @@
-package IPOS.SA.Comms;
+package IPOS.SA.Comms.PUClient;
 
 import java.io.*;
 import java.net.*;

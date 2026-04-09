@@ -1,4 +1,4 @@
-package IPOS.SA.Interfaces;
+package IPOS.SA.Comms.PUClient;
 
 import java.io.OutputStream;
 import java.net.HttpURLConnection;

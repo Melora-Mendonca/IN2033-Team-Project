@@ -1,9 +1,8 @@
-package IPOS.SA.ACC.UI;
+package IPOS.SA.UI;
 
 import IPOS.SA.ACC.Model.LowStockItem;
 import IPOS.SA.ACC.Model.ManagerDashboardData;
 import IPOS.SA.ACC.Service.ManagerService;
-import IPOS.SA.UI.BaseFrame;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
