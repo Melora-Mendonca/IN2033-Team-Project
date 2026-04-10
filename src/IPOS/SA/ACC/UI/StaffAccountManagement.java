@@ -2,14 +2,13 @@ package IPOS.SA.ACC.UI;
 
 import IPOS.SA.ACC.Model.Staff;
 import IPOS.SA.ACC.Service.StaffAccountService;
-import IPOS.SA.UI.AdminDashboard;
-import IPOS.SA.UI.BaseFrame;
+import IPOS.SA.UI.*;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 
-public class StaffAccountManagement extends BaseFrame {
+public class StaffAccountManagement extends BaseFrame implements Refreshable {
 
     private final StaffAccountService accountService;
     private final String mode;
@@ -28,12 +27,12 @@ public class StaffAccountManagement extends BaseFrame {
     private JLabel statusLabel;
     private JLabel messageLabel;
 
-    public StaffAccountManagement(String fullname, String role, String mode) {
-        this(fullname, role, mode, null);
+    public StaffAccountManagement(String fullname, String role, String mode, ScreenRouter router) {
+        this(fullname, role, mode, null, router);
     }
 
-    public StaffAccountManagement(String fullname, String role, String mode, String staffId) {
-        super(fullname, role, "Staff Account Management");
+    public StaffAccountManagement(String fullname, String role, String mode, String staffId, ScreenRouter router) {
+        super(fullname, role, "Staff Account Management", router);
         this.accountService = new StaffAccountService();
         this.mode           = mode;
         this.staffIdToLoad  = staffId;
@@ -177,7 +176,7 @@ public class StaffAccountManagement extends BaseFrame {
 
         createBtn.addActionListener(e -> createStaff());
         clearBtn.addActionListener(e  -> clearForm());
-        backBtn.addActionListener(e   -> { dispose(); new AdminDashboard(fullname, role, username); });
+        backBtn.addActionListener(e -> router.goTo(AppFrame.SCREEN_STAFF_LIST));
 
         actionsCard.add(createBtn); actionsCard.add(Box.createVerticalStrut(8));
         actionsCard.add(clearBtn);  actionsCard.add(Box.createVerticalStrut(8));
@@ -195,7 +194,7 @@ public class StaffAccountManagement extends BaseFrame {
         updateBtn.addActionListener(e -> updateStaff());
         deleteBtn.addActionListener(e -> deactivateStaff());
         clearBtn.addActionListener(e  -> clearForm());
-        backBtn.addActionListener(e   -> { dispose(); new AdminDashboard(fullname, role, username); });
+        backBtn.addActionListener(e -> router.goTo(AppFrame.SCREEN_STAFF_LIST));
 
         actionsCard.add(loadBtn);   actionsCard.add(Box.createVerticalStrut(8));
         actionsCard.add(updateBtn); actionsCard.add(Box.createVerticalStrut(8));
@@ -454,5 +453,10 @@ public class StaffAccountManagement extends BaseFrame {
         btn.setAlignmentX(Component.LEFT_ALIGNMENT);
         btn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 34));
         return btn;
+    }
+
+    @Override
+    public void onShow() {
+        clearForm();
     }
 }

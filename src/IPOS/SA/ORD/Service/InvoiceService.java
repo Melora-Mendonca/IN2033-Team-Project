@@ -40,7 +40,7 @@ public class InvoiceService {
         );
 
         // Save to database - using your actual Invoice table columns
-        String sql = "INSERT INTO Invoice (invoice_id, order_id, invoice_date, due_date, " +
+        String sql = "INSERT INTO invoice (invoice_id, order_id, invoice_date, due_date, " +
                 "total_amount, amount_paid, status, days_overdue) " +
                 "VALUES (?, ?, ?, ?, ?, ?, ?, 0)";
         db.update(sql,

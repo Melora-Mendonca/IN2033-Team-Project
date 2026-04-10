@@ -15,7 +15,7 @@ public class OrderDBConnector {
         try {
             Connection conn = new DBConnection().getConn();
 
-            String orderSql = "INSERT INTO `Order` (order_id, merchant_id, order_date, status, " +
+            String orderSql = "INSERT INTO `order` (order_id, merchant_id, order_date, status, " +
                     "total_amount, discount_applied, final_amount) VALUES (?,?,?,'pending',?,?,?)";
             PreparedStatement orderStmt = conn.prepareStatement(orderSql);
             orderStmt.setString(1, order.getOrderId());
@@ -26,7 +26,7 @@ public class OrderDBConnector {
             orderStmt.setDouble(6, finalTotal);
             orderStmt.executeUpdate();
 
-            String itemSql = "INSERT INTO OrderItem (order_id, catalogue_item_id, quantity, unit_price, total_price) VALUES (?,?,?,?,?)";
+            String itemSql = "INSERT INTO orderitem (order_id, catalogue_item_id, quantity, unit_price, total_price) VALUES (?,?,?,?,?)";
             PreparedStatement itemStmt = conn.prepareStatement(itemSql);
             for (OrderItem item : order.getItems()) {
                 itemStmt.setString(1, order.getOrderId());
@@ -52,7 +52,7 @@ public class OrderDBConnector {
                     "SELECT o.order_id, o.merchant_id, o.order_date, o.status, " +
                             "o.total_amount, o.discount_applied, o.final_amount, " +
                             "o.dispatched_by, o.courier_name " +
-                            "FROM `Order` o ORDER BY o.order_date DESC";
+                            "FROM `order` o ORDER BY o.order_date DESC";
             PreparedStatement stmt = conn.prepareStatement(sql);
             ResultSet rs = stmt.executeQuery();
             while (rs.next()) {
@@ -80,7 +80,7 @@ public class OrderDBConnector {
         List<OrderItem> items = new ArrayList<>();
         try {
             Connection conn = new DBConnection().getConn();
-            String sql = "SELECT catalogue_item_id, quantity, unit_price FROM OrderItem WHERE order_id = ?";
+            String sql = "SELECT catalogue_item_id, quantity, unit_price FROM orderitem WHERE order_id = ?";
             PreparedStatement stmt = conn.prepareStatement(sql);
             stmt.setString(1, orderId);
             ResultSet rs = stmt.executeQuery();
@@ -102,7 +102,7 @@ public class OrderDBConnector {
     public void updateOrderStatus(String orderId, String status) {
         try {
             Connection conn = new DBConnection().getConn();
-            String sql = "UPDATE `Order` SET status = ? WHERE order_id = ?";
+            String sql = "UPDATE `order` SET status = ? WHERE order_id = ?";
             PreparedStatement stmt = conn.prepareStatement(sql);
             stmt.setString(1, status);
             stmt.setString(2, orderId);
@@ -118,7 +118,7 @@ public class OrderDBConnector {
                               String courierRef, String expectedDelivery) {
         try {
             Connection conn = new DBConnection().getConn();
-            String sql = "UPDATE `Order` SET status='dispatched', dispatched_by=?, " +
+            String sql = "UPDATE `order` SET status='dispatched', dispatched_by=?, " +
                     "dispatched_date=CURRENT_DATE(), courier_name=?, courier_ref_no=?, " +
                     "expected_delivery_date=? WHERE order_id=?";
             PreparedStatement stmt = conn.prepareStatement(sql);
@@ -138,7 +138,7 @@ public class OrderDBConnector {
     public void reduceStock(String itemId, int quantity) {
         try {
             Connection conn = new DBConnection().getConn();
-            String sql = "UPDATE Catalogue SET availability = availability - ? WHERE item_id = ?";
+            String sql = "UPDATE catalogue SET availability = availability - ? WHERE item_id = ?";
             PreparedStatement stmt = conn.prepareStatement(sql);
             stmt.setInt(1, quantity);
             stmt.setString(2, itemId);

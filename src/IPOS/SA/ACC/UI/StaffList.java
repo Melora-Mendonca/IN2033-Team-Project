@@ -2,7 +2,10 @@ package IPOS.SA.ACC.UI;
 
 import IPOS.SA.ACC.Model.Staff;
 import IPOS.SA.ACC.Service.StaffService;
+import IPOS.SA.UI.AppFrame;
 import IPOS.SA.UI.BaseFrame;
+import IPOS.SA.UI.Refreshable;
+import IPOS.SA.UI.ScreenRouter;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -11,7 +14,7 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public class StaffList extends BaseFrame {
+public class StaffList extends BaseFrame implements Refreshable {
 
     private final StaffService staffService;
 
@@ -20,8 +23,8 @@ public class StaffList extends BaseFrame {
     private JTextField searchField;
     private JLabel statusLabel;
 
-    public StaffList(String fullname, String role) {
-        super(fullname, role, "Staff List");
+    public StaffList(String fullname, String role, ScreenRouter router) {
+        super(fullname, role, "Staff List", router);
         this.staffService = new StaffService();
         buildContent();
         loadStaffData();
@@ -129,10 +132,7 @@ public class StaffList extends BaseFrame {
         if (role.equals("Administrator")) {
             JButton createButton = new JButton("Create Account");
             styleBtn(createButton);
-            createButton.addActionListener(e -> {
-                dispose();
-                new StaffAccountManagement(fullname, role, "CREATE");
-            });
+            createButton.addActionListener(e -> router.goTo(AppFrame.SCREEN_STAFF_ACCOUNT_CREATE));
             buttonPanel.add(createButton);
 
             JButton viewDetailsButton = new JButton("Manage Staff");
@@ -141,9 +141,7 @@ public class StaffList extends BaseFrame {
             viewDetailsButton.addActionListener(e -> {
                 int row = staffTable.getSelectedRow();
                 if (row >= 0) {
-                    String staffId = tableModel.getValueAt(row, 0).toString();
-                    dispose();
-                    new StaffAccountManagement(fullname, role, "MANAGE", staffId);
+                    router.goTo(AppFrame.SCREEN_STAFF_ACCOUNT_MANAGE);
                 } else {
                     JOptionPane.showMessageDialog(this, "Please select a staff member to view details.");
                 }
@@ -225,5 +223,11 @@ public class StaffList extends BaseFrame {
         btn.setFocusPainted(false);
         btn.setBorderPainted(false);
         btn.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+    }
+
+    @Override
+    public void onShow() {
+        searchField.setText("");
+        loadStaffData();
     }
 }

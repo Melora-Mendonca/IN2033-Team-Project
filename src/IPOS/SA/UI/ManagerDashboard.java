@@ -9,7 +9,7 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.util.List;
 
-public class ManagerDashboard extends BaseFrame {
+public class ManagerDashboard extends BaseFrame implements Refreshable{
 
     private final ManagerService dashboardService;
 
@@ -18,8 +18,8 @@ public class ManagerDashboard extends BaseFrame {
     private JTable lowStockTable;
     private JLabel headerSubTitle;
 
-    public ManagerDashboard(String fullname, String role, String username) {
-        super(fullname, role, username, "Manager Dashboard");
+    public ManagerDashboard(String fullname, String role, String username, ScreenRouter router) {
+        super(fullname, role, username, "Manager Dashboard", router);
         this.dashboardService = new ManagerService();
 
         loadDashboardData();
@@ -172,4 +172,8 @@ public class ManagerDashboard extends BaseFrame {
         tableWrapper.add(stockPanel);
     }
 
+    @Override
+    public void onShow() {
+        loadDashboardData();
+    }
 }

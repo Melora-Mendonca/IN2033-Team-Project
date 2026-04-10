@@ -56,7 +56,7 @@ public class AdminService {
     private int getLowStockCount() throws Exception {
         try {
             ResultSet rs = db.query(
-                    "SELECT COUNT(*) as count FROM Catalogue WHERE availability <= minimum_stock_level AND is_active = 1"
+                    "SELECT COUNT(*) as count FROM catalogue WHERE availability <= minimum_stock_level AND is_active = 1"
             );
             if (rs != null && rs.next()) {
                 return rs.getInt("count");
@@ -76,7 +76,7 @@ public class AdminService {
     private int getStockDeliveriesCount() throws Exception {
         try {
             ResultSet rs = db.query(
-                    "SELECT COUNT(*) as count FROM StockDelivery " +
+                    "SELECT COUNT(*) as count FROM stockdelivery " +
                             "WHERE MONTH(delivery_date) = MONTH(CURRENT_DATE) " +
                             "AND YEAR(delivery_date) = YEAR(CURRENT_DATE)"
             );
@@ -100,7 +100,7 @@ public class AdminService {
         try {
             // Query invoices that are overdue (due date passed and not fully paid)
             ResultSet rs = db.query(
-                    "SELECT COUNT(*) as count FROM Invoice " +
+                    "SELECT COUNT(*) as count FROM invoice " +
                             "WHERE due_date < CURDATE() AND status != 'paid'"
             );
             if (rs != null && rs.next()) {
@@ -125,8 +125,8 @@ public class AdminService {
             // Query the Order table with merchant details
             ResultSet rs = db.query(
                     "SELECT o.order_id, o.order_date, o.status, o.total_amount, m.company_name as merchant_name " +
-                            "FROM `Order` o " +
-                            "JOIN Merchant m ON o.merchant_id = m.merchant_id " +
+                            "FROM `order` o " +
+                            "JOIN merchant m ON o.merchant_id = m.merchant_id " +
                             "ORDER BY o.order_date DESC"
             );
 
@@ -159,7 +159,7 @@ public class AdminService {
         try {
             ResultSet rs = db.query(
                     "SELECT item_id, description, availability, minimum_stock_level " +
-                            "FROM Catalogue WHERE availability <= minimum_stock_level AND is_active = 1 " +
+                            "FROM catalogue WHERE availability <= minimum_stock_level AND is_active = 1 " +
                             "ORDER BY (minimum_stock_level - availability) DESC"
             );
 

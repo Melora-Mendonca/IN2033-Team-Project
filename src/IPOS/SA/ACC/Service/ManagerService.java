@@ -54,7 +54,7 @@ public class ManagerService {
      */
     private int getLowStockCount() throws Exception {
         ResultSet rs = db.query(
-                "SELECT COUNT(*) as count FROM Catalogue WHERE availability <= minimum_stock_level AND is_active = 1"
+                "SELECT COUNT(*) as count FROM catalogue WHERE availability <= minimum_stock_level AND is_active = 1"
         );
 
         if (rs.next()) {
@@ -70,7 +70,7 @@ public class ManagerService {
     private int getTotalInvoices() throws Exception {
         try {
             ResultSet rs = db.query(
-                    "SELECT COUNT(*) as count FROM Invoice WHERE MONTH(invoice_date) = MONTH(CURDATE()) " +
+                    "SELECT COUNT(*) as count FROM invoice WHERE MONTH(invoice_date) = MONTH(CURDATE()) " +
                             "AND YEAR(invoice_date) = YEAR(CURDATE())"
             );
 
@@ -91,7 +91,7 @@ public class ManagerService {
     private double getTotalTurnover() throws Exception {
         try {
             ResultSet rs = db.query(
-                    "SELECT COALESCE(SUM(total_amount), 0) as total FROM Invoice " +
+                    "SELECT COALESCE(SUM(total_amount), 0) as total FROM invoice " +
                             "WHERE MONTH(invoice_date) = MONTH(CURDATE()) " +
                             "AND YEAR(invoice_date) = YEAR(CURDATE())"
             );
@@ -112,7 +112,7 @@ public class ManagerService {
      */
     private int getStockTurnover() throws Exception {
         ResultSet rs = db.query(
-                "SELECT COUNT(*) as count FROM StockDelivery " +
+                "SELECT COUNT(*) as count FROM stockdelivery " +
                         "WHERE MONTH(delivery_date) = MONTH(CURDATE()) " +
                         "AND YEAR(delivery_date) = YEAR(CURDATE())"
         );
@@ -132,7 +132,7 @@ public class ManagerService {
 
         ResultSet rs = db.query(
                 "SELECT item_id, description, availability, minimum_stock_level as stock_limit " +
-                        "FROM Catalogue WHERE availability <= minimum_stock_level AND is_active = 1 " +
+                        "FROM catalogue WHERE availability <= minimum_stock_level AND is_active = 1 " +
                         "ORDER BY (minimum_stock_level - availability) DESC LIMIT 10"
         );
 

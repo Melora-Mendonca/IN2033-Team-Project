@@ -40,7 +40,7 @@ public class OrderService {
         // Start transaction
         try {
             // Insert order - using your actual Order table columns
-            String orderSql = "INSERT INTO `Order` (order_id, merchant_id, order_date, status, " +
+            String orderSql = "INSERT INTO `order` (order_id, merchant_id, order_date, status, " +
                     "total_amount, discount_applied, final_amount) " +
                     "VALUES (?, ?, ?, 'pending', ?, ?, ?)";
             db.update(orderSql,
@@ -54,7 +54,7 @@ public class OrderService {
 
             // Insert order items - using your actual OrderItem table columns
             for (OrderItem item : order.getItems()) {
-                String itemSql = "INSERT INTO OrderItem (order_id, catalogue_item_id, quantity, unit_price, total_price) " +
+                String itemSql = "INSERT INTO orderitem (order_id, catalogue_item_id, quantity, unit_price, total_price) " +
                         "VALUES (?, ?, ?, ?, ?)";
                 db.update(itemSql,
                         order.getOrderId(),
@@ -86,7 +86,7 @@ public class OrderService {
      */
     private void reduceStock(String itemId, int quantity) throws Exception {
         db.update(
-                "UPDATE Catalogue SET availability = availability - ? WHERE item_id = ? AND availability >= ?",
+                "UPDATE catalogue SET availability = availability - ? WHERE item_id = ? AND availability >= ?",
                 quantity, itemId, quantity
         );
     }
@@ -96,7 +96,7 @@ public class OrderService {
      */
     public boolean updateOrderStatus(String orderId, OrderStatus status, String dispatchedBy,
                                      String courierName, String courierRefNo, LocalDate expectedDelivery) throws Exception {
-        String sql = "UPDATE `Order` SET status = ?, dispatched_by = ?, dispatched_date = ?, " +
+        String sql = "UPDATE `order` SET status = ?, dispatched_by = ?, dispatched_date = ?, " +
                 "courier_name = ?, courier_ref_no = ?, expected_delivery_date = ? " +
                 "WHERE order_id = ?";
 
@@ -121,7 +121,7 @@ public class OrderService {
         ResultSet rs = db.query(
                 "SELECT o.order_id, m.company_name, o.order_date, o.status, o.final_amount, " +
                         "o.dispatched_date, o.courier_name, o.courier_ref_no, o.expected_delivery_date " +
-                        "FROM `Order` o JOIN Merchant m ON o.merchant_id = m.merchant_id " +
+                        "FROM `order` o JOIN merchant m ON o.merchant_id = m.merchant_id " +
                         "ORDER BY o.order_date DESC"
         );
 
@@ -315,14 +315,14 @@ public class OrderService {
      */
     public Order getOrderDetails(String orderId) throws Exception {
         ResultSet orderRs = db.query(
-                "SELECT * FROM `Order` WHERE order_id = ?", orderId
+                "SELECT * FROM `order` WHERE order_id = ?", orderId
         );
 
         if (orderRs.next()) {
             List<OrderItem> items = new ArrayList<>();
             ResultSet itemRs = db.query(
                     "SELECT oi.catalogue_item_id, c.description, oi.quantity, oi.unit_price " +
-                            "FROM OrderItem oi JOIN Catalogue c ON oi.catalogue_item_id = c.item_id " +
+                            "FROM orderitem oi JOIN catalogue c ON oi.catalogue_item_id = c.item_id " +
                             "WHERE oi.order_id = ?", orderId
             );
 

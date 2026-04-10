@@ -3,6 +3,7 @@ package IPOS.SA.RPT.UI;
 import IPOS.SA.RPT.Service.ReportService;
 import IPOS.SA.UI.BaseFrame;
 
+import IPOS.SA.UI.ScreenRouter;
 import com.itextpdf.text.*;
 import com.itextpdf.text.Image;
 import com.itextpdf.text.Rectangle;
@@ -19,7 +20,6 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.Color;
 import java.io.*;
-import java.text.MessageFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
@@ -42,8 +42,8 @@ public class ReportForm extends BaseFrame {
     private String[] currentColumns;
     private String currentReportType = "";
 
-    public ReportForm(String fullname, String role) {
-        super(fullname, role, "Report Viewer");
+    public ReportForm(String fullname, String role, ScreenRouter router) {
+        super(fullname, role, "Report Viewer", router);
         this.reportService = new ReportService();
         buildContent();
         loadMerchants();

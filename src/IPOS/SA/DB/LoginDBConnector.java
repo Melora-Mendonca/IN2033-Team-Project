@@ -13,20 +13,32 @@ public class LoginDBConnector {
     // Returns a User object if successful, null if credentials are invalid
     public User authenticate(String username, String password, String role) {
         try {
+            System.out.println("=== AUTH ATTEMPT ===");
+            System.out.println("Username: " + username);
+            System.out.println("Role: " + role);
+            System.out.println("Hash: " + hashPassword(password));
+
             Connection conn = new DBConnection().getConn();
-            String sql = "SELECT * FROM UserLogin WHERE username = ? AND password_hash = ? AND role = ? AND is_active = 1";
+            System.out.println("Connection: " + (conn != null ? "OK" : "NULL"));
+
+            String sql = "SELECT * FROM userlogin WHERE username = ? AND password_hash = ? AND role = ? AND is_active = 1";
             PreparedStatement stmt = conn.prepareStatement(sql);
             stmt.setString(1, username);
             stmt.setString(2, hashPassword(password));
             stmt.setString(3, role);
 
+            System.out.println("Executing query...");
             ResultSet rs = stmt.executeQuery();
-            if (rs.next()) {
+            boolean found = rs.next();
+            System.out.println("User found: " + found);
+
+            if (found) {
                 String fullName = rs.getString("first_Name") + " " + rs.getString("sur_Name");
                 return new User(rs.getString("username"), fullName, rs.getString("role"));
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            System.out.println("AUTH ERROR: " + e.getMessage());
+            e.printStackTrace(System.out);
         }
         return null;
     }
@@ -51,7 +63,7 @@ public class LoginDBConnector {
             Connection conn = new DBConnection().getConn();
             // Updated: changed stock_limit to minimum_stock_level
             String sql = "SELECT item_id, description, availability, minimum_stock_level " +
-                    "FROM Catalogue WHERE is_active = 1 AND availability < minimum_stock_level " +
+                    "FROM catalogue WHERE is_active = 1 AND availability < minimum_stock_level " +
                     "ORDER BY (minimum_stock_level - availability) DESC";
             PreparedStatement stmt = conn.prepareStatement(sql);
             ResultSet rs = stmt.executeQuery();

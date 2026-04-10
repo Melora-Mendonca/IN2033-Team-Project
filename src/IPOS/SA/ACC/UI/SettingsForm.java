@@ -3,6 +3,7 @@ package IPOS.SA.ACC.UI;
 import IPOS.SA.ACC.Service.StaffAccountService;
 import IPOS.SA.DB.DBConnection;
 import IPOS.SA.UI.BaseFrame;
+import IPOS.SA.UI.ScreenRouter;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -27,8 +28,8 @@ public class SettingsForm extends BaseFrame {
 
     private final String username;
 
-    public SettingsForm(String fullname, String role, String username) {
-        super(fullname, role, username,"Settings");
+    public SettingsForm(String fullname, String role, String username, ScreenRouter router) {
+        super(fullname, role, username,"Settings", router);
         this.staffService = new StaffAccountService();
         this.username  = username;
         buildContent();

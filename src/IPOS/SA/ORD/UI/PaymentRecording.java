@@ -4,6 +4,8 @@ import IPOS.SA.Comms.PUClient.CommsClient;
 import IPOS.SA.ORD.Service.PaymentService;
 import IPOS.SA.DB.InvoiceDBConnector;
 import IPOS.SA.UI.BaseFrame;
+import IPOS.SA.UI.Refreshable;
+import IPOS.SA.UI.ScreenRouter;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -11,8 +13,9 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.util.List;
+import java.awt.Dialog;
 
-public class PaymentRecording extends BaseFrame {
+public class PaymentRecording extends BaseFrame implements Refreshable {
 
     private JTable invoiceTable;
     private DefaultTableModel tableModel;
@@ -23,8 +26,8 @@ public class PaymentRecording extends BaseFrame {
     private final PaymentService paymentService = new PaymentService();
     private final InvoiceDBConnector invoiceDB  = new InvoiceDBConnector();
 
-    public PaymentRecording(String fullname, String role) {
-        super(fullname, role, "Payment Recording");
+    public PaymentRecording(String fullname, String role, ScreenRouter router) {
+        super(fullname, role, "Payment Recording", router);
         buildContent();
         loadInvoices();
     }
@@ -223,7 +226,7 @@ public class PaymentRecording extends BaseFrame {
             return;
         }
 
-        JDialog dialog = new JDialog(this, "Record Payment — " + invoiceId, true);
+        JDialog dialog = new JDialog(SwingUtilities.getWindowAncestor(this), "Record Payment — " + invoiceId, Dialog.ModalityType.APPLICATION_MODAL);
         dialog.setSize(460, 420);
         dialog.setLocationRelativeTo(this);
         dialog.setLayout(new BorderLayout());
@@ -590,5 +593,10 @@ public class PaymentRecording extends BaseFrame {
     private void setMessage(String text, boolean success) {
         messageLabel.setText(text);
         messageLabel.setForeground(success ? new Color(0, 200, 100) : new Color(255, 100, 100));
+    }
+
+    @Override
+    public void onShow() {
+        loadInvoices();
     }
 }

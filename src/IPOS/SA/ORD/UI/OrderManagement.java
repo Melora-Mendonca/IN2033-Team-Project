@@ -4,6 +4,8 @@ import IPOS.SA.ACC.Service.AccountService;
 import IPOS.SA.ORD.Service.InvoiceService;
 import IPOS.SA.ORD.Service.OrderService;
 import IPOS.SA.UI.BaseFrame;
+import IPOS.SA.UI.Refreshable;
+import IPOS.SA.UI.ScreenRouter;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -12,7 +14,7 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.util.List;
 
-public class OrderManagement extends BaseFrame {
+public class OrderManagement extends BaseFrame implements Refreshable {
 
     private final OrderService orderService;
     private final String merchantId;
@@ -24,13 +26,13 @@ public class OrderManagement extends BaseFrame {
     private JLabel messageLabel;
 
     // Called from nav — no merchant filter
-    public OrderManagement(String fullname, String role) {
-        this(fullname, role, null);
+    public OrderManagement(String fullname, String role, ScreenRouter router) {
+        this(fullname, role, null, router);
     }
 
     // Called from MerchantList — filtered by merchant
-    public OrderManagement(String fullname, String role, String merchantId) {
-        super(fullname, role, "Order Management");
+    public OrderManagement(String fullname, String role, String merchantId, ScreenRouter router) {
+        super(fullname, role, "Order Management", router);
         this.merchantId   = merchantId;
         this.orderService = new OrderService(new AccountService(), new InvoiceService());
         buildContent();
@@ -361,5 +363,10 @@ public class OrderManagement extends BaseFrame {
         messageLabel.setForeground(success
                 ? new Color(0, 200, 100)
                 : new Color(255, 100, 100));
+    }
+
+    @Override
+    public void onShow() {
+        loadOrders();
     }
 }

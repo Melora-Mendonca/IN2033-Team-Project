@@ -2,30 +2,25 @@ package IPOS.SA.UI;
 
 import IPOS.SA.ACC.UI.*;
 import IPOS.SA.CAT.UI.Catalogue;
-import IPOS.SA.ORD.UI.OrderProcessingFrame;
-import IPOS.SA.ORD.UI.OrderTrackingFrame;
-import IPOS.SA.ORD.UI.PaymentRecording;
-import IPOS.SA.RPT.UI.CommercialAppForm;
-import IPOS.SA.RPT.UI.ReportForm;
-import IPOS.SA.ACC.UI.SettingsForm;
-import IPOS.SA.ORD.UI.InvoiceListFrame;
-import IPOS.SA.ORD.UI.OrderManagement;
+import IPOS.SA.ORD.UI.*;
+import IPOS.SA.RPT.UI.*;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 
-public abstract class BaseFrame extends JFrame {
+public abstract class BaseFrame extends JPanel {
 
     protected String fullname;
     protected String role;
     protected String username;
+    protected ScreenRouter router;
 
-    // Common UI Components
     protected JPanel MainPanel;
     protected JPanel ContentPanel;
     protected JPanel NavPanel;
     protected JPanel HeaderPanel;
-    private JPanel FooterPanel;
     protected JPanel CenterPanel;
     protected JLabel headerLabel;
     protected JLabel headerSubTitle;
@@ -33,33 +28,24 @@ public abstract class BaseFrame extends JFrame {
     protected JButton logoutBtn;
     protected JSeparator divider;
 
-
-    // Old constructor — still works for all existing classes
-    public BaseFrame(String fullname, String role, String title) {
-        this(fullname, role, null, title);
+    public BaseFrame(String fullname, String role, String title, ScreenRouter router) {
+        this(fullname, role, null, title, router);
     }
 
-    // New constructor — used when username is needed
-    public BaseFrame(String fullname, String role, String username, String title) {
+    public BaseFrame(String fullname, String role, String username, String title, ScreenRouter router) {
         this.fullname = fullname;
-        this.role     = role;
+        this.role = role;
         this.username = username;
+        this.router = router;
 
-        setTitle(title);
-        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        setExtendedState(JFrame.MAXIMIZED_BOTH);
-        setLocationRelativeTo(null);
+        setLayout(new BorderLayout());
 
-        // Initialize main panel
         MainPanel = new JPanel(new BorderLayout());
-        setContentPane(MainPanel);
+        add(MainPanel, BorderLayout.CENTER);
 
-        // Create common components
         createHeaderPanel();
         createNavPanel();
         createContentContainer();
-
-        setVisible(true);
     }
 
     private void createHeaderPanel() {
@@ -100,126 +86,50 @@ public abstract class BaseFrame extends JFrame {
         NavPanel.add(navIcon);
         NavPanel.add(Box.createVerticalStrut(16));
 
-        // ROLE-SPECIFIC NAVIGATION
-
-        // ADMINISTRATOR - Full access
         if (role.equals("Administrator")) {
-
             NavPanel.add(buildNavButton("Overview", false));
             NavPanel.add(Box.createVerticalStrut(4));
             NavPanel.add(buildNavButton("Catalogue", false));
             NavPanel.add(Box.createVerticalStrut(4));
-
-            addExpandableNavItem("Merchants", new String[]{
-                    "View Merchant Orders",
-                    "View Merchant Invoices"
-            });
-            addExpandableNavItem("Accounts", new String[]{
-                    "View All Merchants",
-                    "Create Merchant Account",
-                    "Manage Merchant Accounts",
-                    "Commercial Applications"
-            });
-            addExpandableNavItem("Staff", new String[]{
-                    "View All Staff",
-                    "Create Staff Account",
-                    "Manage Staff Account",
-            });
-            addExpandableNavItem("Orders", new String[]{
-                    "View All Orders",
-                    "Manage Orders"
-            });
+            addExpandableNavItem("Merchants", new String[]{"View Merchant Orders", "View Merchant Invoices"});
+            addExpandableNavItem("Accounts", new String[]{"View All Merchants", "Create Merchant Account", "Manage Merchant Accounts", "Commercial Applications"});
+            addExpandableNavItem("Staff", new String[]{"View All Staff", "Create Staff Account", "Manage Staff Account"});
+            addExpandableNavItem("Orders", new String[]{"View All Orders", "Manage Orders"});
             NavPanel.add(buildNavButton("Reports", false));
             NavPanel.add(Box.createVerticalStrut(4));
             NavPanel.add(buildNavButton("Settings", false));
             NavPanel.add(Box.createVerticalStrut(4));
-        }
-
-        // MANAGER (Director of Operations) - Limited access
-        else if (role.equals("Director of Operations")) {
+        } else if (role.equals("Director of Operations")) {
             NavPanel.add(buildNavButton("Overview", false));
             NavPanel.add(Box.createVerticalStrut(4));
             NavPanel.add(buildNavButton("Catalogue", false));
             NavPanel.add(Box.createVerticalStrut(4));
-
-            addExpandableNavItem("Merchants", new String[]{
-                    "View Merchant Orders",
-                    "View Merchant Invoices"
-            });
-            addExpandableNavItem("Accounts", new String[]{
-                    "View All Merchants",
-                    "Manage Merchant Accounts"
-            });
-            addExpandableNavItem("Staff", new String[]{
-                    "View All Staff"
-            });
-            addExpandableNavItem("Invoices", new String[]{
-                    "View All Invoices"
-            });
-
+            addExpandableNavItem("Merchants", new String[]{"View Merchant Orders", "View Merchant Invoices"});
+            addExpandableNavItem("Accounts", new String[]{"View All Merchants", "Manage Merchant Accounts"});
+            addExpandableNavItem("Staff", new String[]{"View All Staff"});
+            addExpandableNavItem("Invoices", new String[]{"View All Invoices"});
             NavPanel.add(buildNavButton("Reports", false));
             NavPanel.add(Box.createVerticalStrut(4));
             NavPanel.add(buildNavButton("Settings", false));
             NavPanel.add(Box.createVerticalStrut(4));
-
-        }
-
-        // WAREHOUSE STAFF - Order processing only
-        else if (role.equals("Warehouse Employee")) {
+        } else if (role.equals("Warehouse Employee") || role.equals("Delivery Employee")) {
             NavPanel.add(buildNavButton("Overview", false));
             NavPanel.add(Box.createVerticalStrut(4));
-
-            addExpandableNavItem("Orders", new String[]{
-                    "View All Orders",
-                    "Manage Orders"
-            });
-
+            addExpandableNavItem("Orders", new String[]{"View All Orders", "Manage Orders"});
             NavPanel.add(buildNavButton("Settings", false));
             NavPanel.add(Box.createVerticalStrut(4));
-
-        }
-
-        // WAREHOUSE STAFF - Order processing only
-        else if (role.equals("Delivery Employee")) {
+        } else if (role.equals("Senior Accountant")) {
             NavPanel.add(buildNavButton("Overview", false));
             NavPanel.add(Box.createVerticalStrut(4));
-
-            addExpandableNavItem("Orders", new String[]{
-                    "View All Orders",
-                    "Manage Orders"
-            });
-
+            addExpandableNavItem("Invoices", new String[]{"View All Invoices"});
+            addExpandableNavItem("Payments", new String[]{"Record Payments", "View Debtors List", "View Payment History"});
             NavPanel.add(buildNavButton("Settings", false));
             NavPanel.add(Box.createVerticalStrut(4));
-
-        }
-
-        // ACCOUNTANTS - Invoice and payment only
-        else if (role.equals("Senior Accountant")) {
+        } else if (role.equals("Accountant")) {
             NavPanel.add(buildNavButton("Overview", false));
             NavPanel.add(Box.createVerticalStrut(4));
-            addExpandableNavItem("Invoices", new String[]{
-                    "View All Invoices"
-            });
-            addExpandableNavItem("Payments", new String[]{
-                    "Record Payments",
-                    "View Debtors List",
-                    "View Payment History"
-
-            });
-            NavPanel.add(buildNavButton("Settings", false));
-            NavPanel.add(Box.createVerticalStrut(4));
-        }
-
-        else if (role.equals("Accountant")) {
-            NavPanel.add(buildNavButton("Overview", false));
-            NavPanel.add(Box.createVerticalStrut(4));
-            addExpandableNavItem("Invoices", new String[]{
-                    "View All Invoices"
-            });
-            addExpandableNavItem("Payments", new String[]{
-                    "Record Payments"
-            });
+            addExpandableNavItem("Invoices", new String[]{"View All Invoices"});
+            addExpandableNavItem("Payments", new String[]{"Record Payments"});
             NavPanel.add(buildNavButton("Settings", false));
             NavPanel.add(Box.createVerticalStrut(4));
         }
@@ -253,7 +163,6 @@ public abstract class BaseFrame extends JFrame {
 
         ContentPanel.add(CenterPanel, BorderLayout.CENTER);
 
-        // Assemble MainPanel
         MainPanel.add(HeaderPanel, BorderLayout.NORTH);
         MainPanel.add(NavPanel, BorderLayout.WEST);
         MainPanel.add(ContentPanel, BorderLayout.CENTER);
@@ -286,12 +195,12 @@ public abstract class BaseFrame extends JFrame {
             subBtn.setBackground(new Color(10, 28, 38));
             subBtn.setForeground(new Color(120, 160, 185));
 
-            subBtn.addMouseListener(new java.awt.event.MouseAdapter() {
-                public void mouseEntered(java.awt.event.MouseEvent e) {
+            subBtn.addMouseListener(new MouseAdapter() {
+                public void mouseEntered(MouseEvent e) {
                     subBtn.setForeground(Color.WHITE);
                     subBtn.setBackground(new Color(20, 50, 65));
                 }
-                public void mouseExited(java.awt.event.MouseEvent e) {
+                public void mouseExited(MouseEvent e) {
                     subBtn.setForeground(new Color(120, 160, 185));
                     subBtn.setBackground(new Color(10, 28, 38));
                 }
@@ -318,72 +227,24 @@ public abstract class BaseFrame extends JFrame {
 
     protected void handleSubNavClick(String label) {
         switch (label) {
-            case "View All Merchants":
-                dispose();
-                new MerchantList(fullname, role);
-                break;
-            case "Create Merchant Account":
-                dispose();
-                new AccountManagement(fullname, role, "CREATE");
-                break;
-            case "Manage Merchant Accounts":
-                dispose();
-                new AccountManagement(fullname, role, "MANAGE");
-                break;
-            case "View All Staff":
-                dispose();
-                new StaffList(fullname, role);
-                break;
-            case "Create Staff Account":
-                dispose();
-                new StaffAccountManagement(fullname, role, "CREATE");
-                break;
-            case "Manage Staff Account":
-                dispose();
-                new StaffAccountManagement(fullname, role, "MANAGE");
-                break;
-            case "Commercial Applications":
-                dispose();
-                new CommercialAppForm(fullname, role);
-                break;
-            case "View All Orders":
-                dispose();
-                new OrderManagement(fullname, role);
-                break;
-            case "Manage Orders":
-                dispose();
-                new OrderProcessingFrame(fullname, role);
-                break;
-            case "Reports":
-                dispose();
-                new ReportForm(fullname, role);
-                break;
-            case "Settings":
-                dispose();
-                new SettingsForm(fullname, role, username);
-                break;
-            case "View All Invoices":
-                dispose();
-                new InvoiceListFrame(fullname, role);
-                break;
-            case "View Merchant Orders":
-                dispose();
-                new MerchantList(fullname, role, "ORDERS");
-                break;
-            case "View Merchant Invoices":
-                dispose();
-                new MerchantList(fullname, role, "INVOICES");
-                break;
-            case "Record Payments":
-                dispose();
-                new PaymentRecording(fullname, role);
-                break;
+            case "View All Merchants":       router.goTo(AppFrame.SCREEN_MERCHANT_LIST); break;
+            case "Create Merchant Account":  router.goTo(AppFrame.SCREEN_ACCOUNT_MANAGEMENT_CREATE); break;
+            case "Manage Merchant Accounts": router.goTo(AppFrame.SCREEN_ACCOUNT_MANAGEMENT_MANAGE); break;
+            case "View All Staff":           router.goTo(AppFrame.SCREEN_STAFF_LIST); break;
+            case "Create Staff Account":     router.goTo(AppFrame.SCREEN_STAFF_ACCOUNT_CREATE); break;
+            case "Manage Staff Account":     router.goTo(AppFrame.SCREEN_STAFF_ACCOUNT_MANAGE); break;
+            case "Commercial Applications":  router.goTo(AppFrame.SCREEN_COMMERCIAL_APP); break;
+            case "View All Orders":          router.goTo(AppFrame.SCREEN_ORDER_MANAGEMENT); break;
+            case "Manage Orders":            router.goTo(AppFrame.SCREEN_ORDER_PROCESSING); break;
+            case "View All Invoices":        router.goTo(AppFrame.SCREEN_INVOICE_LIST); break;
+            case "View Merchant Orders":     router.goTo(AppFrame.SCREEN_MERCHANT_ORDERS); break;
+            case "View Merchant Invoices":   router.goTo(AppFrame.SCREEN_MERCHANT_INVOICES); break;
+            case "Record Payments":          router.goTo(AppFrame.SCREEN_PAYMENT_RECORDING); break;
             case "View Debtors List":
-                new PaymentRecording(fullname, role).showDebtorsDialog();
+                new PaymentRecording(fullname, role, router).showDebtorsDialog();
                 break;
             case "View Payment History":
-                new PaymentRecording(fullname, role).showPaymentHistoryDialog();
-                dispose();
+                new PaymentRecording(fullname, role, router).showPaymentHistoryDialog();
                 break;
             default:
                 JOptionPane.showMessageDialog(this, label + " — coming soon.");
@@ -404,45 +265,14 @@ public abstract class BaseFrame extends JFrame {
 
         btn.addActionListener(e -> {
             switch (label) {
-                case "Catalogue":
-                    dispose();
-                    new Catalogue(fullname, role);
-                    break;
+                case "Catalogue": router.goTo(AppFrame.SCREEN_CATALOGUE); break;
                 case "Overview":
-                    // Open appropriate dashboard based on role
-                    if (role.equals("Administrator")) {
-                        dispose();
-                        new AdminDashboard(fullname, role, username);
-                        break;
-                    } else if (role.equals("Director of Operations")) {
-                        dispose();
-                        new ManagerDashboard(fullname, role, username);
-                        break;
-                    } else {
-                        dispose();
-                        new StaffDashboard(fullname, role, username);
-                        break;
-                    }
-                case "Process Orders":
-                    dispose();
-                    new OrderProcessingFrame(fullname, role);
+                    if (role.equals("Administrator")) router.goTo(AppFrame.SCREEN_ADMIN_DASHBOARD);
+                    else if (role.equals("Director of Operations")) router.goTo(AppFrame.SCREEN_MANAGER_DASHBOARD);
+                    else router.goTo(AppFrame.SCREEN_STAFF_DASHBOARD);
                     break;
-                case "Track Orders":
-                    dispose();
-                    new OrderTrackingFrame(fullname, role);
-                    break;
-                case "Payments":
-                    dispose();
-                    new PaymentRecording(fullname, role);
-                    break;
-                case "Reports":
-                    dispose();
-                    new ReportForm(fullname, role);
-                    break;
-                case "Settings":
-                    dispose();
-                    new SettingsForm(fullname, role, username);
-                    break;
+                case "Reports":  router.goTo(AppFrame.SCREEN_REPORT); break;
+                case "Settings": router.goTo(AppFrame.SCREEN_SETTINGS); break;
                 default:
                     JOptionPane.showMessageDialog(this, label + " — coming soon.");
                     break;
@@ -453,11 +283,8 @@ public abstract class BaseFrame extends JFrame {
     }
 
     protected void handleLogout() {
-        dispose();
-        new LoginForm();
+        router.goTo(AppFrame.SCREEN_LOGIN);
     }
 
-    // Abstract methods for subclasses
     protected abstract String getHeaderTitle();
-
 }

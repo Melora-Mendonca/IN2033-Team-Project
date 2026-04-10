@@ -3,6 +3,8 @@ package IPOS.SA.ORD.UI;
 import IPOS.SA.ORD.Service.OrderService;
 import IPOS.SA.ACC.Service.AccountService;
 import IPOS.SA.ORD.Service.InvoiceService;
+import IPOS.SA.UI.BaseFrame;
+import IPOS.SA.UI.ScreenRouter;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -10,81 +12,62 @@ import javax.swing.table.DefaultTableCellRenderer;
 import java.awt.*;
 import java.util.List;
 
-public class OrderTrackingFrame extends JFrame {
+public class OrderTrackingFrame extends BaseFrame {
+
     private final OrderService orderService;
-    private final String fullname;
-    private final String role;
     private JTable orderTable;
     private DefaultTableModel tableModel;
 
-    public OrderTrackingFrame(String fullname, String role) {
+    public OrderTrackingFrame(String fullname, String role, ScreenRouter router) {
+        super(fullname, role, "Order Tracking", router);
         this.orderService = new OrderService(new AccountService(), new InvoiceService());
-        this.fullname = fullname;
-        this.role = role;
-
-        setTitle("Order Tracking");
-        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        setSize(1100, 600);
-        setLocationRelativeTo(null);
-
         buildUI();
         loadOrders();
-        setVisible(true);
+    }
+
+    @Override
+    protected String getHeaderTitle() {
+        return "Order Tracking";
     }
 
     private void buildUI() {
-        JPanel mainPanel = new JPanel(new BorderLayout());
-        mainPanel.setBackground(new Color(245, 247, 250));
+        CenterPanel.setLayout(new BorderLayout());
+        CenterPanel.setBackground(new Color(245, 247, 250));
 
-        // Header
-        JPanel header = new JPanel(new BorderLayout());
-        header.setBackground(new Color(14, 37, 48));
-        header.setBorder(BorderFactory.createEmptyBorder(12, 20, 12, 20));
-        JLabel title = new JLabel("Order Tracking");
-        title.setFont(new Font("Segoe UI", Font.BOLD, 18));
-        title.setForeground(Color.WHITE);
-        header.add(title, BorderLayout.WEST);
-        mainPanel.add(header, BorderLayout.NORTH);
-
-        // Orders Table with more details
         String[] cols = {"Order ID", "Merchant", "Date", "Status", "Amount", "Dispatched", "Courier", "Ref No", "Est. Delivery"};
         tableModel = new DefaultTableModel(cols, 0) {
             public boolean isCellEditable(int r, int c) { return false; }
         };
+
         orderTable = new JTable(tableModel);
         styleTable(orderTable);
 
-        // Status color renderer
         orderTable.getColumnModel().getColumn(3).setCellRenderer(new DefaultTableCellRenderer() {
             public Component getTableCellRendererComponent(JTable t, Object val, boolean sel, boolean foc, int row, int col) {
                 JLabel lbl = new JLabel(val.toString(), SwingConstants.CENTER);
                 lbl.setOpaque(true);
                 lbl.setFont(new Font("Segoe UI", Font.BOLD, 11));
                 switch (val.toString()) {
-                    case "pending": lbl.setBackground(new Color(255, 243, 205)); lbl.setForeground(new Color(133, 100, 4)); break;
-                    case "accepted": lbl.setBackground(new Color(207, 226, 255)); lbl.setForeground(new Color(10, 64, 168)); break;
-                    case "processing": lbl.setBackground(new Color(207, 226, 255)); lbl.setForeground(new Color(10, 64, 168)); break;
-                    case "dispatched": lbl.setBackground(new Color(198, 239, 206)); lbl.setForeground(new Color(0, 97, 0)); break;
-                    case "delivered": lbl.setBackground(new Color(198, 239, 206)); lbl.setForeground(new Color(0, 97, 0)); break;
-                    default: lbl.setBackground(Color.WHITE); lbl.setForeground(Color.BLACK);
+                    case "pending":    lbl.setBackground(new Color(255, 243, 205)); lbl.setForeground(new Color(133, 100, 4));  break;
+                    case "accepted":   lbl.setBackground(new Color(207, 226, 255)); lbl.setForeground(new Color(10, 64, 168));  break;
+                    case "processing": lbl.setBackground(new Color(207, 226, 255)); lbl.setForeground(new Color(10, 64, 168));  break;
+                    case "dispatched": lbl.setBackground(new Color(198, 239, 206)); lbl.setForeground(new Color(0, 97, 0));     break;
+                    case "delivered":  lbl.setBackground(new Color(198, 239, 206)); lbl.setForeground(new Color(0, 97, 0));     break;
+                    default:           lbl.setBackground(Color.WHITE);              lbl.setForeground(Color.BLACK);
                 }
                 return lbl;
             }
         });
 
         JScrollPane scroll = new JScrollPane(orderTable);
-        mainPanel.add(scroll, BorderLayout.CENTER);
-
-        setContentPane(mainPanel);
+        CenterPanel.add(scroll, BorderLayout.CENTER);
     }
 
     private void loadOrders() {
         try {
             List<Object[]> orders = orderService.getAllOrders();
             tableModel.setRowCount(0);
-            for (Object[] order : orders) {
-                tableModel.addRow(order);
-            }
+            for (Object[] order : orders) tableModel.addRow(order);
         } catch (Exception e) {
             e.printStackTrace();
         }

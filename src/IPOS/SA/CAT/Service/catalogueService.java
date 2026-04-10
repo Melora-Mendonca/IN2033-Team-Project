@@ -17,7 +17,7 @@ public class catalogueService {
     // Load a single item by ID (only active items)
     public CatalogueItem loadItem(String itemId) throws Exception {
         ResultSet rs = db.query(
-                "SELECT * FROM Catalogue WHERE item_id = ? AND is_active = 1",
+                "SELECT * FROM catalogue WHERE item_id = ? AND is_active = 1",
                 itemId
         );
 
@@ -30,7 +30,7 @@ public class catalogueService {
     // Load an item including inactive ones (for admin purposes)
     public CatalogueItem loadItemIncludingInactive(String itemId) throws Exception {
         ResultSet rs = db.query(
-                "SELECT * FROM Catalogue WHERE item_id = ?",
+                "SELECT * FROM catalogue WHERE item_id = ?",
                 itemId
         );
 
@@ -43,7 +43,7 @@ public class catalogueService {
     // Check if an item exists and is active
     public boolean isItemActive(String itemId) throws Exception {
         ResultSet rs = db.query(
-                "SELECT is_active FROM Catalogue WHERE item_id = ?",
+                "SELECT is_active FROM catalogue WHERE item_id = ?",
                 itemId
         );
 
@@ -56,7 +56,7 @@ public class catalogueService {
     // Check if an item exists (regardless of active status)
     public boolean itemExists(String itemId) throws Exception {
         ResultSet rs = db.query(
-                "SELECT item_id FROM Catalogue WHERE item_id = ?",
+                "SELECT item_id FROM catalogue WHERE item_id = ?",
                 itemId
         );
         return rs != null && rs.next();
@@ -65,7 +65,7 @@ public class catalogueService {
     // Get the active status of an item
     public boolean getItemActiveStatus(String itemId) throws Exception {
         ResultSet rs = db.query(
-                "SELECT is_active FROM Catalogue WHERE item_id = ?",
+                "SELECT is_active FROM catalogue WHERE item_id = ?",
                 itemId
         );
 
@@ -83,7 +83,7 @@ public class catalogueService {
         }
 
         int rowsAffected = db.update(
-                "INSERT INTO Catalogue (item_id, description, package_type, unit, " +
+                "INSERT INTO catalogue (item_id, description, package_type, unit, " +
                         "unit_per_pack, package_cost, availability, minimum_stock_level, is_active) " +
                         "VALUES (?,?,?,?,?,?,?,?,1)",
                 item.getItemId(),
@@ -106,7 +106,7 @@ public class catalogueService {
         }
 
         int rowsAffected = db.update(
-                "UPDATE Catalogue SET description=?, package_type=?, unit=?, " +
+                "UPDATE catalogue SET description=?, package_type=?, unit=?, " +
                         "unit_per_pack=?, package_cost=?, availability=?, minimum_stock_level=? " +
                         "WHERE item_id=? AND is_active=1",
                 item.getDescription(),
@@ -129,7 +129,7 @@ public class catalogueService {
         }
 
         int rowsAffected = db.update(
-                "UPDATE Catalogue SET is_active = 0 WHERE item_id = ?",
+                "UPDATE catalogue SET is_active = 0 WHERE item_id = ?",
                 itemId
         );
 
@@ -143,7 +143,7 @@ public class catalogueService {
         }
 
         int rowsAffected = db.update(
-                "UPDATE Catalogue SET is_active = 1 WHERE item_id = ?",
+                "UPDATE catalogue SET is_active = 1 WHERE item_id = ?",
                 itemId
         );
 
@@ -164,7 +164,7 @@ public class catalogueService {
         try {
             // Update stock in Catalogue table
             db.update(
-                    "UPDATE Catalogue SET availability = availability - ? " +
+                    "UPDATE catalogue SET availability = availability - ? " +
                             "WHERE item_id = ? AND is_active = 1",
                     quantity, itemId
             );
@@ -189,14 +189,14 @@ public class catalogueService {
         try {
             // Insert delivery record into StockDelivery table
             db.update(
-                    "INSERT INTO StockDelivery (catalogue_item_id, quantity, delivery_date, status, supplier_name, userlogin_user_id) " +
+                    "INSERT INTO stockdelivery (catalogue_item_id, quantity, delivery_date, status, supplier_name, userlogin_user_id) " +
                             "VALUES (?, ?, CURDATE(), 'completed', 'Manual Entry', ?)",
                     itemId, quantity, enteredBy
             );
 
             // Update stock in Catalogue table
             db.update(
-                    "UPDATE Catalogue SET availability = availability + ? " +
+                    "UPDATE catalogue SET availability = availability + ? " +
                             "WHERE item_id = ? AND is_active = 1",
                     quantity, itemId
             );
@@ -211,7 +211,7 @@ public class catalogueService {
     public List<CatalogueItem> getAllActiveItems() throws Exception {
         List<CatalogueItem> items = new ArrayList<>();
         ResultSet rs = db.query(
-                "SELECT * FROM Catalogue WHERE is_active = 1 ORDER BY item_id"
+                "SELECT * FROM catalogue WHERE is_active = 1 ORDER BY item_id"
         );
 
         while (rs != null && rs.next()) {
@@ -225,7 +225,7 @@ public class catalogueService {
     public List<CatalogueItem> getAllItems() throws Exception {
         List<CatalogueItem> items = new ArrayList<>();
         ResultSet rs = db.query(
-                "SELECT * FROM Catalogue ORDER BY item_id"
+                "SELECT * FROM catalogue ORDER BY item_id"
         );
 
         while (rs != null && rs.next()) {

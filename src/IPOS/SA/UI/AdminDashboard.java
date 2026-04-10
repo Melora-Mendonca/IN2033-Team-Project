@@ -11,7 +11,7 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.util.List;
 
-public class AdminDashboard extends BaseFrame {
+public class AdminDashboard extends BaseFrame implements Refreshable{
 
     private final AdminService dashboardService;
 
@@ -20,8 +20,8 @@ public class AdminDashboard extends BaseFrame {
     private JTable OrderStatusTable;
     private JTable LowStockTable;
 
-    public AdminDashboard(String fullname, String role, String username) {
-        super(fullname, role, username,"Admin Dashboard");
+    public AdminDashboard(String fullname, String role, String username, ScreenRouter router) {
+        super(fullname, role, username,"Admin Dashboard", router);
         this.dashboardService = new AdminService();
 
         loadDashboardData();
@@ -235,5 +235,10 @@ public class AdminDashboard extends BaseFrame {
         stockPanel.add(stockTitle, BorderLayout.NORTH);
         stockPanel.add(scroll, BorderLayout.CENTER);
         tableWrapper.add(stockPanel);
+    }
+
+    @Override
+    public void onShow() {
+        loadDashboardData();
     }
 }

@@ -1,14 +1,25 @@
-# Use Java runtime
-FROM eclipse-temurin:17-jre-alpine
+FROM eclipse-temurin:23-jre-noble
 
-# Set working directory
 WORKDIR /app
 
-# Copy your JAR file (use the exact name you see)
-COPY IN2033_Team_Project.jar app.jar
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        xvfb \
+        x11vnc \
+        novnc \
+        websockify \
+        x11-xserver-utils \
+        libxext6 \
+        libxrender1 \
+        libxtst6 \
+        libxi6 \
+        fonts-dejavu-core \
+    && rm -rf /var/lib/apt/lists/*
 
-# Expose the port for REST API
-EXPOSE 8081
+COPY IN2033-Team-Project.jar app.jar
+COPY start.sh .
+COPY data/ ./data/
+RUN chmod +x start.sh
 
-# Run the application
-ENTRYPOINT ["java", "-jar", "app.jar"]
+EXPOSE 5900 6082 8081
+
+ENTRYPOINT ["./start.sh"]

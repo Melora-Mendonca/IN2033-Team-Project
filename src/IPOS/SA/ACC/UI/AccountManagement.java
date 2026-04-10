@@ -5,8 +5,10 @@ import IPOS.SA.ACC.Model.FixedDiscountPlan;
 import IPOS.SA.ACC.Model.MerchantAccount;
 import IPOS.SA.ACC.Service.AccountService;
 import IPOS.SA.Comms.PUClient.EmailService;
-import IPOS.SA.UI.AdminDashboard;
+import IPOS.SA.UI.AppFrame;
 import IPOS.SA.UI.BaseFrame;
+import IPOS.SA.UI.Refreshable;
+import IPOS.SA.UI.ScreenRouter;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -14,7 +16,7 @@ import java.awt.*;
 import java.sql.Date;
 import java.time.LocalDate;
 
-public class AccountManagement extends BaseFrame {
+public class AccountManagement extends BaseFrame implements Refreshable {
 
     private final AccountService accountService;
     private final String mode;
@@ -37,12 +39,12 @@ public class AccountManagement extends BaseFrame {
     private JLabel messageLabel;
     private JPanel StatusPanel;
 
-    public AccountManagement(String fullname, String role, String mode) {
-        this(fullname, role, mode, null);
+    public AccountManagement(String fullname, String role, String mode, ScreenRouter router) {
+        this(fullname, role, mode, null, router);
     }
 
-    public AccountManagement(String fullname, String role, String mode, String merchantId) {
-        super(fullname, role, "Merchant Account Management");
+    public AccountManagement(String fullname, String role, String mode, String merchantId, ScreenRouter router) {
+        super(fullname, role, "Merchant Account Management", router);
         this.accountService = new AccountService();
         this.mode = mode;
 
@@ -218,7 +220,7 @@ public class AccountManagement extends BaseFrame {
 
         createBtn.addActionListener(e -> createAccount());
         clearBtn.addActionListener(e  -> clearForm());
-        backBtn.addActionListener(e   -> { dispose(); new AdminDashboard(fullname, role, username); });
+        backBtn.addActionListener(e -> router.goTo(AppFrame.SCREEN_MERCHANT_LIST));
 
         actionsCard.add(createBtn); actionsCard.add(Box.createVerticalStrut(8));
         actionsCard.add(clearBtn);  actionsCard.add(Box.createVerticalStrut(8));
@@ -242,10 +244,7 @@ public class AccountManagement extends BaseFrame {
         deleteDiscountBtn.addActionListener(e -> deleteDiscountPlan());
         deleteAccountBtn.addActionListener(e  -> deleteAccount());
         clearBtn.addActionListener(e          -> clearForm());
-        backBtn.addActionListener(e           -> {
-            dispose();
-            new AdminDashboard(fullname, role, username);
-        });
+        backBtn.addActionListener(e -> router.goTo(AppFrame.SCREEN_MERCHANT_LIST));
 
         actionsCard.add(loadBtn);
         actionsCard.add(Box.createVerticalStrut(8));
@@ -679,6 +678,11 @@ public class AccountManagement extends BaseFrame {
         if (!sent) {
             System.out.println("WARNING: Failed to send login email to " + email);
         }
+    }
+
+    @Override
+    public void onShow() {
+        clearForm();
     }
 
 }

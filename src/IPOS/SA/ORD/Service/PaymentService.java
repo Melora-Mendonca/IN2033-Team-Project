@@ -24,7 +24,7 @@ public class PaymentService {
         // Get invoice details first
         ResultSet invoiceRs = db.query(
                 "SELECT i.total_amount, i.amount_paid, o.merchant_id " +
-                        "FROM Invoice i JOIN `Order` o ON i.order_id = o.order_id " +
+                        "FROM invoice i JOIN `order` o ON i.order_id = o.order_id " +
                         "WHERE i.invoice_id = ?", invoiceId
         );
 
@@ -41,7 +41,7 @@ public class PaymentService {
 
         // Insert into RecordPayment
         db.update(
-                "INSERT INTO RecordPayment (amount, payment_date, payment_method, " +
+                "INSERT INTO recordpayment (amount, payment_date, payment_method, " +
                         "reference_number, invoice_id, userlogin_user_id) VALUES (?,CURRENT_DATE(),?,?,?,1)",
                 amount,
                 method,
@@ -85,8 +85,8 @@ public class PaymentService {
         String sql =
                 "SELECT i.invoice_id, i.order_id, m.company_name, i.invoice_date, i.due_date, " +
                         "i.total_amount, i.amount_paid, i.status, i.days_overdue " +
-                        "FROM Invoice i " +
-                        "JOIN `Order` o ON i.order_id = o.order_id " +
+                        "FROM invoice i " +
+                        "JOIN `order` o ON i.order_id = o.order_id " +
                         "JOIN merchant m ON o.merchant_id = m.merchant_id " +
                         "WHERE 1=1";
 
@@ -117,7 +117,7 @@ public class PaymentService {
         List<Object[]> rows = new ArrayList<>();
         ResultSet rs = db.query(
                 "SELECT amount, payment_date, payment_method, reference_number " +
-                        "FROM RecordPayment WHERE invoice_id = ? ORDER BY payment_date",
+                        "FROM recordpayment WHERE invoice_id = ? ORDER BY payment_date",
                 invoiceId
         );
         while (rs.next()) {
@@ -136,7 +136,7 @@ public class PaymentService {
         List<Object[]> rows = new ArrayList<>();
         ResultSet rs = db.query(
                 "SELECT c.description, oi.quantity, oi.unit_price, oi.total_price " +
-                        "FROM OrderItem oi JOIN Catalogue c ON oi.catalogue_item_id = c.item_id " +
+                        "FROM orderitem oi JOIN catalogue c ON oi.catalogue_item_id = c.item_id " +
                         "WHERE oi.order_id = ?", orderId
         );
         while (rs.next()) {
@@ -159,8 +159,8 @@ public class PaymentService {
                         "SUM(i.total_amount - i.amount_paid) as outstanding, " +
                         "MAX(i.days_overdue) as max_overdue, " +
                         "m.account_status " +
-                        "FROM Invoice i " +
-                        "JOIN `Order` o ON i.order_id = o.order_id " +
+                        "FROM invoice i " +
+                        "JOIN `order` o ON i.order_id = o.order_id " +
                         "JOIN merchant m ON o.merchant_id = m.merchant_id " +
                         "WHERE i.status IN ('unpaid', 'partial', 'overdue') " +
                         "GROUP BY m.merchant_id, m.company_name, m.email, m.account_status " +
@@ -186,7 +186,7 @@ public class PaymentService {
     public String[] getMerchantAndOrderForInvoice(String invoiceId) throws Exception {
         ResultSet rs = db.query(
                 "SELECT o.merchant_id, i.order_id " +
-                        "FROM Invoice i JOIN `Order` o ON i.order_id = o.order_id " +
+                        "FROM invoice i JOIN `order` o ON i.order_id = o.order_id " +
                         "WHERE i.invoice_id = ?", invoiceId
         );
         if (!rs.next()) throw new Exception("Invoice not found: " + invoiceId);

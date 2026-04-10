@@ -15,6 +15,8 @@ package IPOS.SA.CAT.UI;
 import IPOS.SA.CAT.Model.CatalogueItem;
 import IPOS.SA.DB.DBConnection;
 import IPOS.SA.UI.BaseFrame;
+import IPOS.SA.UI.Refreshable;
+import IPOS.SA.UI.ScreenRouter;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -24,7 +26,7 @@ import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Catalogue extends BaseFrame {
+public class Catalogue extends BaseFrame implements Refreshable {
 
     private final List<CatalogueItem> Items = new ArrayList<>();
 
@@ -40,8 +42,8 @@ public class Catalogue extends BaseFrame {
     private JButton searchButton;
     private JButton deliveryButton;
 
-    public Catalogue(String fullname, String role) {
-        super(fullname, role, "Catalogue");
+    public Catalogue(String fullname, String role, ScreenRouter router) {
+        super(fullname, role, "Catalogue", router);
         buildContent();
         loadData();
         updateTableForSelectedRole();
@@ -140,10 +142,10 @@ public class Catalogue extends BaseFrame {
         styleBtn(deleteButton);
         styleBtn(deliveryButton);
 
-        addButton.addActionListener(e      -> { dispose(); new ManageItem(fullname, role, "ADD"); });
-        updateButton.addActionListener(e   -> { dispose(); new ManageItem(fullname, role, "EDIT"); });
-        deleteButton.addActionListener(e   -> { dispose(); new ManageItem(fullname, role, "DELETE"); });
-        deliveryButton.addActionListener(e -> { dispose(); new ManageItem(fullname, role, "DELIVERY"); });
+        addButton.addActionListener(e      -> new ManageItem(fullname, role, "ADD", router));
+        updateButton.addActionListener(e   -> new ManageItem(fullname, role, "EDIT", router));
+        deleteButton.addActionListener(e   -> new ManageItem(fullname, role, "DELETE", router));
+        deliveryButton.addActionListener(e -> new ManageItem(fullname, role, "DELIVERY", router));
 
         buttonPanel.add(addButton);
         buttonPanel.add(updateButton);
@@ -330,5 +332,12 @@ public class Catalogue extends BaseFrame {
         btn.setFocusPainted(false);
         btn.setBorderPainted(false);
         btn.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+    }
+
+    @Override
+    public void onShow() {
+        searchField.setText("");
+        loadData();
+        updateTableForSelectedRole();
     }
 }

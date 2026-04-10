@@ -9,7 +9,7 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 
-public class StaffDashboard extends BaseFrame {
+public class StaffDashboard extends BaseFrame implements Refreshable{
     private final StaffService dashboardService;
     private JPanel CardsPanel;
     private JPanel tableWrapper;
@@ -18,8 +18,8 @@ public class StaffDashboard extends BaseFrame {
     private JPanel ordersPanel;
     private JLabel ordersTitle;
 
-    public StaffDashboard(String fullname, String role, String username) {
-        super(fullname, role, username,"Staff Dashboard");
+    public StaffDashboard(String fullname, String role, String username, ScreenRouter router) {
+        super(fullname, role, username,"Staff Dashboard", router);
         this.dashboardService = new StaffService();
         createCenterContent();
     }
@@ -218,5 +218,10 @@ public class StaffDashboard extends BaseFrame {
         panel.add(scroll, BorderLayout.CENTER);
 
         return panel;
+    }
+
+    @Override
+    public void onShow() {
+        loadDashboardData();
     }
 }

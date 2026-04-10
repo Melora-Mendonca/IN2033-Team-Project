@@ -3,6 +3,8 @@ package IPOS.SA.ORD.UI;
 import IPOS.SA.ORD.Service.InvoiceService;
 import IPOS.SA.ORD.Model.Invoice;
 import IPOS.SA.UI.BaseFrame;
+import IPOS.SA.UI.Refreshable;
+import IPOS.SA.UI.ScreenRouter;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -12,7 +14,7 @@ import javax.swing.table.TableRowSorter;
 import java.awt.*;
 import java.util.List;
 
-public class InvoiceListFrame extends BaseFrame {
+public class InvoiceListFrame extends BaseFrame implements Refreshable {
 
     private final InvoiceService invoiceService;
     private final String merchantId;
@@ -25,13 +27,13 @@ public class InvoiceListFrame extends BaseFrame {
     private JLabel messageLabel;
 
     // Called from nav — no merchant filter
-    public InvoiceListFrame(String fullname, String role) {
-        this(fullname, role, null);
+    public InvoiceListFrame(String fullname, String role, ScreenRouter router) {
+        this(fullname, role, null, router);
     }
 
     // Called from MerchantList — filtered by merchant
-    public InvoiceListFrame(String fullname, String role, String merchantId) {
-        super(fullname, role, "Invoice Management");
+    public InvoiceListFrame(String fullname, String role, String merchantId, ScreenRouter router) {
+        super(fullname, role, "Invoice Management", router);
         this.merchantId     = merchantId;
         this.invoiceService = new InvoiceService();
         buildContent();
@@ -266,5 +268,10 @@ public class InvoiceListFrame extends BaseFrame {
         messageLabel.setForeground(success
                 ? new Color(0, 200, 100)
                 : new Color(255, 100, 100));
+    }
+
+    @Override
+    public void onShow() {
+        loadInvoices();
     }
 }

@@ -2,7 +2,9 @@ package IPOS.SA.CAT.UI;
 
 import IPOS.SA.CAT.Model.CatalogueItem;
 import IPOS.SA.CAT.Service.catalogueService;
+import IPOS.SA.UI.AppFrame;
 import IPOS.SA.UI.BaseFrame;
+import IPOS.SA.UI.ScreenRouter;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -25,8 +27,8 @@ public class ManageItem extends BaseFrame {
     private JTextField quantityField;
     private JLabel messageLabel;
 
-    public ManageItem(String fullname, String role, String mode) {
-        super(fullname, role, getTitleForMode(mode));
+    public ManageItem(String fullname, String role, String mode, ScreenRouter router) {
+        super(fullname, role, getTitleForMode(mode), router);
         this.service       = new catalogueService();
         this.mode          = mode;
         this.currentUserId = 1;
@@ -140,7 +142,7 @@ public class ManageItem extends BaseFrame {
 
         actionsPanel.add(Box.createVerticalStrut(8));
         JButton backBtn = actionButton("← Back to Catalogue", new Color(17, 24, 39));
-        backBtn.addActionListener(e -> { dispose(); new Catalogue(fullname, role); });
+        backBtn.addActionListener(e -> router.goTo(AppFrame.SCREEN_CATALOGUE));
         actionsPanel.add(backBtn);
 
         CenterPanel.add(formPanel,    BorderLayout.CENTER);

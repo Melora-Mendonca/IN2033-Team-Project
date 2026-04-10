@@ -20,7 +20,7 @@ public class ReportService {
         ResultSet rs = db.query(
                 "SELECT item_id, description, package_type, unit, " +
                         "availability, minimum_stock_level " +
-                        "FROM Catalogue WHERE availability <= minimum_stock_level AND is_active = 1 " +
+                        "FROM catalogue WHERE availability <= minimum_stock_level AND is_active = 1 " +
                         "ORDER BY (minimum_stock_level - availability) DESC"
         );
 
@@ -47,8 +47,8 @@ public class ReportService {
                         "COUNT(DISTINCT o.order_id) as orders, " +
                         "COALESCE(SUM(oi.quantity), 0) as items_sold, " +
                         "COALESCE(SUM(o.total_amount), 0) as revenue " +
-                        "FROM `Order` o " +
-                        "LEFT JOIN OrderItem oi ON o.order_id = oi.order_id " +
+                        "FROM `order` o " +
+                        "LEFT JOIN orderitem oi ON o.order_id = oi.order_id " +
                         "WHERE o.order_date BETWEEN ? AND ? " +
                         "GROUP BY DATE_FORMAT(order_date, '%Y-%m') ORDER BY period",
                 new java.sql.Date(fromDate.getTime()), new java.sql.Date(toDate.getTime())
@@ -75,7 +75,7 @@ public class ReportService {
         ResultSet rs = db.query(
                 "SELECT o.order_id, o.order_date, o.total_amount, o.dispatched_date, " +
                         "CASE WHEN i.amount_paid >= i.total_amount THEN 'Paid' ELSE 'Pending' END as payment " +
-                        "FROM `Order` o LEFT JOIN Invoice i ON o.order_id = i.order_id " +
+                        "FROM `order` o LEFT JOIN invoice i ON o.order_id = i.order_id " +
                         "WHERE o.merchant_id = ? AND o.order_date BETWEEN ? AND ? " +
                         "ORDER BY o.order_date DESC",
                 merchantId, new java.sql.Date(fromDate.getTime()), new java.sql.Date(toDate.getTime())
@@ -105,7 +105,7 @@ public class ReportService {
         // Get merchant details
         ResultSet merchantRs = db.query(
                 "SELECT company_name, email, phone, address, credit_limit, outstanding_balance " +
-                        "FROM Merchant WHERE merchant_id = ?", merchantId);
+                        "FROM merchant WHERE merchant_id = ?", merchantId);
 
         if (merchantRs.next()) {
             text.append("MERCHANT ACTIVITY REPORT\n");
@@ -129,9 +129,9 @@ public class ReportService {
                         "CASE WHEN i.amount_paid >= i.total_amount THEN 'Paid' ELSE 'Pending' END as payment_status, " +
                         "oi.catalogue_item_id, c.description, oi.quantity, oi.unit_price " +
                         "FROM `Order` o " +
-                        "LEFT JOIN Invoice i ON o.order_id = i.order_id " +
-                        "LEFT JOIN OrderItem oi ON o.order_id = oi.order_id " +
-                        "LEFT JOIN Catalogue c ON oi.catalogue_item_id = c.item_id " +
+                        "LEFT JOIN invoice i ON o.order_id = i.order_id " +
+                        "LEFT JOIN orderitem oi ON o.order_id = oi.order_id " +
+                        "LEFT JOIN catalogue c ON oi.catalogue_item_id = c.item_id " +
                         "WHERE o.merchant_id = ? AND o.order_date BETWEEN ? AND ? " +
                         "ORDER BY o.order_date DESC, o.order_id",
                 merchantId, new java.sql.Date(fromDate.getTime()), new java.sql.Date(toDate.getTime())
@@ -188,7 +188,7 @@ public class ReportService {
         ResultSet rs = db.query(
                 "SELECT i.invoice_id, i.invoice_date, i.due_date, i.order_id, " +
                         "i.total_amount, i.amount_paid, i.status " +
-                        "FROM Invoice i JOIN `Order` o ON i.order_id = o.order_id " +
+                        "FROM invoice i JOIN `order` o ON i.order_id = o.order_id " +
                         "WHERE o.merchant_id = ? AND i.invoice_date BETWEEN ? AND ? " +
                         "ORDER BY i.invoice_date DESC",
                 merchantId, new java.sql.Date(fromDate.getTime()), new java.sql.Date(toDate.getTime())
@@ -218,8 +218,8 @@ public class ReportService {
         ResultSet rs = db.query(
                 "SELECT i.invoice_id, m.company_name, i.invoice_date, i.due_date, " +
                         "i.order_id, i.total_amount, i.amount_paid, i.status " +
-                        "FROM Invoice i JOIN `Order` o ON i.order_id = o.order_id " +
-                        "JOIN Merchant m ON o.merchant_id = m.merchant_id " +
+                        "FROM invoice i JOIN `order` o ON i.order_id = o.order_id " +
+                        "JOIN merchant m ON o.merchant_id = m.merchant_id " +
                         "WHERE i.invoice_date BETWEEN ? AND ? ORDER BY i.invoice_date DESC",
                 new java.sql.Date(fromDate.getTime()), new java.sql.Date(toDate.getTime())
         );
@@ -250,8 +250,8 @@ public class ReportService {
         ResultSet soldRs = db.query(
                 "SELECT oi.catalogue_item_id, c.description, COALESCE(SUM(oi.quantity), 0) as sold, " +
                         "COALESCE(SUM(oi.total_price), 0) as revenue " +
-                        "FROM OrderItem oi JOIN `Order` o ON oi.order_id = o.order_id " +
-                        "JOIN Catalogue c ON oi.catalogue_item_id = c.item_id " +
+                        "FROM orderitem oi JOIN `order` o ON oi.order_id = o.order_id " +
+                        "JOIN catalogue c ON oi.catalogue_item_id = c.item_id " +
                         "WHERE o.order_date BETWEEN ? AND ? GROUP BY oi.catalogue_item_id, c.description",
                 new java.sql.Date(fromDate.getTime()), new java.sql.Date(toDate.getTime())
         );
@@ -267,7 +267,7 @@ public class ReportService {
         // Get goods received
         ResultSet receivedRs = db.query(
                 "SELECT catalogue_item_id, COALESCE(SUM(quantity), 0) as received " +
-                        "FROM StockDelivery WHERE delivery_date BETWEEN ? AND ? GROUP BY catalogue_item_id",
+                        "FROM stockdelivery WHERE delivery_date BETWEEN ? AND ? GROUP BY catalogue_item_id",
                 new java.sql.Date(fromDate.getTime()), new java.sql.Date(toDate.getTime())
         );
 
@@ -304,7 +304,7 @@ public class ReportService {
     public List<String[]> getMerchantList() throws Exception {
         List<String[]> merchants = new ArrayList<>();
         ResultSet rs = db.query(
-                "SELECT merchant_id, company_name FROM Merchant WHERE is_Active = 1 ORDER BY company_name"
+                "SELECT merchant_id, company_name FROM merchant WHERE is_Active = 1 ORDER BY company_name"
         );
 
         while (rs.next()) {

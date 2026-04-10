@@ -3,6 +3,7 @@ package IPOS.SA.RPT.UI;
 import IPOS.SA.RPT.Model.CommercialApplication;
 import IPOS.SA.RPT.Service.CommercialAppService;
 import IPOS.SA.UI.BaseFrame;
+import IPOS.SA.UI.ScreenRouter;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -20,8 +21,8 @@ public class CommercialAppForm extends BaseFrame {
     private JComboBox<String> statusFilter;
     private JLabel messageLabel;
 
-    public CommercialAppForm(String fullname, String role) {
-        super(fullname, role, "Commercial Applications");
+    public CommercialAppForm(String fullname, String role, ScreenRouter router) {
+        super(fullname, role, "Commercial Applications", router);
         this.appService = new CommercialAppService();
         buildContent();
         loadApplications();

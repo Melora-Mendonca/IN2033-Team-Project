@@ -13,7 +13,7 @@ public class InvoiceDBConnector {
     public void saveInvoice(Invoice invoice) {
         try {
             Connection conn = new DBConnection().getConn();
-            String sql = "INSERT INTO Invoice (invoice_id, order_id, invoice_date, due_date, " +
+            String sql = "INSERT INTO invoice (invoice_id, order_id, invoice_date, due_date, " +
                     "total_amount, amount_paid, status, days_overdue) VALUES (?,?,?,?,?,?,?,?)";
             PreparedStatement stmt = conn.prepareStatement(sql);
             stmt.setString(1, invoice.getInvoiceId());
@@ -39,8 +39,8 @@ public class InvoiceDBConnector {
             String sql =
                     "SELECT i.invoice_id, i.order_id, m.company_name, i.invoice_date, i.due_date, " +
                             "i.total_amount, i.amount_paid, i.status, i.days_overdue " +
-                            "FROM Invoice i " +
-                            "JOIN `Order` o ON i.order_id = o.order_id " +
+                            "FROM invoice i " +
+                            "JOIN `order` o ON i.order_id = o.order_id " +
                             "JOIN merchant m ON o.merchant_id = m.merchant_id " +
                             "ORDER BY i.invoice_date DESC";
             PreparedStatement stmt = conn.prepareStatement(sql);
@@ -73,7 +73,7 @@ public class InvoiceDBConnector {
             String sql =
                     "SELECT i.invoice_id, i.order_id, i.invoice_date, i.due_date, " +
                             "i.total_amount, i.amount_paid, i.status, i.days_overdue " +
-                            "FROM Invoice i JOIN `Order` o ON i.order_id = o.order_id " +
+                            "FROM invoice i JOIN `order` o ON i.order_id = o.order_id " +
                             "WHERE o.merchant_id = ? ORDER BY i.invoice_date DESC";
             PreparedStatement stmt = conn.prepareStatement(sql);
             stmt.setString(1, merchantId);
@@ -101,7 +101,7 @@ public class InvoiceDBConnector {
     public Invoice getInvoiceById(String invoiceId) {
         try {
             Connection conn = new DBConnection().getConn();
-            String sql = "SELECT * FROM Invoice WHERE invoice_id = ?";
+            String sql = "SELECT * FROM invoice WHERE invoice_id = ?";
             PreparedStatement stmt = conn.prepareStatement(sql);
             stmt.setString(1, invoiceId);
             ResultSet rs = stmt.executeQuery();
@@ -136,7 +136,7 @@ public class InvoiceDBConnector {
             Connection conn = new DBConnection().getConn();
 
             ResultSet rs = conn.createStatement().executeQuery(
-                    "SELECT total_amount FROM Invoice WHERE invoice_id = '" + invoiceId + "'");
+                    "SELECT total_amount FROM invoice WHERE invoice_id = '" + invoiceId + "'");
             double totalAmount = rs.next() ? rs.getDouble("total_amount") : 0;
 
             String status;
@@ -144,7 +144,7 @@ public class InvoiceDBConnector {
             else if (newAmountPaid > 0)          status = "partial";
             else                                 status = "unpaid";
 
-            String sql = "UPDATE Invoice SET amount_paid = ?, status = ? WHERE invoice_id = ?";
+            String sql = "UPDATE invoice SET amount_paid = ?, status = ? WHERE invoice_id = ?";
             PreparedStatement stmt = conn.prepareStatement(sql);
             stmt.setDouble(1, newAmountPaid);
             stmt.setString(2, status);
@@ -161,7 +161,7 @@ public class InvoiceDBConnector {
         try {
             Connection conn = new DBConnection().getConn();
             String sql =
-                    "UPDATE Invoice SET " +
+                    "UPDATE invoice SET " +
                             "days_overdue = DATEDIFF(CURDATE(), due_date), " +
                             "status = CASE " +
                             "WHEN amount_paid >= total_amount THEN 'paid' " +

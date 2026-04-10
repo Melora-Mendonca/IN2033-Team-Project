@@ -53,7 +53,7 @@ public class StaffService {
     private int getPendingOrders() throws Exception {
         try {
             ResultSet rs = db.query(
-                    "SELECT COUNT(*) as count FROM `Order` WHERE status IN ('pending', 'processing')"
+                    "SELECT COUNT(*) as count FROM `order` WHERE status IN ('pending', 'processing')"
             );
 
             if (rs != null && rs.next()) {
@@ -72,7 +72,7 @@ public class StaffService {
     private int getRecentOrdersCount() throws Exception {
         try {
             ResultSet rs = db.query(
-                    "SELECT COUNT(*) as count FROM `Order` WHERE order_date >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)"
+                    "SELECT COUNT(*) as count FROM `order` WHERE order_date >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)"
             );
 
             if (rs != null && rs.next()) {
@@ -91,7 +91,7 @@ public class StaffService {
     private double getTotalValueProcessed() throws Exception {
         try {
             ResultSet rs = db.query(
-                    "SELECT COALESCE(SUM(total_amount), 0) as total FROM `Order` " +
+                    "SELECT COALESCE(SUM(total_amount), 0) as total FROM `order` " +
                             "WHERE MONTH(order_date) = MONTH(CURDATE()) " +
                             "AND YEAR(order_date) = YEAR(CURDATE())"
             );
@@ -115,8 +115,8 @@ public class StaffService {
         try {
             ResultSet rs = db.query(
                     "SELECT o.order_id, m.company_name as merchant_name, o.order_date, o.status, o.total_amount " +
-                            "FROM `Order` o " +
-                            "JOIN Merchant m ON o.merchant_id = m.merchant_id " +
+                            "FROM `order` o " +
+                            "JOIN merchant m ON o.merchant_id = m.merchant_id " +
                             "ORDER BY o.order_date DESC"
             );
 
@@ -150,7 +150,7 @@ public class StaffService {
 
         ResultSet rs = db.query(
                 "SELECT user_id, username, first_Name, sur_Name, email, role, is_Active " +
-                        "FROM UserLogin WHERE is_Active = 1 ORDER BY first_Name, sur_Name"
+                        "FROM userlogin WHERE is_Active = 1 ORDER BY first_Name, sur_Name"
         );
 
         while (rs != null && rs.next()) {

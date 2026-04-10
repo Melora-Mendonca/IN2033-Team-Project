@@ -8,6 +8,7 @@ import IPOS.SA.ORD.Service.InvoiceService;
 import IPOS.SA.ORD.Service.OrderService;
 import IPOS.SA.UI.BaseFrame;
 import IPOS.SA.CAT.Service.catalogueService;
+import IPOS.SA.UI.ScreenRouter;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -42,8 +43,8 @@ public class OrderProcessingFrame extends BaseFrame {
     // Common components
     private JButton refreshButton;
 
-    public OrderProcessingFrame(String fullname, String role) {
-        super(fullname, role, getTitleByRole(role));
+    public OrderProcessingFrame(String fullname, String role, ScreenRouter router) {
+        super(fullname, role, getTitleByRole(role), router);
         this.orderService = new OrderService(new AccountService(), new InvoiceService());
         buildContent();
         configureByRole();

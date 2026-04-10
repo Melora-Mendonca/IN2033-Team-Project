@@ -42,7 +42,7 @@ public class StaffAccountService {
 
         // Checks if account already exists
         ResultSet checkRs = db.query(
-                "SELECT user_id FROM userLogin WHERE user_id = ?",
+                "SELECT user_id FROM userlogin WHERE user_id = ?",
                 staff.getStaffId()
         );
 
@@ -51,7 +51,7 @@ public class StaffAccountService {
         }
 
         int rowsAffected = db.update(
-                "INSERT INTO UserLogin (username, password_hash, first_Name, sur_Name, email, role, is_Active, phone, address) " +
+                "INSERT INTO userlogin (username, password_hash, first_Name, sur_Name, email, role, is_Active, phone, address) " +
                         "VALUES (?, ?, ?, ?, ?, ?, 1, ?, ?)",
                 staff.getUsername(),
                 defaultPassword,
@@ -132,7 +132,7 @@ public class StaffAccountService {
     public Staff loadStaff(String staffId) throws Exception {
         ResultSet rs = db.query(
                 "SELECT user_id, username, first_Name, sur_Name, email, role, is_Active, phone, address " +
-                        "FROM UserLogin WHERE user_id = ?",
+                        "FROM userlogin WHERE user_id = ?",
                 staffId
         );
 
@@ -151,7 +151,7 @@ public class StaffAccountService {
      */
     public boolean updateStaff(Staff staff) throws Exception {
         int rowsAffected = db.update(
-                "UPDATE UserLogin SET username=?, first_Name=?, sur_Name=?, email=?, role=?, phone=?, address=?" +
+                "UPDATE userlogin SET username=?, first_Name=?, sur_Name=?, email=?, role=?, phone=?, address=?" +
                         "WHERE user_id=?",
                 staff.getUsername(),
                 staff.getFirstName(),
@@ -176,7 +176,7 @@ public class StaffAccountService {
      */
     public boolean deleteStaff(String staffId) throws Exception {
         int rowsAffected = db.update(
-                "DELETE FROM UserLogin WHERE user_id = ?",
+                "DELETE FROM userlogin WHERE user_id = ?",
                 Integer.parseInt(staffId)
         );
 
@@ -192,7 +192,7 @@ public class StaffAccountService {
      */
     public boolean usernameExists(String username) throws Exception {
         ResultSet rs = db.query(
-                "SELECT username FROM UserLogin WHERE username = ?",
+                "SELECT username FROM userlogin WHERE username = ?",
                 username
         );
         return rs.next();
@@ -208,7 +208,7 @@ public class StaffAccountService {
      */
     public boolean resetPassword(String staffId, String newPassword) throws Exception {
         int rowsAffected = db.update(
-                "UPDATE UserLogin SET password_hash = ? WHERE user_id = ?",
+                "UPDATE userlogin SET password_hash = ? WHERE user_id = ?",
                 newPassword, Integer.parseInt(staffId)
         );
         return rowsAffected > 0;

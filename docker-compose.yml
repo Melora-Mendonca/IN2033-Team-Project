@@ -2,16 +2,22 @@ version: '3.8'
 
 services:
   mysql:
-    image: mysql:8.0
+    image: mysql:8.4
     container_name: ipos-mysql
     environment:
       MYSQL_ROOT_PASSWORD: Karkala1998?
       MYSQL_DATABASE: ipos_sa
     ports:
-      - "3306:3306"
+      - "3308:3306"
     volumes:
       - mysql_data:/var/lib/mysql
-
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-pKarkala1998?" ]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
   ipos-sa:
     build: .
     container_name: ipos-sa-app
@@ -25,8 +31,9 @@ services:
       DB_PASSWORD: Karkala1998?
     ports:
       - "8081:8081"
+      - "5900:5900"
+      - "6082:6082"
     stdin_open: true
     tty: true
-
 volumes:
   mysql_data:
