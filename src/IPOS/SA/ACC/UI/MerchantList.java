@@ -140,15 +140,18 @@ public class MerchantList extends BaseFrame implements Refreshable {
                 int row = merchantTable.getSelectedRow();
                 if (row >= 0) {
                     String merchantId = tableModel.getValueAt(row, 0).toString();
+                    AppFrame.getInstance().setSelectedMerchant(merchantId);
                     router.goTo(AppFrame.SCREEN_ACCOUNT_MANAGEMENT_MANAGE);
                 } else {
-                    JOptionPane.showMessageDialog(this, "Please select a merchant to view details.");
+                    JOptionPane.showMessageDialog(this, "Please select a merchant.");
                 }
             });
 
             viewOrdersButton.addActionListener(e -> {
                 int row = merchantTable.getSelectedRow();
                 if (row >= 0) {
+                    String merchantId = tableModel.getValueAt(row, 0).toString();
+                    AppFrame.getInstance().setSelectedMerchant(merchantId);
                     router.goTo(AppFrame.SCREEN_ORDER_MANAGEMENT);
                 } else {
                     JOptionPane.showMessageDialog(this, "Please select a merchant.");
@@ -158,6 +161,8 @@ public class MerchantList extends BaseFrame implements Refreshable {
             viewInvoicesButton.addActionListener(e -> {
                 int row = merchantTable.getSelectedRow();
                 if (row >= 0) {
+                    String merchantId = tableModel.getValueAt(row, 0).toString();
+                    AppFrame.getInstance().setSelectedMerchant(merchantId);
                     router.goTo(AppFrame.SCREEN_INVOICE_LIST);
                 } else {
                     JOptionPane.showMessageDialog(this, "Please select a merchant.");
@@ -185,9 +190,9 @@ public class MerchantList extends BaseFrame implements Refreshable {
             selectButton.addActionListener(e -> {
                 int row = merchantTable.getSelectedRow();
                 if (row >= 0) {
+                    String merchantId = tableModel.getValueAt(row, 0).toString();
+                    AppFrame.getInstance().setSelectedMerchant(merchantId);
                     router.goTo(AppFrame.SCREEN_ORDER_MANAGEMENT);
-                } else {
-                    JOptionPane.showMessageDialog(this, "Please select a merchant.");
                 }
             });
 
@@ -211,14 +216,14 @@ public class MerchantList extends BaseFrame implements Refreshable {
             selectButton.addActionListener(e -> {
                 int row = merchantTable.getSelectedRow();
                 if (row >= 0) {
+                    String merchantId = tableModel.getValueAt(row, 0).toString();
+                    AppFrame.getInstance().setSelectedMerchant(merchantId);
                     router.goTo(AppFrame.SCREEN_INVOICE_LIST);
                 } else {
                     JOptionPane.showMessageDialog(this, "Please select a merchant.");
                 }
             });
-
             backButton.addActionListener(e -> router.goTo(AppFrame.SCREEN_ADMIN_DASHBOARD));
-
             buttonPanel.add(selectButton);
             buttonPanel.add(backButton);
 

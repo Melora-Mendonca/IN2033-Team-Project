@@ -3,6 +3,7 @@ package IPOS.SA.ORD.UI;
 import IPOS.SA.ACC.Service.AccountService;
 import IPOS.SA.ORD.Service.InvoiceService;
 import IPOS.SA.ORD.Service.OrderService;
+import IPOS.SA.UI.AppFrame;
 import IPOS.SA.UI.BaseFrame;
 import IPOS.SA.UI.Refreshable;
 import IPOS.SA.UI.ScreenRouter;
@@ -17,7 +18,7 @@ import java.util.List;
 public class OrderManagement extends BaseFrame implements Refreshable {
 
     private final OrderService orderService;
-    private final String merchantId;
+    private String merchantId;
 
     private JTable orderTable;
     private DefaultTableModel tableModel;
@@ -196,7 +197,6 @@ public class OrderManagement extends BaseFrame implements Refreshable {
             processBtn.setVisible(false);
             deliverBtn.setVisible(false);
             rejectBtn.setVisible(false);
-            // Only keep viewBtn visible
         }
 
         messageLabel = new JLabel(" ");
@@ -343,7 +343,7 @@ public class OrderManagement extends BaseFrame implements Refreshable {
         switch (current) {
             case "pending":    return next.equals("accepted");
             case "accepted":   return next.equals("processing");
-            case "processing": return next.equals("dispatched") || next.equals("delivered");
+            case "processing": return next.equals("dispatched");
             case "dispatched": return next.equals("delivered");
             default:           return false;
         }
@@ -365,8 +365,8 @@ public class OrderManagement extends BaseFrame implements Refreshable {
                 : new Color(255, 100, 100));
     }
 
-    @Override
     public void onShow() {
+        this.merchantId = AppFrame.getInstance().getSelectedMerchant();
         loadOrders();
     }
 }

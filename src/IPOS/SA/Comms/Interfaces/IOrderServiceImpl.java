@@ -76,7 +76,7 @@ public class IOrderServiceImpl implements IOrderService {
     public double queryOutstandingBalance(String merchantID) {
         try {
             ResultSet rs = db.query(
-                    "SELECT outstanding_balance FROM Merchant WHERE merchant_id = ?",
+                    "SELECT outstanding_balance FROM merchant WHERE merchant_id = ?",
                     merchantID
             );
             return rs.next() ? rs.getDouble("outstanding_balance") : -1;
@@ -118,7 +118,7 @@ public class IOrderServiceImpl implements IOrderService {
     public boolean getAccStatus(String merchantID, String status) {
         try {
             ResultSet rs = db.query(
-                    "SELECT account_status FROM Merchant WHERE merchant_id = ?",
+                    "SELECT account_status FROM merchant WHERE merchant_id = ?",
                     merchantID
             );
             return rs.next() && rs.getString("account_status").equalsIgnoreCase(status);
@@ -135,7 +135,7 @@ public class IOrderServiceImpl implements IOrderService {
     public boolean viewDiscountPlan(String merchantID) {
         try {
             ResultSet rs = db.query(
-                    "SELECT fixed_discount_rate, discount_type FROM Merchant WHERE merchant_id = ?",
+                    "SELECT fixed_discount_rate, discount_type FROM merchant WHERE merchant_id = ?",
                     merchantID
             );
             if (rs.next()) {
@@ -159,7 +159,7 @@ public class IOrderServiceImpl implements IOrderService {
     public boolean viewCreditLimit(String merchantID) {
         try {
             ResultSet rs = db.query(
-                    "SELECT credit_limit FROM Merchant WHERE merchant_id = ?",
+                    "SELECT credit_limit FROM merchant WHERE merchant_id = ?",
                     merchantID
             );
             if (rs.next()) {

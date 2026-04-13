@@ -68,7 +68,7 @@ public class OrderService {
                 reduceStock(item.getItemId(), item.getQuantity());
             }
 
-            // Update merchant's outstanding balance
+            // UPDATE merchant's outstanding balance
             accountService.addToBalance(order.getMerchantId(), finalTotal);
 
             // Generate invoice

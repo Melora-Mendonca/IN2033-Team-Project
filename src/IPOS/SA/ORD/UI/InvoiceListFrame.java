@@ -2,6 +2,7 @@ package IPOS.SA.ORD.UI;
 
 import IPOS.SA.ORD.Service.InvoiceService;
 import IPOS.SA.ORD.Model.Invoice;
+import IPOS.SA.UI.AppFrame;
 import IPOS.SA.UI.BaseFrame;
 import IPOS.SA.UI.Refreshable;
 import IPOS.SA.UI.ScreenRouter;
@@ -17,7 +18,7 @@ import java.util.List;
 public class InvoiceListFrame extends BaseFrame implements Refreshable {
 
     private final InvoiceService invoiceService;
-    private final String merchantId;
+    private String merchantId;
 
     private JTable invoiceTable;
     private DefaultTableModel tableModel;
@@ -270,8 +271,8 @@ public class InvoiceListFrame extends BaseFrame implements Refreshable {
                 : new Color(255, 100, 100));
     }
 
-    @Override
     public void onShow() {
+        this.merchantId = AppFrame.getInstance().getSelectedMerchant();
         loadInvoices();
     }
 }

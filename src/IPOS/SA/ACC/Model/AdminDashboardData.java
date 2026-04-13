@@ -47,7 +47,7 @@ public class AdminDashboardData {
     public void setStockDeliveriesCount(int stockDeliveriesCount) { this.stockDeliveriesCount = stockDeliveriesCount; }
 
     /**
-     * Gets the number of overdue payments from merchants
+     * Gets the number of overdue payments FROM merchants
      * @return the number of overdue payments
      */
     public int getOverduePaymentsCount() { return overduePaymentsCount; }

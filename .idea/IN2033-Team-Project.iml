@@ -3,14 +3,14 @@
   <component name="NewModuleRootManager" inherit-compiler-output="true">
     <exclude-output />
     <content url="file://$MODULE_DIR$">
-      <sourceFolder url="file://$MODULE_DIR$/src"  isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/test" isTestSource="true"  />
+      <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/test" isTestSource="true" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="mysql-connector-j-8.0.31" level="application" />
     <orderEntry type="library" name="mysql-connector-j-9.6.0" level="project" />
-    <orderEntry type="module-library">
+    <orderEntry type="module-library" scope="TEST">
       <library>
         <CLASSES>
           <root url="jar://$MODULE_DIR$/lib/junit-jupiter-5.9.3.jar!/" />
@@ -61,5 +61,8 @@
         <SOURCES />
       </library>
     </orderEntry>
+    <orderEntry type="library" scope="TEST" name="junit.jupiter" level="application" />
+    <orderEntry type="library" name="junit.jupiter.engine" level="project" />
+    <orderEntry type="library" name="junit.platform.launcher" level="project" />
   </component>
 </module>

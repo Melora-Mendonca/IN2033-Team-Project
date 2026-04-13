@@ -43,7 +43,7 @@ public class AccountService {
 
         // Checks if account already exists
         ResultSet checkRs = db.query(
-                "SELECT merchant_id FROM Merchant WHERE merchant_id = ?",
+                "SELECT merchant_id FROM merchant WHERE merchant_id = ?",
                 account.getMerchantId()
         );
 
@@ -53,7 +53,7 @@ public class AccountService {
 
         // Inserts new merchant account if account doesnt exist
         int rowsAffected = db.update(
-                "INSERT INTO Merchant (merchant_id, company_name, business_type, registration_number, " +
+                "INSERT INTO merchant (merchant_id, company_name, business_type, registration_number, " +
                         "email, phone, fax, address, credit_limit, outstanding_balance, " +
                         "account_status, discount_type, fixed_discount_rate, flexible_discount_rate, " +
                         "registration_date, is_Active, last_payment_date, username, password_hash) " +
@@ -154,7 +154,7 @@ public class AccountService {
                 "SELECT merchant_id, company_name, business_type, registration_number, email, phone, fax, " +
                         "address, credit_limit, outstanding_balance, account_status, " +
                         "discount_type, fixed_discount_rate, flexible_discount_rate, registration_date, " +
-                        "is_Active, last_payment_date FROM Merchant WHERE merchant_id = ?",
+                        "is_Active, last_payment_date FROM merchant WHERE merchant_id = ?",
                 merchantId
         );
 
@@ -191,7 +191,7 @@ public class AccountService {
      */
     public boolean updateAccount(MerchantAccount account) throws Exception {
         int rowsAffected = db.update(
-                "UPDATE Merchant SET company_name=?, business_type=?, registration_number=?, " +
+                "UPDATE merchant SET company_name=?, business_type=?, registration_number=?, " +
                         "email=?, phone=?, fax=?, address=?, credit_limit=?, " +
                         "fixed_discount_rate=? WHERE merchant_id=?",
                 account.getBusinessName(),
@@ -218,7 +218,7 @@ public class AccountService {
      */
     public boolean updateAccountStatus(String merchantId, String status) throws Exception {
         int rowsAffected = db.update(
-                "UPDATE Merchant SET account_status=? WHERE merchant_id=?",
+                "UPDATE merchant SET account_status=? WHERE merchant_id=?",
                 status.toLowerCase(),
                 merchantId
         );
@@ -235,7 +235,7 @@ public class AccountService {
      */
     public boolean deleteDiscountPlan(String merchantId) throws Exception {
         int rowsAffected = db.update(
-                "UPDATE Merchant SET fixed_discount_rate = 0, discount_type = 'fixed' WHERE merchant_id = ?",
+                "UPDATE merchant SET fixed_discount_rate = 0, discount_type = 'fixed' WHERE merchant_id = ?",
                 merchantId
         );
 
@@ -251,7 +251,7 @@ public class AccountService {
      */
     public boolean deleteAccount(String merchantId) throws Exception {
         int rowsAffected = db.update(
-                "DELETE FROM Merchant WHERE merchant_id = ?",
+                "DELETE FROM merchant WHERE merchant_id = ?",
                 merchantId
         );
 
@@ -268,7 +268,7 @@ public class AccountService {
     public boolean restoreFromDefault(String merchantId) throws Exception {
         // Check current balance
         ResultSet rs = db.query(
-                "SELECT outstanding_balance FROM Merchant WHERE merchant_id = ?",
+                "SELECT outstanding_balance FROM merchant WHERE merchant_id = ?",
                 merchantId
         );
 
@@ -281,7 +281,7 @@ public class AccountService {
 
         // Restore to normal
         int rowsAffected = db.update(
-                "UPDATE Merchant SET account_status = 'normal' WHERE merchant_id = ?",
+                "UPDATE merchant SET account_status = 'normal' WHERE merchant_id = ?",
                 merchantId
         );
 
@@ -297,7 +297,7 @@ public class AccountService {
      */
     public double getAccountBalance(String merchantId) throws Exception {
         ResultSet rs = db.query(
-                "SELECT outstanding_balance FROM Merchant WHERE merchant_id = ?",
+                "SELECT outstanding_balance FROM merchant WHERE merchant_id = ?",
                 merchantId
         );
 
@@ -319,7 +319,7 @@ public class AccountService {
                 "SELECT merchant_id, company_name, business_type, registration_number, email, phone, fax, " +
                         "address, credit_limit, outstanding_balance, account_status, " +
                         "discount_type, fixed_discount_rate, flexible_discount_rate, registration_date, " +
-                        "is_Active, last_payment_date FROM Merchant ORDER BY company_name"
+                        "is_Active, last_payment_date FROM merchant ORDER BY company_name"
         );
 
         while (rs.next()) {
@@ -369,7 +369,7 @@ public class AccountService {
     }
 
     public double getCreditLimit(String merchantId) throws Exception {
-        ResultSet rs = db.query("SELECT credit_limit FROM Merchant WHERE merchant_id = ?", merchantId);
+        ResultSet rs = db.query("SELECT credit_limit FROM merchant WHERE merchant_id = ?", merchantId);
         if (rs.next()) {
             return rs.getDouble("credit_limit");
         }
@@ -377,7 +377,7 @@ public class AccountService {
     }
 
     public String getAccountStatus(String merchantId) throws Exception {
-        ResultSet rs = db.query("SELECT account_status FROM Merchant WHERE merchant_id = ?", merchantId);
+        ResultSet rs = db.query("SELECT account_status FROM merchant WHERE merchant_id = ?", merchantId);
         if (rs.next()) {
             return rs.getString("account_status");
         }
@@ -388,7 +388,7 @@ public class AccountService {
         try {
             ResultSet rs = db.query(
                     "SELECT discount_type, fixed_discount_rate, flexible_discount_rate " +
-                            "FROM Merchant WHERE merchant_id = ?", merchantId);
+                            "FROM merchant WHERE merchant_id = ?", merchantId);
 
             if (rs.next()) {
                 String discountType = rs.getString("discount_type");

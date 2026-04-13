@@ -544,7 +544,7 @@ public class PaymentRecording extends BaseFrame implements Refreshable {
                         + "This is a reminder that your account has an outstanding balance of £" + outstanding
                         + ", which is now " + daysOverdue + " day(s) overdue.\n\n"
                         + "Please contact us at your earliest convenience to arrange settlement.\n\n"
-                        + "Kind regards,\nIPOS Sales Administration";
+                        + "Kind regards,\nInfoPharma Ordering System";
 
                 try {
                     CommsClient.sendEmail(email, subject, body);

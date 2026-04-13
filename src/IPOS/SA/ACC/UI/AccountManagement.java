@@ -682,7 +682,13 @@ public class AccountManagement extends BaseFrame implements Refreshable {
 
     @Override
     public void onShow() {
-        clearForm();
+        String merchantId = AppFrame.getInstance().getSelectedMerchant();
+        if (merchantId != null && !merchantId.isEmpty() && "MANAGE".equals(mode)) {
+            merchantIdField.setText(merchantId);
+            loadAccount();
+        } else {
+            clearForm();
+        }
     }
 
 }

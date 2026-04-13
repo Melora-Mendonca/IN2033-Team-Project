@@ -13,6 +13,7 @@ public class AppFrame extends JFrame {
     private final CardLayout cards = new CardLayout();
     private final JPanel root = new JPanel(cards);
     private final ScreenRouter router;
+    private String selectedMerchantId;
 
     public static final String SCREEN_LOGIN = "login";
     public static final String SCREEN_ADMIN_DASHBOARD = "adminDashboard";
@@ -54,6 +55,7 @@ public class AppFrame extends JFrame {
         super("IPOS-SA");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(1280, 800);
+        setExtendedState(JFrame.MAXIMIZED_BOTH);
         setLocationRelativeTo(null);
 
         router = new ScreenRouter(cards, root);
@@ -105,5 +107,13 @@ public class AppFrame extends JFrame {
 
     public ScreenRouter getRouter() {
         return router;
+    }
+
+    public void setSelectedMerchant(String merchantId) {
+        this.selectedMerchantId = merchantId;
+    }
+
+    public String getSelectedMerchant() {
+        return selectedMerchantId;
     }
 }
