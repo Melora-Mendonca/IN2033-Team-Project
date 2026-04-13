@@ -14,6 +14,7 @@ package IPOS.SA.CAT.UI;
 
 import IPOS.SA.CAT.Model.CatalogueItem;
 import IPOS.SA.DB.DBConnection;
+import IPOS.SA.UI.AppFrame;
 import IPOS.SA.UI.BaseFrame;
 import IPOS.SA.UI.Refreshable;
 import IPOS.SA.UI.ScreenRouter;
@@ -142,10 +143,10 @@ public class Catalogue extends BaseFrame implements Refreshable {
         styleBtn(deleteButton);
         styleBtn(deliveryButton);
 
-        addButton.addActionListener(e      -> new ManageItem(fullname, role, "ADD", router));
-        updateButton.addActionListener(e   -> new ManageItem(fullname, role, "EDIT", router));
-        deleteButton.addActionListener(e   -> new ManageItem(fullname, role, "DELETE", router));
-        deliveryButton.addActionListener(e -> new ManageItem(fullname, role, "DELIVERY", router));
+        addButton.addActionListener(e -> router.goTo(AppFrame.SCREEN_MANAGE_ITEM_ADD));
+        updateButton.addActionListener(e -> router.goTo(AppFrame.SCREEN_MANAGE_ITEM_EDIT));
+        deleteButton.addActionListener(e -> router.goTo(AppFrame.SCREEN_MANAGE_ITEM_DELETE));
+        deliveryButton.addActionListener(e -> router.goTo(AppFrame.SCREEN_MANAGE_ITEM_DELIVERY));
 
         buttonPanel.add(addButton);
         buttonPanel.add(updateButton);

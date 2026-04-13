@@ -141,6 +141,8 @@ public class StaffList extends BaseFrame implements Refreshable {
             viewDetailsButton.addActionListener(e -> {
                 int row = staffTable.getSelectedRow();
                 if (row >= 0) {
+                    String staffId = tableModel.getValueAt(row, 0).toString();
+                    AppFrame.getInstance().setSelectedMerchant(staffId);
                     router.goTo(AppFrame.SCREEN_STAFF_ACCOUNT_MANAGE);
                 } else {
                     JOptionPane.showMessageDialog(this, "Please select a staff member to view details.");

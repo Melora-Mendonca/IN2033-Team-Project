@@ -457,6 +457,12 @@ public class StaffAccountManagement extends BaseFrame implements Refreshable {
 
     @Override
     public void onShow() {
-        clearForm();
+        String staffId = AppFrame.getInstance().getSelectedMerchant();
+        if (staffId != null && !staffId.isEmpty() && "MANAGE".equals(mode)) {
+            staffIdField.setText(staffId);
+            loadStaff();
+        } else {
+            clearForm();
+        }
     }
 }

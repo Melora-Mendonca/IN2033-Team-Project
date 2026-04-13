@@ -2,6 +2,7 @@ package IPOS.SA.UI;
 
 import IPOS.SA.ACC.UI.*;
 import IPOS.SA.CAT.UI.Catalogue;
+import IPOS.SA.CAT.UI.ManageItem;
 import IPOS.SA.ORD.UI.*;
 import IPOS.SA.RPT.UI.*;
 
@@ -36,6 +37,10 @@ public class AppFrame extends JFrame {
     public static final String SCREEN_SETTINGS = "settings";
     public static final String SCREEN_MERCHANT_ORDERS = "merchantOrders";
     public static final String SCREEN_MERCHANT_INVOICES = "merchantInvoices";
+    public static final String SCREEN_MANAGE_ITEM_ADD = "manageItemAdd";
+    public static final String SCREEN_MANAGE_ITEM_EDIT = "manageItemEdit";
+    public static final String SCREEN_MANAGE_ITEM_DELETE = "manageItemDelete";
+    public static final String SCREEN_MANAGE_ITEM_DELIVERY = "manageItemDelivery";
 
     private String fullname;
     private String role;
@@ -103,6 +108,11 @@ public class AppFrame extends JFrame {
         root.add(new ReportForm(fullname, role, router), SCREEN_REPORT);
         root.add(new CommercialAppForm(fullname, role, router), SCREEN_COMMERCIAL_APP);
         root.add(new SettingsForm(fullname, role, username, router), SCREEN_SETTINGS);
+        root.add(new ManageItem(fullname, role, "ADD", router), SCREEN_MANAGE_ITEM_ADD);
+        root.add(new ManageItem(fullname, role, "EDIT", router), SCREEN_MANAGE_ITEM_EDIT);
+        root.add(new ManageItem(fullname, role, "DELETE", router), SCREEN_MANAGE_ITEM_DELETE);
+        root.add(new ManageItem(fullname, role, "DELIVERY", router), SCREEN_MANAGE_ITEM_DELIVERY);
+
     }
 
     public ScreenRouter getRouter() {
