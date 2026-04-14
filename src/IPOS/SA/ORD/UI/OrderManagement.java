@@ -2,6 +2,7 @@ package IPOS.SA.ORD.UI;
 
 import IPOS.SA.ACC.Service.AccountService;
 import IPOS.SA.ORD.Service.InvoiceService;
+import IPOS.SA.ORD.Service.OrderImportService;
 import IPOS.SA.ORD.Service.OrderService;
 import IPOS.SA.UI.AppFrame;
 import IPOS.SA.UI.BaseFrame;
@@ -10,6 +11,7 @@ import IPOS.SA.UI.ScreenRouter;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+import javax.swing.SwingUtilities;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
@@ -18,6 +20,7 @@ import java.util.List;
 public class OrderManagement extends BaseFrame implements Refreshable {
 
     private final OrderService orderService;
+    private final OrderImportService importService;
     private String merchantId;
 
     private JTable orderTable;
@@ -34,8 +37,9 @@ public class OrderManagement extends BaseFrame implements Refreshable {
     // Called from MerchantList — filtered by merchant
     public OrderManagement(String fullname, String role, String merchantId, ScreenRouter router) {
         super(fullname, role, "Order Management", router);
-        this.merchantId   = merchantId;
-        this.orderService = new OrderService(new AccountService(), new InvoiceService());
+        this.merchantId    = merchantId;
+        this.orderService  = new OrderService(new AccountService(), new InvoiceService());
+        this.importService = new OrderImportService();
         buildContent();
         loadOrders();
     }
@@ -87,11 +91,17 @@ public class OrderManagement extends BaseFrame implements Refreshable {
         styleBtn(refreshBtn);
         refreshBtn.addActionListener(e -> loadOrders());
 
+        JButton syncBtn = new JButton("Sync from IPOS-PU");
+        styleBtn(syncBtn);
+        syncBtn.setBackground(new Color(30, 58, 138));
+        syncBtn.addActionListener(e -> syncFromIPOSPU());
+
         searchPanel.add(searchLbl);
         searchPanel.add(searchField);
         searchPanel.add(filterLbl);
         searchPanel.add(statusFilter);
         searchPanel.add(refreshBtn);
+        searchPanel.add(syncBtn);
         topBar.add(searchPanel, BorderLayout.WEST);
 
         // ── TABLE ─────────────────────────────────────────────
@@ -337,6 +347,26 @@ public class OrderManagement extends BaseFrame implements Refreshable {
         } catch (Exception e) {
             setMsg("Error: " + e.getMessage(), false);
         }
+    }
+
+    private void syncFromIPOSPU() {
+        setMsg("Syncing from IPOS-PU...", true);
+        new Thread(() -> {
+            try {
+                int count = importService.importUndeliveredOrders();
+                SwingUtilities.invokeLater(() -> {
+                    loadOrders();
+                    if (count == 0) {
+                        setMsg("No new orders from IPOS-PU.", true);
+                    } else {
+                        setMsg("Imported " + count + " new order" + (count == 1 ? "" : "s") + " from IPOS-PU.", true);
+                    }
+                });
+            } catch (Exception e) {
+                SwingUtilities.invokeLater(() ->
+                        setMsg("Sync failed: " + e.getMessage(), false));
+            }
+        }).start();
     }
 
     private boolean isValidTransition(String current, String next) {
