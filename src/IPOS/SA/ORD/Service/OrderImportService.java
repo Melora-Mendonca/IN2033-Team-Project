@@ -24,14 +24,21 @@ public class OrderImportService {
         for (int i = 0; i < orders.length(); i++) {
             JSONObject order = orders.getJSONObject(i);
 
-            String orderId  = str(order, "orderId", "order_id", "id");
-            String merchantId = str(order, "merchantId", "merchant_id", "merchantID");
-            String dateStr  = str(order, "orderDate", "order_date", "date", "createdAt");
+            String orderId = str(order, "orderId", "order_id", "id");
+            String email   = str(order, "memberName", "email", "merchantEmail");
+            String dateStr = str(order, "orderDate", "order_date", "date", "createdAt");
 
-            if (orderId.isEmpty() || merchantId.isEmpty()) {
-                System.out.println("OrderImportService: skipping entry with missing orderId/merchantId");
+            if (orderId.isEmpty() || email.isEmpty()) {
+                System.out.println("OrderImportService: skipping entry with missing orderId/email");
                 continue;
             }
+
+            ResultSet merchantRs = db.query("SELECT merchant_id FROM merchant WHERE email = ?", email);
+            if (!merchantRs.next()) {
+                System.out.println("OrderImportService: no merchant found for email " + email + ", skipping order " + orderId);
+                continue;
+            }
+            String merchantId = merchantRs.getString("merchant_id");
 
             ResultSet existing = db.query("SELECT order_id FROM `order` WHERE order_id = ?", orderId);
             if (existing.next()) continue;
