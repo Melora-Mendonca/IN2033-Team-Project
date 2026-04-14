@@ -658,28 +658,6 @@ public class AccountManagement extends BaseFrame implements Refreshable {
         }
     }
 
-    private void sendLoginCredentials(String email, String username, String password, String name, String accountType) {
-        EmailService emailService = new EmailService();
-
-        String subject = "Your IPOS-SA " + accountType + " Account Login Details";
-
-        String body = "Dear " + name + ",\n\n" +
-                "A " + accountType + " account has been created for you in the IPOS-SA system.\n\n" +
-                "Your login details are:\n" +
-                "----------------------------------------\n" +
-                "Username: " + username + "\n" +
-                "Temporary Password: " + password + "\n" +
-                "----------------------------------------\n\n" +
-                "Please log in and change your password immediately.\n\n" +
-                "Regards,\n" +
-                "IPOS-SA Administrator";
-
-        boolean sent = emailService.sendEmail(email, subject, body);
-        if (!sent) {
-            System.out.println("WARNING: Failed to send login email to " + email);
-        }
-    }
-
     @Override
     public void onShow() {
         String merchantId = AppFrame.getInstance().getSelectedMerchant();

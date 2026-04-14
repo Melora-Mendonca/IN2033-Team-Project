@@ -2,6 +2,7 @@ package IPOS.SA.ORD.Service;
 
 import IPOS.SA.ACC.Model.MerchantAccount;
 import IPOS.SA.ACC.Service.AccountService;
+import IPOS.SA.Comms.PUClient.PUOrderClient;
 import IPOS.SA.DB.DBConnection;
 import IPOS.SA.ORD.Model.Order;
 import IPOS.SA.ORD.Model.OrderItem;
@@ -292,21 +293,27 @@ public class OrderService {
         InvoiceService invoiceService = new InvoiceService();
         invoiceService.generateInvoiceForOrder(orderId);
 
+        PUOrderClient.updateOrderStatus(orderId, "accepted");
+
         return true;
     }
 
-    // Simple status update
     public boolean updateStatus(String orderId, String newStatus) throws Exception {
         System.out.println("Updating order " + orderId + " to status: " + newStatus);
         int rows = db.update(
                 "UPDATE `order` SET status = ? WHERE order_id = ?", newStatus, orderId);
+        if (rows > 0) {
+            PUOrderClient.updateOrderStatus(orderId, newStatus);
+        }
         return rows > 0;
     }
 
-    // Reject order
     public boolean rejectOrder(String orderId) throws Exception {
         int rows = db.update(
                 "UPDATE `order` SET status = 'rejected' WHERE order_id = ?", orderId);
+        if (rows > 0) {
+            PUOrderClient.updateOrderStatus(orderId, "rejected");
+        }
         return rows > 0;
     }
 

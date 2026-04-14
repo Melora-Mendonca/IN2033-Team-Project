@@ -302,6 +302,8 @@ public class LoginForm extends JPanel {
         loginBtn.setForeground(Color.WHITE);
         loginBtn.setFocusPainted(false);
         loginBtn.setBorderPainted(false);
+        loginBtn.setOpaque(true);  // ADD THIS
+        loginBtn.setContentAreaFilled(true);  // ADD THIS
         loginBtn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
         loginBtn.setAlignmentX(Component.LEFT_ALIGNMENT);
         loginBtn.addActionListener(e -> handleLogin());
