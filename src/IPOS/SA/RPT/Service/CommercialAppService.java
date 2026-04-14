@@ -56,6 +56,57 @@ public class CommercialAppService {
         return rows > 0;
     }
 
+    public void sendApprovalEmail(String email, String companyName, String merchantId) {
+        String content = "Dear " + companyName + ",\n\n"
+                + "We are pleased to inform you that your commercial application has been approved.\n\n"
+                + "Your merchant account has been created:\n"
+                + "Merchant ID: " + merchantId + "\n\n"
+                + "Our team will be in touch with your login credentials shortly.\n\n"
+                + "Regards,\nIPOS System Administrator";
+
+        try {
+            boolean sent = IPOSPUEmailClient.produceEmail(
+                    email,
+                    content,
+                    companyName,
+                    "IPOS-SA",
+                    "CommercialApplications"
+            );
+            if (sent) {
+                System.out.println("Approval email sent to " + email);
+            } else {
+                System.err.println("Failed to send approval email to " + email);
+            }
+        } catch (IOException e) {
+            System.err.println("Email error: " + e.getMessage());
+        }
+    }
+
+    public void sendRejectionEmail(String email, String companyName, String notes) {
+        String content = "Dear " + companyName + ",\n\n"
+                + "We regret to inform you that your commercial application has not been approved at this time.\n\n"
+                + (notes != null && !notes.isEmpty() ? "Notes: " + notes + "\n\n" : "")
+                + "If you have any questions, please contact us.\n\n"
+                + "Regards,\nIPOS System Administrator";
+
+        try {
+            boolean sent = IPOSPUEmailClient.produceEmail(
+                    email,
+                    content,
+                    companyName,
+                    "IPOS-SA",
+                    "CommercialApplications"
+            );
+            if (sent) {
+                System.out.println("Rejection email sent to " + email);
+            } else {
+                System.err.println("Failed to send rejection email to " + email);
+            }
+        } catch (IOException e) {
+            System.err.println("Email error: " + e.getMessage());
+        }
+    }
+
     // Creates a merchant account from an approved application
     public String createMerchantFromApplication(int applicationId) throws Exception {
         CommercialApplication app = getApplication(applicationId);

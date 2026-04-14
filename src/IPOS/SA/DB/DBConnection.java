@@ -11,7 +11,14 @@ public class DBConnection {
     private Connection conn = null;
 
     public DBConnection() {
-        conn = this.getConnection();
+        int retries = 5;
+        while (retries > 0) {
+            conn = this.getConnection();
+            if (conn != null) break;
+            retries--;
+            System.out.println("Retrying connection... " + retries + " attempts left");
+            try { Thread.sleep(3000); } catch (InterruptedException e) {}
+        }
     }
 
     // Creates the database connection

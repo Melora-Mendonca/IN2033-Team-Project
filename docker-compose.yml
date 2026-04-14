@@ -22,7 +22,8 @@ services:
     build: .
     container_name: ipos-sa-app
     depends_on:
-      - mysql
+      mysql:
+        condition: service_healthy
     environment:
       DB_HOST: mysql
       DB_PORT: 3306

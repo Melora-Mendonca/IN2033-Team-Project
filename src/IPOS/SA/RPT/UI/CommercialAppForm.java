@@ -270,11 +270,12 @@ public class CommercialAppForm extends BaseFrame {
             if (decision.equals("approved")) {
                 String merchantId = appService.createMerchantFromApplication(appId);
                 setMsg("Application approved. Merchant account " + merchantId + " created.", true);
+                appService.sendApprovalEmail(email, company, merchantId);
                 // Send approval response to PU system
                 sendResponseToPU("http://localhost:8080/merchant/response", email);
             } else {
                 setMsg("Application rejected successfully.", true);
-
+                appService.sendRejectionEmail(email, company, notes);
                 // Send rejection response to PU system
                 sendResponseToPU("http://localhost:8080/merchant/reject", email);
             }
