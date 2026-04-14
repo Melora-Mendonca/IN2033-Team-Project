@@ -12,6 +12,7 @@ import java.io.*;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.Executors;
+import org.json.JSONObject;
 
 public class IPOSAPIServer {
 
@@ -291,16 +292,17 @@ public class IPOSAPIServer {
                     String address = extractValue(body, "address");
                     String email = extractValue(body, "email");
                     String fax = extractValue(body, "fax");
+                    String phone = extractValue(body, "phone");
                     boolean preferPhysicalMail = "true".equals(extractValue(body, "preferPhysicalMail"));
 
                     DBConnection db = new DBConnection();
                     int rows = db.update(
                             "INSERT INTO commercial_applications " +
-                                    "(company_name, registration_number, directors, " +
-                                    "business_type, address, email, fax, prefer_physical_mail, status, application_date) " +
-                                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending', CURRENT_DATE())",
+                                    "(company_name, registration_no, director_name, " +
+                                    "business_type, address, email, phone, fax, prefer_physical_mail, status, application_date) " +
+                                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', CURRENT_DATE())",
                             companyName, registrationNumber, directors,
-                            businessType, address, email, fax, preferPhysicalMail ? 1 : 0
+                            businessType, address, email, phone, fax, preferPhysicalMail ? 1 : 0
                     );
 
                     if (rows > 0) {
@@ -318,24 +320,40 @@ public class IPOSAPIServer {
     }
 
     private String extractValue(String json, String key) {
-        String search = "\"" + key + "\":";
-        int start = json.indexOf(search);
-        if (start == -1) return "";
-        start += search.length();
+        String search = "\"" + key + "\"";
+        int keyIndex = json.indexOf(search);
+        if (keyIndex == -1) return "";
 
+        // Find the colon after the key
+        int colonIndex = json.indexOf(":", keyIndex + search.length());
+        if (colonIndex == -1) return "";
+
+        // Skip whitespace after colon
+        int start = colonIndex + 1;
+        while (start < json.length() && Character.isWhitespace(json.charAt(start))) {
+            start++;
+        }
+
+        if (start >= json.length()) return "";
+
+        // String value
         if (json.charAt(start) == '"') {
             start++;
             int end = json.indexOf("\"", start);
+            if (end == -1) return "";
             return json.substring(start, end);
         }
 
+        // Boolean or number value
         int end = start;
-        while (end < json.length() && (Character.isDigit(json.charAt(end)) ||
-                json.charAt(end) == '.' || json.charAt(end) == '-' ||
-                json.charAt(end) == 't' || json.charAt(end) == 'f')) {
+        while (end < json.length() &&
+                json.charAt(end) != ',' &&
+                json.charAt(end) != '}' &&
+                json.charAt(end) != '\n' &&
+                !Character.isWhitespace(json.charAt(end))) {
             end++;
         }
-        return json.substring(start, end);
+        return json.substring(start, end).trim();
     }
 
     private String extractQueryParam(String query, String key) {
