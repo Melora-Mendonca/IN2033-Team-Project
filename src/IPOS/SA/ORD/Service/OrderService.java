@@ -293,13 +293,11 @@ public class OrderService {
         InvoiceService invoiceService = new InvoiceService();
         invoiceService.generateInvoiceForOrder(orderId);
 
-        // Notify IPOS-PU of status change (non-fatal if PU is offline)
         PUOrderClient.updateOrderStatus(orderId, "accepted");
 
         return true;
     }
 
-    // Simple status update
     public boolean updateStatus(String orderId, String newStatus) throws Exception {
         System.out.println("Updating order " + orderId + " to status: " + newStatus);
         int rows = db.update(
@@ -310,7 +308,6 @@ public class OrderService {
         return rows > 0;
     }
 
-    // Reject order
     public boolean rejectOrder(String orderId) throws Exception {
         int rows = db.update(
                 "UPDATE `order` SET status = 'rejected' WHERE order_id = ?", orderId);

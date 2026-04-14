@@ -4,46 +4,23 @@ import java.io.*;
 import java.net.*;
 import java.nio.charset.StandardCharsets;
 
-/**
- * HTTP client for fetching orders from IPOS-PU.
- *
- * Undelivered orders endpoint: GET http://localhost:8080/api/orders/undelivered
- */
 public class PUOrderClient {
 
     private static final String BASE_URL = "http://localhost:8080/api/orders";
 
-    /**
-     * Fetches all undelivered orders from IPOS-PU.
-     *
-     * @return raw JSON string (array of order objects)
-     * @throws IOException if IPOS-PU is unreachable or returns an error
-     */
     public static String fetchUndeliveredOrders() throws IOException {
         return get(BASE_URL + "/undelivered");
     }
 
-    /**
-     * Notifies IPOS-PU of a status change for a given order.
-     *
-     * Endpoint: POST /api/orders/{orderId}/status
-     * Body:     {"status": "<newStatus>"}
-     *
-     * @param orderId   the order ID as known by IPOS-PU
-     * @param newStatus e.g. "accepted", "processing", "dispatched", "delivered", "rejected"
-     */
     public static void updateOrderStatus(String orderId, String newStatus) {
         try {
             String json = "{\"status\":\"" + escapeJson(newStatus) + "\"}";
             post(BASE_URL + "/" + orderId + "/status", json);
-            System.out.println("PUOrderClient: notified IPOS-PU — order " + orderId + " -> " + newStatus);
+            System.out.println("PUOrderClient: order " + orderId + " -> " + newStatus);
         } catch (IOException e) {
-            // Non-fatal: log and continue — IPOS-SA still updates its own DB
             System.err.println("PUOrderClient: failed to notify IPOS-PU for order " + orderId + ": " + e.getMessage());
         }
     }
-
-    // ── Internal HTTP helpers ─────────────────────────────────────────────────
 
     private static String get(String urlStr) throws IOException {
         URL url = new URL(urlStr);
