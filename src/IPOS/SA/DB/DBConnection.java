@@ -14,11 +14,11 @@ public class DBConnection {
         conn = this.getConnection();
     }
 
+    // Creates the database connection
     private Connection getConnection() {
         System.out.println("About to create a connection");
         Connection con = null;
 
-        // Read from environment variables (Docker) or use defaults (local development)
         String userName = System.getenv().getOrDefault("DB_USER", "root");
         String pwd = System.getenv().getOrDefault("DB_PASSWORD", "Karkala1998?");
         String dbName = System.getenv().getOrDefault("DB_NAME", "ipos_sa");

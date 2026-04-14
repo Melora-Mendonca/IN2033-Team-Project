@@ -34,6 +34,7 @@ CREATE TABLE `catalogue` (
   `availability` int NOT NULL DEFAULT '0',
   `minimum_stock_level` int NOT NULL DEFAULT '0',
   `is_active` int DEFAULT '1',
+  `buffer_percent` double DEFAULT '10.0',
   PRIMARY KEY (`item_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -44,7 +45,7 @@ CREATE TABLE `catalogue` (
 
 LOCK TABLES `catalogue` WRITE;
 /*!40000 ALTER TABLE `catalogue` DISABLE KEYS */;
-INSERT INTO `catalogue` VALUES ('100 00001','Paracetamol','box','Caps',200,0.10,43,300,1),('100 00002','Aspirin','box','Caps',200,0.50,12413,500,1),('100 00003','Analgin','box','Caps',10,1.20,4215,200,1),('100 00004','Celebrex, caps 100 mg','box','Caps',10,10.00,3420,200,1),('100 00005','Celebrex, caps 200 mg','box','Caps',10,18.50,1435,150,1),('100 00006','Retin-A Tretin, 30 g','box','Caps',20,25.00,2003,200,1),('100 00007','Lipitor TB, 20 mg','box','Caps',30,15.50,1562,200,1),('100 00008','Claritin CR, 60g','box','Caps',20,19.50,2540,200,1),('100 20002','Ibuprofen','Bottle','Caps',30,10.00,320,200,0),('200 00004','Iodine tincture','bottle','ml',1000,0.30,2213,200,1),('200 00005','Rhynol','bottle','ml',200,2.50,1908,300,1),('300','test','test','30',30,30.00,200,250,1),('300 00001','Ospen','box','Caps',20,10.50,809,200,1),('300 00002','Ampolen','box','Caps',30,15.00,1340,300,1),('3p14','dfaldkfjlfa','dafladfhad','dfhaldifa',30,20.00,360,250,0),('400 00001','Vitamin C','box','Caps',30,1.20,3258,300,1),('400 00002','Vitamin B12','box','Caps',30,1.30,2673,300,1),('4242','fjsdjfs;dk','dladkfnadk','sdsld',30,10.00,300,250,0),('5345345','TEST','box','12',34,5.00,425,4646,0);
+INSERT INTO `catalogue` VALUES ('100 00001','Paracetamol','box','Caps',200,0.10,43,300,1,10.0),('100 00002','Aspirin','box','Caps',200,0.50,12413,500,1,10.0),('100 00003','Analgin','box','Caps',10,1.20,4215,200,1,10.0),('100 00004','Celebrex, caps 100 mg','box','Caps',10,10.00,3420,200,1,10.0),('100 00005','Celebrex, caps 200 mg','box','Caps',10,18.50,1435,150,1,10.0),('100 00006','Retin-A Tretin, 30 g','box','Caps',20,25.00,2003,200,1,10.0),('100 00007','Lipitor TB, 20 mg','box','Caps',30,15.50,1562,200,1,10.0),('100 00008','Claritin CR, 60g','box','Caps',20,19.50,2540,200,1,10.0),('100 20002','Ibuprofen','Bottle','Caps',30,10.00,320,200,0,10.0),('200 00004','Iodine tincture','bottle','ml',1000,0.30,2213,200,1,10.0),('200 00005','Rhynol','bottle','ml',200,2.50,1908,300,1,10.0),('300','test','test','30',30,30.00,200,250,1,10.0),('300 00001','Ospen','box','Caps',20,10.50,809,200,1,10.0),('300 00002','Ampolen','box','Caps',30,15.00,1340,300,1,10.0),('3p14','dfaldkfjlfa','dafladfhad','dfhaldifa',30,20.00,360,250,0,10.0),('400 00001','Vitamin C','box','Caps',30,1.20,3258,300,1,10.0),('400 00002','Vitamin B12','box','Caps',30,1.30,2673,300,1,10.0),('4242','fjsdjfs;dk','dladkfnadk','sdsld',30,10.00,300,250,0,10.0),('5345345','TEST','box','12',34,5.00,425,4646,0,10.0);
 /*!40000 ALTER TABLE `catalogue` ENABLE KEYS */;
 UNLOCK TABLES;
 

@@ -158,7 +158,9 @@ public class StaffAccountManagement extends BaseFrame implements Refreshable {
 
         switch (mode) {
             case "CREATE": addCreateButtons(actionsCard); break;
-            case "MANAGE": addManageButtons(actionsCard); break;
+            case "MANAGE": addManageButtons(actionsCard);
+            roleDropdown.setEnabled(false);
+            break;
         }
 
         rightColumn.add(statusPanel);
