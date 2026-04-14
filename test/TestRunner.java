@@ -16,8 +16,8 @@ public class TestRunner {
                         DiscoverySelectors.selectClass("IPOS.SA.ORD.Model.OrderItemTest"),
                         DiscoverySelectors.selectClass("IPOS.SA.ORD.Model.OrderTest"),
                         DiscoverySelectors.selectClass("IPOS.SA.ORD.Model.InvoiceTest"),
-                        DiscoverySelectors.selectClass("IPOS.SA.ORD.OrderStatusTest")
-
+                        DiscoverySelectors.selectClass("IPOS.SA.ORD.OrderStatusTest"),
+                        DiscoverySelectors.selectClass("IPOS.SA.ORD.CatalogueItemTest")
                 )
                 .build();
 

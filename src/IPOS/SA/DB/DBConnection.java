@@ -20,7 +20,7 @@ public class DBConnection {
 
         // Read from environment variables (Docker) or use defaults (local development)
         String userName = System.getenv().getOrDefault("DB_USER", "root");
-        String pwd = System.getenv().getOrDefault("DB_PASSWORD", "Karkala1998?");
+        String pwd = System.getenv().getOrDefault("DB_PASSWORD", "Jordan04.");
         String dbName = System.getenv().getOrDefault("DB_NAME", "ipos_sa");
         String serverName = System.getenv().getOrDefault("DB_HOST", "localhost");
         String portNumber = System.getenv().getOrDefault("DB_PORT", "3306");
