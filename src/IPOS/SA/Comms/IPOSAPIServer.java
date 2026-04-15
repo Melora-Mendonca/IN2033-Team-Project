@@ -383,13 +383,13 @@ public class IPOSAPIServer {
                 try {
                     String body = readBody(exchange);
                     String companyName = extractValue(body, "companyName");
-                    String registrationNumber = extractValue(body, "registrationNumber");
-                    String directors = extractValue(body, "directors");
+                    String registrationNumber = extractValue(body, "companyRegNumber");  // changed
+                    String directors = extractValue(body, "directorName");               // changed
                     String businessType = extractValue(body, "businessType");
                     String address = extractValue(body, "address");
-                    String email = extractValue(body, "email");
-                    String fax = extractValue(body, "fax");
+                    String email = extractValue(body, "userEmail");                      // changed
                     String phone = extractValue(body, "phone");
+                    String fax = extractValue(body, "fax");
                     boolean preferPhysicalMail = "true".equals(extractValue(body, "preferPhysicalMail"));
 
                     DBConnection db = new DBConnection();

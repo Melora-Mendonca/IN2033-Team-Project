@@ -572,8 +572,8 @@ public class ReportForm extends BaseFrame {
             return;
         }
 
-        JFileChooser chooser = new JFileChooser();
-        chooser.setSelectedFile(new File(currentReportType.replace(" ", "_") + ".csv"));
+        JFileChooser chooser = new JFileChooser("/app/exports");
+        chooser.setSelectedFile(new File("/app/exports/" + currentReportType.replace(" ", "_") + ".csv"));
         if (chooser.showSaveDialog(this) != JFileChooser.APPROVE_OPTION) return;
 
         try (PrintWriter writer = new PrintWriter(new FileWriter(chooser.getSelectedFile()))) {
@@ -602,8 +602,8 @@ public class ReportForm extends BaseFrame {
             return;
         }
 
-        JFileChooser chooser = new JFileChooser();
-        chooser.setSelectedFile(new File(currentReportType.replace(" ", "_") + ".xlsx"));
+        JFileChooser chooser = new JFileChooser("/app/exports");
+        chooser.setSelectedFile(new File("/app/exports/" + currentReportType.replace(" ", "_") + ".xlsx"));
         if (chooser.showSaveDialog(this) != JFileChooser.APPROVE_OPTION) return;
 
         try (XSSFWorkbook workbook = new XSSFWorkbook()) {
@@ -696,8 +696,8 @@ public class ReportForm extends BaseFrame {
             return;
         }
 
-        JFileChooser chooser = new JFileChooser();
-        chooser.setSelectedFile(new File(currentReportType.replace(" ", "_") + ".pdf"));
+        JFileChooser chooser = new JFileChooser("/app/exports");
+        chooser.setSelectedFile(new File("/app/exports/" + currentReportType.replace(" ", "_") + ".pdf"));
         if (chooser.showSaveDialog(this) != JFileChooser.APPROVE_OPTION) return;
 
         try {
@@ -802,7 +802,14 @@ public class ReportForm extends BaseFrame {
             int open = JOptionPane.showConfirmDialog(this,
                     "Open PDF now?", "Open Report", JOptionPane.YES_NO_OPTION);
             if (open == JOptionPane.YES_OPTION) {
-                java.awt.Desktop.getDesktop().open(chooser.getSelectedFile());
+                if (java.awt.Desktop.isDesktopSupported()) {
+                    java.awt.Desktop.getDesktop().open(chooser.getSelectedFile());
+                } else {
+                    JOptionPane.showMessageDialog(this,
+                            "File saved to:\n" + chooser.getSelectedFile().getAbsolutePath() +
+                                    "\n\nTo view it, check the exports folder on your host machine.",
+                            "File Saved", JOptionPane.INFORMATION_MESSAGE);
+                }
             }
 
         } catch (Exception e) {

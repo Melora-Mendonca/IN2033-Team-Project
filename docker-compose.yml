@@ -34,6 +34,10 @@ services:
       - "8081:8081"
       - "5900:5900"
       - "6082:6082"
+    volumes:
+      - ./exports:/app/exports
+    extra_hosts:
+        - "host.docker.internal:host-gateway"
     stdin_open: true
     tty: true
 volumes:
