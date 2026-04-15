@@ -156,8 +156,9 @@ public class IPOSAPIServer {
             if ("POST".equals(exchange.getRequestMethod())) {
                 try {
                     String body = readBody(exchange);
-                    String merchantId = extractValue(body, "merchantID");
-                    String orderDetailsStr = extractValue(body, "orderDetails");
+                    JSONObject parsed = new JSONObject(body);
+                    String merchantId = parsed.optString("merchantID", "");
+                    String orderDetailsStr = parsed.optString("orderDetails", "");
 
                     if (merchantId.isEmpty() || orderDetailsStr.isEmpty()) {
                         sendResponse(exchange, 400, "{\"error\":\"Missing merchantID or orderDetails\"}");
