@@ -260,12 +260,43 @@ public class LoginForm extends JPanel {
         passLbl.setForeground(new Color(55, 65, 81));
         passLbl.setAlignmentX(Component.LEFT_ALIGNMENT);
 
+        // Create panel to hold password field and button
+        JPanel passwordPanel = new JPanel(new BorderLayout());
+        passwordPanel.setOpaque(false);
+        passwordPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 38));
+
         passField = new JPasswordField();
         passField.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-        passField.setMaximumSize(new Dimension(Integer.MAX_VALUE, 38));
         passField.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(new Color(221, 225, 231)),
                 BorderFactory.createEmptyBorder(0, 12, 0, 12)));
+        passField.setEchoChar('•');
+
+        JButton showPasswordBtn = new JButton("👁");
+        showPasswordBtn.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        showPasswordBtn.setFocusPainted(false);
+        showPasswordBtn.setBorder(BorderFactory.createEmptyBorder(0, 8, 0, 8));
+        showPasswordBtn.setBackground(Color.WHITE);
+        showPasswordBtn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        showPasswordBtn.setToolTipText("Show Password");
+
+        final boolean[] passwordVisible = {false};
+
+        showPasswordBtn.addActionListener(e -> {
+            passwordVisible[0] = !passwordVisible[0];
+            if (passwordVisible[0]) {
+                passField.setEchoChar((char) 0);
+                showPasswordBtn.setText("●");
+                showPasswordBtn.setToolTipText("Hide Password");
+            } else {
+                passField.setEchoChar('•');
+                showPasswordBtn.setText("●");
+                showPasswordBtn.setToolTipText("Show Password");
+            }
+        });
+
+        passwordPanel.add(passField, BorderLayout.CENTER);
+        passwordPanel.add(showPasswordBtn, BorderLayout.EAST);
 
         statusLbl = new JLabel("");
         statusLbl.setFont(new Font("Segoe UI", Font.PLAIN, 11));
@@ -288,7 +319,7 @@ public class LoginForm extends JPanel {
         LoginPanel.add(Box.createVerticalStrut(16));
         LoginPanel.add(passLbl);
         LoginPanel.add(Box.createVerticalStrut(6));
-        LoginPanel.add(passField);
+        LoginPanel.add(passwordPanel);
         LoginPanel.add(Box.createVerticalStrut(20));
         LoginPanel.add(loginBtn);
         LoginPanel.add(Box.createVerticalStrut(8));
@@ -302,8 +333,8 @@ public class LoginForm extends JPanel {
         loginBtn.setForeground(Color.WHITE);
         loginBtn.setFocusPainted(false);
         loginBtn.setBorderPainted(false);
-        loginBtn.setOpaque(true);  // ADD THIS
-        loginBtn.setContentAreaFilled(true);  // ADD THIS
+        loginBtn.setOpaque(true);
+        loginBtn.setContentAreaFilled(true);
         loginBtn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
         loginBtn.setAlignmentX(Component.LEFT_ALIGNMENT);
         loginBtn.addActionListener(e -> handleLogin());
