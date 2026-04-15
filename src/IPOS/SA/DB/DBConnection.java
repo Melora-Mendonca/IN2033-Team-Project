@@ -27,7 +27,7 @@ public class DBConnection {
         Connection con = null;
 
         String userName = System.getenv().getOrDefault("DB_USER", "root");
-        String pwd = System.getenv().getOrDefault("DB_PASSWORD", "Karkala1998?");
+        String pwd = System.getenv().getOrDefault("DB_PASSWORD", "Kamaal19");
         String dbName = System.getenv().getOrDefault("DB_NAME", "ipos_sa");
         String serverName = System.getenv().getOrDefault("DB_HOST", "localhost");
         String portNumber = System.getenv().getOrDefault("DB_PORT", "3306");
