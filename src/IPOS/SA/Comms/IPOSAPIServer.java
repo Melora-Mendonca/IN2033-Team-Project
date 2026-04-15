@@ -12,7 +12,9 @@ import java.io.*;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.Executors;
+import org.json.JSONArray;
 import org.json.JSONObject;
+import java.sql.ResultSet;
 
 public class IPOSAPIServer {
 
@@ -155,8 +157,52 @@ public class IPOSAPIServer {
                 try {
                     String body = readBody(exchange);
                     String merchantId = extractValue(body, "merchantID");
-                    String orderDetails = extractValue(body, "orderDetails");
+                    String orderDetailsStr = extractValue(body, "orderDetails");
+
+                    if (merchantId.isEmpty() || orderDetailsStr.isEmpty()) {
+                        sendResponse(exchange, 400, "{\"error\":\"Missing merchantID or orderDetails\"}");
+                        return;
+                    }
+
+                    JSONObject orderDetailsJson = new JSONObject(orderDetailsStr);
+                    JSONArray items = orderDetailsJson.optJSONArray("items");
+
+                    if (items == null || items.length() == 0) {
+                        sendResponse(exchange, 400, "{\"error\":\"No items in order\"}");
+                        return;
+                    }
+
+                    DBConnection db = new DBConnection();
                     String orderId = "ORD_" + System.currentTimeMillis();
+                    double total = 0;
+
+                    for (int i = 0; i < items.length(); i++) {
+                        JSONObject item = items.getJSONObject(i);
+                        String itemId = item.optString("itemId", "");
+                        int quantity = item.optInt("quantity", 1);
+                        ResultSet rs = db.query("SELECT package_cost FROM catalogue WHERE item_id = ?", itemId);
+                        double unitPrice = rs.next() ? rs.getDouble("package_cost") : 0.0;
+                        total += unitPrice * quantity;
+                    }
+
+                    db.update(
+                        "INSERT INTO `order` (order_id, merchant_id, order_date, status, total_amount, discount_applied, final_amount) " +
+                        "VALUES (?, ?, CURRENT_DATE(), 'pending', ?, 0, ?)",
+                        orderId, merchantId, total, total
+                    );
+
+                    for (int i = 0; i < items.length(); i++) {
+                        JSONObject item = items.getJSONObject(i);
+                        String itemId = item.optString("itemId", "");
+                        int quantity = item.optInt("quantity", 1);
+                        ResultSet rs = db.query("SELECT package_cost FROM catalogue WHERE item_id = ?", itemId);
+                        double unitPrice = rs.next() ? rs.getDouble("package_cost") : 0.0;
+                        db.update(
+                            "INSERT INTO orderitem (order_id, catalogue_item_id, quantity, unit_price, total_price) VALUES (?, ?, ?, ?, ?)",
+                            orderId, itemId, quantity, unitPrice, unitPrice * quantity
+                        );
+                    }
+
                     sendResponse(exchange, 200, "{\"orderId\":\"" + orderId + "\"}");
                 } catch (Exception e) {
                     sendResponse(exchange, 500, "{\"error\":\"" + e.getMessage() + "\"}");
