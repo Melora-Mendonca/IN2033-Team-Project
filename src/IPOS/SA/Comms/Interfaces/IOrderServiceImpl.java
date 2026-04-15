@@ -93,7 +93,7 @@ public class IOrderServiceImpl implements IOrderService {
     public String getInvoice(String orderID) {
         try {
             ResultSet rs = db.query(
-                    "SELECT invoice_id, total_amount, amount_paid, status FROM Invoice WHERE order_id = ?",
+                    "SELECT invoice_id, total_amount, amount_paid, status FROM invoice WHERE order_id = ?",
                     orderID
             );
             if (rs.next()) {

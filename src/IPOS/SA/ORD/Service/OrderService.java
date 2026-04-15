@@ -24,6 +24,25 @@ public class OrderService {
     }
 
     /**
+     * Calculate discount based on merchant discount type
+     */
+    private double calculateDiscount(MerchantAccount account, double orderTotal) {
+        if (account == null) return 0.0;
+        String discountType = account.getDiscountType();
+        if (discountType == null) return 0.0;
+
+        if ("fixed".equalsIgnoreCase(discountType)) {
+            return account.getFixedDiscountRate();
+        } else {
+            // Variable discount based on order total
+            double flexRate = account.getFlexibleDiscountRate(); // max rate e.g. 2%
+            if (orderTotal >= 2000) return flexRate;           // 2%
+            if (orderTotal >= 1000) return flexRate / 2;       // 1%
+            return 0.0;                                         // < £1000 = 0%
+        }
+    }
+
+    /**
      * Place a new order
      */
     public boolean placeOrder(Order order, MerchantAccount account, double discountPercentage) throws Exception {
@@ -34,13 +53,16 @@ public class OrderService {
             return false;
         }
 
+        // Use calculateDiscount if discountPercentage not explicitly passed
+        if (discountPercentage == 0 && account != null) {
+            discountPercentage = calculateDiscount(account, grossTotal);
+        }
+
         // Calculate discount
         double discountAmount = grossTotal * (discountPercentage / 100.0);
         double finalTotal = grossTotal - discountAmount;
 
-        // Start transaction
         try {
-            // Insert order - using your actual Order table columns
             String orderSql = "INSERT INTO `order` (order_id, merchant_id, order_date, status, " +
                     "total_amount, discount_applied, final_amount) " +
                     "VALUES (?, ?, ?, 'pending', ?, ?, ?)";
@@ -53,7 +75,6 @@ public class OrderService {
                     finalTotal
             );
 
-            // Insert order items - using your actual OrderItem table columns
             for (OrderItem item : order.getItems()) {
                 String itemSql = "INSERT INTO orderitem (order_id, catalogue_item_id, quantity, unit_price, total_price) " +
                         "VALUES (?, ?, ?, ?, ?)";
@@ -64,9 +85,8 @@ public class OrderService {
                         item.getUnitPrice(),
                         item.getLineTotal()
                 );
-
-                // Reduce stock - using your actual Catalogue table
-                reduceStock(item.getItemId(), item.getQuantity());
+                // NOTE: Stock is NOT reduced here
+                // Stock is reduced when warehouse staff confirm picking
             }
 
             // UPDATE merchant's outstanding balance
@@ -83,7 +103,7 @@ public class OrderService {
     }
 
     /**
-     * Reduce stock when order is placed
+     * Reduce stock when warehouse picks order
      */
     private void reduceStock(String itemId, int quantity) throws Exception {
         db.update(
@@ -115,7 +135,7 @@ public class OrderService {
     }
 
     /**
-     * Get all orders with merchant names (for admin/manager)
+     * Get all orders with merchant names
      */
     public List<Object[]> getAllOrders() throws Exception {
         List<Object[]> orders = new ArrayList<>();
@@ -143,7 +163,7 @@ public class OrderService {
     }
 
     /**
-     * Get orders for a specific merchant (for merchant view)
+     * Get orders for a specific merchant
      */
     public List<Object[]> getMerchantFilteredOrders(String merchantId,
                                                     String status,
@@ -175,7 +195,9 @@ public class OrderService {
         return orders;
     }
 
-    // Get orders with search and status filter
+    /**
+     * Get orders with search and status filter
+     */
     public List<Object[]> getFilteredOrders(String status, String search) throws Exception {
         List<Object[]> orders = new ArrayList<>();
 
@@ -205,7 +227,9 @@ public class OrderService {
         return orders;
     }
 
-    // Get full order details including items and dispatch info
+    /**
+     * Get full order details including items and dispatch info
+     */
     public String getOrderDetailsText(String orderId) throws Exception {
         StringBuilder sb = new StringBuilder();
 
@@ -259,9 +283,10 @@ public class OrderService {
         return sb.toString();
     }
 
-    // Accept order and update merchant balance
+    /**
+     * Accept order and update merchant balance
+     */
     public boolean acceptOrder(String orderId) throws Exception {
-        // Get order details
         ResultSet rs = db.query(
                 "SELECT merchant_id, final_amount FROM `order` WHERE order_id = ?", orderId);
         if (!rs.next()) return false;
@@ -269,27 +294,13 @@ public class OrderService {
         String merchantId  = rs.getString("merchant_id");
         double finalAmount = rs.getDouble("final_amount");
 
-        // Update order status
         db.update("UPDATE `order` SET status = 'accepted' WHERE order_id = ?", orderId);
 
-        // Update merchant outstanding balance
         db.update(
                 "UPDATE merchant SET outstanding_balance = outstanding_balance + ? " +
                         "WHERE merchant_id = ?", finalAmount, merchantId);
 
-        // Reduce stock for each item in the order
-        ResultSet itemRs = db.query(
-                "SELECT catalogue_item_id, quantity FROM orderitem WHERE order_id = ?", orderId);
-        while (itemRs.next()) {
-            db.update(
-                    "UPDATE catalogue SET availability = availability - ? " +
-                            "WHERE item_id = ? AND availability >= ?",
-                    itemRs.getInt("quantity"),
-                    itemRs.getString("catalogue_item_id"),
-                    itemRs.getInt("quantity"));
-        }
-
-        // Generate invoice automatically
+        // NOTE: Stock NOT reduced here — reduced when warehouse picks
         InvoiceService invoiceService = new InvoiceService();
         invoiceService.generateInvoiceForOrder(orderId);
 

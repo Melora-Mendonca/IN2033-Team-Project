@@ -217,6 +217,19 @@ public class MerchantAccount {
             this.discountPercentage = ((FixedDiscountPlan) discountPlan).getPercentage();
         }
     }
+
+        public void setDiscountType(String discountType) {
+            this.discountType = discountType;
+        }
+
+        public void setFlexibleDiscountRate(double flexibleDiscountRate) {
+            this.flexibleDiscountRate = flexibleDiscountRate;
+        }
+
+        public void setFixedDiscountRate(double fixedDiscountRate) {
+            this.fixedDiscountRate = fixedDiscountRate;
+        }
+
     public void setUsername(String username) {
         this.username = username;
     }

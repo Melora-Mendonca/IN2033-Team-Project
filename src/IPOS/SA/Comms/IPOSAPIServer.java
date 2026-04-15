@@ -13,6 +13,9 @@ import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.Executors;
 import org.json.JSONArray;
+import IPOS.SA.ORD.Model.Order;
+import IPOS.SA.ORD.Model.OrderItem;
+import IPOS.SA.ACC.Model.MerchantAccount;
 import org.json.JSONObject;
 import java.sql.ResultSet;
 
@@ -131,7 +134,7 @@ public class IPOSAPIServer {
             if ("POST".equals(exchange.getRequestMethod())) {
                 try {
                     String body = readBody(exchange);
-                    String itemId = extractValue(body, "itemID");
+                    String itemId = extractValue(body, "itemId");
                     int quantity = Integer.parseInt(extractValue(body, "quantity"));
                     boolean success = catalogueService.UpdateCatalogue(itemId, quantity);
                     if (success) {
@@ -187,9 +190,9 @@ public class IPOSAPIServer {
                     }
 
                     db.update(
-                        "INSERT INTO `order` (order_id, merchant_id, order_date, status, total_amount, discount_applied, final_amount) " +
-                        "VALUES (?, ?, CURRENT_DATE(), 'pending', ?, 0, ?)",
-                        orderId, merchantId, total, total
+                            "INSERT INTO `order` (order_id, merchant_id, order_date, status, total_amount, discount_applied, final_amount) " +
+                                    "VALUES (?, ?, CURRENT_DATE(), 'pending', ?, 0, ?)",
+                            orderId, merchantId, total, total
                     );
 
                     for (int i = 0; i < items.length(); i++) {
@@ -199,12 +202,59 @@ public class IPOSAPIServer {
                         ResultSet rs = db.query("SELECT package_cost FROM catalogue WHERE item_id = ?", itemId);
                         double unitPrice = rs.next() ? rs.getDouble("package_cost") : 0.0;
                         db.update(
-                            "INSERT INTO orderitem (order_id, catalogue_item_id, quantity, unit_price, total_price) VALUES (?, ?, ?, ?, ?)",
-                            orderId, itemId, quantity, unitPrice, unitPrice * quantity
+                                "INSERT INTO orderitem (order_id, catalogue_item_id, quantity, unit_price, total_price) VALUES (?, ?, ?, ?, ?)",
+                                orderId, itemId, quantity, unitPrice, unitPrice * quantity
                         );
                     }
 
                     sendResponse(exchange, 200, "{\"orderId\":\"" + orderId + "\"}");
+                    merchantId = extractValue(body, "merchantId");
+
+                    // Get merchant account
+                    MerchantAccount account = accountService.getAccount(merchantId);
+                    if (account == null) {
+                        sendResponse(exchange, 400, "{\"error\":\"Merchant not found\"}");
+                        return;
+                    }
+
+                    // Generate order ID
+                    orderId = "ORD_" + System.currentTimeMillis();
+
+                    // Parse items array
+                    java.util.List<OrderItem> orderItems = new java.util.ArrayList<>();
+                    int itemsStart = body.indexOf("\"items\"");
+                    if (itemsStart != -1) {
+                        int arrStart = body.indexOf("[", itemsStart);
+                        int arrEnd = body.indexOf("]", arrStart);
+                        String itemsArr = body.substring(arrStart + 1, arrEnd);
+                        String[] itemObjs = itemsArr.split("\\},\\s*\\{");
+                        for (String itemObj : itemObjs) {
+                            String cleaned = itemObj.replace("{", "").replace("}", "");
+                            String itemId = extractValue("{" + cleaned + "}", "itemId");
+                            String qtyStr = extractValue("{" + cleaned + "}", "quantity");
+                            if (!itemId.isEmpty() && !qtyStr.isEmpty()) {
+                                int qty = Integer.parseInt(qtyStr);
+                                // Get price from catalogue
+                                double price = catalogueService.getItemPrice(itemId);
+                                OrderItem item = new OrderItem(itemId, qty, price);
+                                orderItems.add(item);
+                            }
+                        }
+                    }
+
+                    // Build order object
+                    Order order = new Order(orderId, merchantId, java.time.LocalDate.now(), orderItems);
+
+                    // Get discount rate
+                    double discountRate = accountService.getDiscountRate(merchantId);
+
+                    // Place order
+                    boolean success = orderService.placeOrder(order, account, discountRate);
+                    if (success) {
+                        sendResponse(exchange, 200, "{\"orderId\":\"" + orderId + "\"}");
+                    } else {
+                        sendResponse(exchange, 400, "{\"error\":\"Failed to place order - credit limit exceeded or merchant inactive\"}");
+                    }
                 } catch (Exception e) {
                     sendResponse(exchange, 500, "{\"error\":\"" + e.getMessage() + "\"}");
                 }

@@ -193,7 +193,8 @@ public class AccountService {
         int rowsAffected = db.update(
                 "UPDATE merchant SET company_name=?, business_type=?, registration_number=?, " +
                         "email=?, phone=?, fax=?, address=?, credit_limit=?, " +
-                        "fixed_discount_rate=? WHERE merchant_id=?",
+                        "discount_type=?, fixed_discount_rate=?, flexible_discount_rate=? " +
+                        "WHERE merchant_id=?",
                 account.getBusinessName(),
                 account.getBusinessType(),
                 account.getRegistrationNumber(),
@@ -202,7 +203,9 @@ public class AccountService {
                 account.getFax(),
                 account.getAddress(),
                 account.getCreditLimit(),
-                account.getDiscountPercentage(),
+                account.getDiscountType(),
+                account.getFixedDiscountRate(),
+                account.getFlexibleDiscountRate(),
                 account.getMerchantId()
         );
         return rowsAffected > 0;

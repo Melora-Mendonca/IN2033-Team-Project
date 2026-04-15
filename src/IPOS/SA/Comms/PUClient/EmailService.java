@@ -7,7 +7,7 @@ import java.nio.charset.StandardCharsets;
 
 public class EmailService {
 
-    private static final String EMAIL_API_URL = "http://localhost:8080/api/comms/email";
+    private static final String EMAIL_API_URL = "http://host.docker.internal:8080/api/comms/email";
 
     public boolean sendEmail(String to, String subject, String body) {
         try {

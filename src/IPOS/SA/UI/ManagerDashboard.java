@@ -44,7 +44,8 @@ public class ManagerDashboard extends BaseFrame implements Refreshable{
     }
 
     private void createCardsPanel(ManagerDashboardData data) {
-        CardsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 16, 16));
+        CardsPanel = new JPanel(new GridLayout(1, 3, 16, 16));
+        CardsPanel.setBorder(BorderFactory.createEmptyBorder(16, 16, 16, 16));
         CardsPanel.setBackground(new Color(245, 247, 250));
 
         CardsPanel.add(buildCard("Low Stock Items",
@@ -75,7 +76,7 @@ public class ManagerDashboard extends BaseFrame implements Refreshable{
         JPanel card = new JPanel();
         card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
         card.setBackground(bg);
-        card.setPreferredSize(new Dimension(300, 200));
+        //card.setPreferredSize(new Dimension(300, 200));
         card.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
         JLabel titleLbl = new JLabel(title);

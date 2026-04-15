@@ -7,7 +7,7 @@ import java.nio.charset.StandardCharsets;
 public class IPOSPUEmailClient {
 
     // IPOS-PU's email service endpoint - NO "/produce" suffix
-    private static final String BASE_URL = "http://localhost:8080/api/comms/email";
+    private static final String BASE_URL = "http://host.docker.internal:8080/api/comms/email";
 
     /**
      * Calls IPOS-PU's email service to send an email

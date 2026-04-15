@@ -33,6 +33,9 @@ public class AccountManagement extends BaseFrame implements Refreshable {
     private JTextField contactPersonField;
     private JTextField creditLimitField;
     private JTextField discountValueField;
+    private JComboBox<String> discountTypeCombo;
+    private JPanel variableDiscountPanel;
+    private JLabel variableDiscountLabel;
 
     private JLabel balanceLabel;
     private JLabel statusLabel;
@@ -59,18 +62,14 @@ public class AccountManagement extends BaseFrame implements Refreshable {
     @Override
     protected String getHeaderTitle() {
         if (mode == null) return "Merchant Account Management";
-        if (mode.equals("CREATE")) {
-            return "Create Merchant Account";
-        } else {
-            return "Manage Merchant Account";
-        }
+        if (mode.equals("CREATE")) return "Create Merchant Account";
+        return "Manage Merchant Account";
     }
 
     private void buildContent() {
         CenterPanel.setLayout(new BorderLayout());
         CenterPanel.setBackground(new Color(245, 247, 250));
 
-        // ── FORM PANEL ───────────────────────────────────────
         JPanel formPanel = new JPanel(new BorderLayout());
         formPanel.setBackground(Color.WHITE);
         formPanel.setBorder(BorderFactory.createCompoundBorder(
@@ -86,27 +85,28 @@ public class AccountManagement extends BaseFrame implements Refreshable {
         grid.setLayout(new BoxLayout(grid, BoxLayout.Y_AXIS));
         grid.setBackground(Color.WHITE);
 
-        usernameField = new JTextField();
-        merchantIdField = createTextField();
-        companyNameField = createTextField();
-        businessTypeField = createTextField();
+        usernameField           = new JTextField();
+        merchantIdField         = createTextField();
+        companyNameField        = createTextField();
+        businessTypeField       = createTextField();
         registrationNumberField = createTextField();
-        emailField = createTextField();
-        phoneField = createTextField();
-        faxField = createTextField();
-        addressField = createTextField();
-        contactPersonField = createTextField();
-        creditLimitField = createTextField();
-        discountValueField = createTextField();
+        emailField              = createTextField();
+        phoneField              = createTextField();
+        faxField                = createTextField();
+        addressField            = createTextField();
+        contactPersonField      = createTextField();
+        creditLimitField        = createTextField();
+        discountValueField      = createTextField();
+        discountTypeCombo       = new JComboBox<>(new String[]{"fixed", "flexible"});
+        discountTypeCombo.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        discountTypeCombo.addActionListener(e -> toggleDiscountFields());
 
         if ("CREATE".equals(mode)) {
-            // Show username field only when creating
             JPanel row1 = row(2);
             row1.add(fieldWrapper("MERCHANT ID", merchantIdField));
             row1.add(fieldWrapper("USERNAME", usernameField));
             grid.add(row1);
         } else {
-            // For MANAGE mode, just show merchant ID without username
             JPanel row1 = row(1);
             row1.add(fieldWrapper("MERCHANT ID", merchantIdField));
             grid.add(row1);
@@ -115,17 +115,49 @@ public class AccountManagement extends BaseFrame implements Refreshable {
         JPanel row2 = row(2);
         row2.add(fieldWrapper("COMPANY NAME", companyNameField));
         row2.add(fieldWrapper("BUSINESS TYPE", businessTypeField));
+
         JPanel row3 = row(2);
         row3.add(fieldWrapper("REGISTRATION NUMBER", registrationNumberField));
         row3.add(fieldWrapper("EMAIL", emailField));
+
         JPanel row4 = row(1);
         row4.add(fieldWrapper("ADDRESS", addressField));
+
         JPanel row5 = row(2);
         row5.add(fieldWrapper("PHONE", phoneField));
         row5.add(fieldWrapper("FAX", faxField));
+
         JPanel row6 = row(2);
         row6.add(fieldWrapper("CREDIT LIMIT (£)", creditLimitField));
-        row6.add(fieldWrapper("FIXED DISCOUNT %", discountValueField));
+
+        // Discount type selector
+        JPanel discountTypeWrapper = new JPanel(new BorderLayout(0, 4));
+        discountTypeWrapper.setBackground(Color.WHITE);
+        JLabel discountTypeLbl = new JLabel("DISCOUNT TYPE");
+        discountTypeLbl.setFont(new Font("Segoe UI", Font.BOLD, 10));
+        discountTypeLbl.setForeground(new Color(107, 114, 128));
+        discountTypeWrapper.add(discountTypeLbl, BorderLayout.NORTH);
+        discountTypeWrapper.add(discountTypeCombo, BorderLayout.CENTER);
+        row6.add(discountTypeWrapper);
+
+        JPanel row7 = row(2);
+        row7.add(fieldWrapper("DISCOUNT % (Fixed or Max Variable)", discountValueField));
+
+        // Variable discount info panel
+        variableDiscountPanel = new JPanel(new BorderLayout());
+        variableDiscountPanel.setBackground(new Color(245, 247, 250));
+        variableDiscountPanel.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(221, 225, 231)),
+                new EmptyBorder(8, 12, 8, 12)));
+        variableDiscountLabel = new JLabel(
+                "<html><b>Variable Discount Tiers:</b><br/>" +
+                        "• Under £1,000 → 0%<br/>" +
+                        "• £1,000 - £2,000 → 1%<br/>" +
+                        "• Over £2,000 → 2%</html>");
+        variableDiscountLabel.setFont(new Font("Segoe UI", Font.PLAIN, 11));
+        variableDiscountPanel.add(variableDiscountLabel);
+        variableDiscountPanel.setVisible(false);
+        variableDiscountPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 80));
 
         grid.add(Box.createVerticalStrut(12));
         grid.add(row2);
@@ -137,6 +169,10 @@ public class AccountManagement extends BaseFrame implements Refreshable {
         grid.add(row5);
         grid.add(Box.createVerticalStrut(12));
         grid.add(row6);
+        grid.add(Box.createVerticalStrut(12));
+        grid.add(row7);
+        grid.add(Box.createVerticalStrut(8));
+        grid.add(variableDiscountPanel);
 
         messageLabel = new JLabel(" ");
         messageLabel.setFont(new Font("Segoe UI", Font.PLAIN, 11));
@@ -146,7 +182,7 @@ public class AccountManagement extends BaseFrame implements Refreshable {
         formPanel.add(grid,         BorderLayout.CENTER);
         formPanel.add(messageLabel, BorderLayout.SOUTH);
 
-        // ── RIGHT COLUMN ─────────────────────────────────────
+        // Right column
         JPanel rightColumn = new JPanel();
         rightColumn.setLayout(new BoxLayout(rightColumn, BoxLayout.Y_AXIS));
         rightColumn.setBackground(new Color(245, 247, 250));
@@ -197,20 +233,23 @@ public class AccountManagement extends BaseFrame implements Refreshable {
         actionsCard.add(Box.createVerticalStrut(10));
 
         switch (mode) {
-            case "CREATE":
-                addCreateButtons(actionsCard);
-                break;
-            case "MANAGE":
-                addManageButtons(actionsCard);
-                break;
+            case "CREATE": addCreateButtons(actionsCard); break;
+            case "MANAGE": addManageButtons(actionsCard); break;
         }
 
         rightColumn.add(StatusPanel);
         rightColumn.add(Box.createVerticalStrut(12));
         rightColumn.add(actionsCard);
 
-        CenterPanel.add(formPanel, BorderLayout.CENTER);
+        CenterPanel.add(formPanel,   BorderLayout.CENTER);
         CenterPanel.add(rightColumn, BorderLayout.EAST);
+    }
+
+    private void toggleDiscountFields() {
+        boolean isFixed = "fixed".equals(discountTypeCombo.getSelectedItem());
+        variableDiscountPanel.setVisible(!isFixed);
+        CenterPanel.revalidate();
+        CenterPanel.repaint();
     }
 
     private void addCreateButtons(JPanel actionsCard) {
@@ -220,7 +259,7 @@ public class AccountManagement extends BaseFrame implements Refreshable {
 
         createBtn.addActionListener(e -> createAccount());
         clearBtn.addActionListener(e  -> clearForm());
-        backBtn.addActionListener(e -> router.goTo(AppFrame.SCREEN_MERCHANT_LIST));
+        backBtn.addActionListener(e   -> router.goTo(AppFrame.SCREEN_MERCHANT_LIST));
 
         actionsCard.add(createBtn); actionsCard.add(Box.createVerticalStrut(8));
         actionsCard.add(clearBtn);  actionsCard.add(Box.createVerticalStrut(8));
@@ -228,14 +267,14 @@ public class AccountManagement extends BaseFrame implements Refreshable {
     }
 
     private void addManageButtons(JPanel actionsCard) {
-        JButton loadBtn           = actionButton("Load Account",        new Color(17, 24, 39));
-        JButton updateBtn         = actionButton("Update Account",      new Color(30, 70, 90));
-        JButton suspendBtn        = actionButton("Suspend Account",     new Color(127, 29, 29));
-        JButton reinstateBtn      = actionButton("Reinstate Account",   new Color(20, 83, 45));
+        JButton loadBtn           = actionButton("Load Account",         new Color(17, 24, 39));
+        JButton updateBtn         = actionButton("Update Account",       new Color(30, 70, 90));
+        JButton suspendBtn        = actionButton("Suspend Account",      new Color(127, 29, 29));
+        JButton reinstateBtn      = actionButton("Reinstate Account",    new Color(20, 83, 45));
         JButton deleteDiscountBtn = actionButton("Delete Discount Plan", new Color(107, 114, 128));
-        JButton deleteAccountBtn  = actionButton("Delete Account",      new Color(127, 29, 29));
-        JButton clearBtn          = actionButton("Clear",               new Color(107, 114, 128));
-        JButton backBtn           = actionButton("← Back",              new Color(17, 24, 39));
+        JButton deleteAccountBtn  = actionButton("Delete Account",       new Color(127, 29, 29));
+        JButton clearBtn          = actionButton("Clear",                new Color(107, 114, 128));
+        JButton backBtn           = actionButton("← Back",               new Color(17, 24, 39));
 
         loadBtn.addActionListener(e           -> loadAccount());
         updateBtn.addActionListener(e         -> updateAccount());
@@ -244,24 +283,16 @@ public class AccountManagement extends BaseFrame implements Refreshable {
         deleteDiscountBtn.addActionListener(e -> deleteDiscountPlan());
         deleteAccountBtn.addActionListener(e  -> deleteAccount());
         clearBtn.addActionListener(e          -> clearForm());
-        backBtn.addActionListener(e -> router.goTo(AppFrame.SCREEN_MERCHANT_LIST));
+        backBtn.addActionListener(e           -> router.goTo(AppFrame.SCREEN_MERCHANT_LIST));
 
-        actionsCard.add(loadBtn);
-        actionsCard.add(Box.createVerticalStrut(8));
-        actionsCard.add(updateBtn);
-        actionsCard.add(Box.createVerticalStrut(8));
-        actionsCard.add(suspendBtn);
-        actionsCard.add(Box.createVerticalStrut(8));
-        actionsCard.add(reinstateBtn);
-        actionsCard.add(Box.createVerticalStrut(8));
-        actionsCard.add(deleteDiscountBtn);
-        actionsCard.add(Box.createVerticalStrut(8));
-        actionsCard.add(deleteAccountBtn);
-        actionsCard.add(Box.createVerticalStrut(8));
-        actionsCard.add(clearBtn);
-        actionsCard.add(Box.createVerticalStrut(8));
-        actionsCard.add(backBtn);
-        actionsCard.add(Box.createVerticalStrut(8));
+        actionsCard.add(loadBtn);           actionsCard.add(Box.createVerticalStrut(8));
+        actionsCard.add(updateBtn);         actionsCard.add(Box.createVerticalStrut(8));
+        actionsCard.add(suspendBtn);        actionsCard.add(Box.createVerticalStrut(8));
+        actionsCard.add(reinstateBtn);      actionsCard.add(Box.createVerticalStrut(8));
+        actionsCard.add(deleteDiscountBtn); actionsCard.add(Box.createVerticalStrut(8));
+        actionsCard.add(deleteAccountBtn);  actionsCard.add(Box.createVerticalStrut(8));
+        actionsCard.add(clearBtn);          actionsCard.add(Box.createVerticalStrut(8));
+        actionsCard.add(backBtn);           actionsCard.add(Box.createVerticalStrut(8));
 
         if (role.equals("Director of Operations")) {
             JButton restoreBtn = actionButton("Restore from Default", new Color(20, 83, 45));
@@ -271,94 +302,55 @@ public class AccountManagement extends BaseFrame implements Refreshable {
         }
     }
 
-    // ── BUSINESS LOGIC ───────────────────────────────────────
     private void createAccount() {
         try {
-            String id = merchantIdField.getText().trim();
-            String username = usernameField.getText().trim();
-            String name = companyNameField.getText().trim();
-            String email = emailField.getText().trim();
-            String regNo = registrationNumberField.getText().trim();
-            String phone = phoneField.getText().trim();
+            String id            = merchantIdField.getText().trim();
+            String username      = usernameField.getText().trim();
+            String name          = companyNameField.getText().trim();
+            String email         = emailField.getText().trim();
+            String regNo         = registrationNumberField.getText().trim();
+            String phone         = phoneField.getText().trim();
+            String discountType  = discountTypeCombo.getSelectedItem().toString();
 
-            double credit = Double.parseDouble(creditLimitField.getText().trim());
-            double discount = Double.parseDouble(discountValueField.getText().trim());
-
-            if (id.isEmpty()) { setMessage("Merchant ID is required.", false); return; }
-            if (username.isEmpty()) { setMessage("Username is required.", false); return; }
-            if (name.isEmpty()) { setMessage("Company name is required.", false); return; }
-            if (email.isEmpty()) { setMessage("Email is required.", false); return; }
-            if (regNo.isEmpty()) { setMessage("Registration number is required.", false); return; }
-            if (credit < 0) { setMessage("Credit limit cannot be negative.", false); return; }
-            if (discount < 0) { setMessage("Discount cannot be negative.", false); return; }
-
-            // Merchant ID format — no spaces allowed
-            if (id.contains(" ")) {
-                setMessage("Merchant ID cannot contain spaces.", false); return;
-            }
-
-            // Username format — no spaces allowed
-            if (username.contains(" ")) {
-                setMessage("Username cannot contain spaces.", false); return;
-            }
-
-            // Email format check
+            if (id.isEmpty())       { setMessage("Merchant ID is required.", false);       return; }
+            if (username.isEmpty()) { setMessage("Username is required.", false);           return; }
+            if (name.isEmpty())     { setMessage("Company name is required.", false);       return; }
+            if (email.isEmpty())    { setMessage("Email is required.", false);              return; }
+            if (regNo.isEmpty())    { setMessage("Registration number is required.", false); return; }
+            if (id.contains(" "))   { setMessage("Merchant ID cannot contain spaces.", false); return; }
+            if (username.contains(" ")) { setMessage("Username cannot contain spaces.", false); return; }
             if (!email.contains("@") || !email.contains(".")) {
                 setMessage("Please enter a valid email address.", false); return;
             }
-
-            // Phone format — digits only if provided
             if (!phone.isEmpty() && !phone.matches("[0-9+\\-\\s()]+")) {
                 setMessage("Phone number contains invalid characters.", false); return;
             }
 
-            // Credit limit validation
-            if (creditLimitField.getText().trim().isEmpty()) {
-                setMessage("Credit limit is required.", false); return;
-            }
+            double credit   = Double.parseDouble(creditLimitField.getText().trim());
+            double discount = Double.parseDouble(discountValueField.getText().trim());
 
-            if (credit < 0) {
-                setMessage("Credit limit cannot be negative.", false); return;
-            }
+            if (credit < 0)    { setMessage("Credit limit cannot be negative.", false); return; }
+            if (discount < 0)  { setMessage("Discount cannot be negative.", false); return; }
+            if (discount > 100){ setMessage("Discount cannot exceed 100%.", false); return; }
 
-            // Discount validation
-            if (discountValueField.getText().trim().isEmpty()) {
-                setMessage("Discount value is required.", false); return;
-            }
-
-            if (discount < 0) {
-                setMessage("Discount cannot be negative.", false); return;
-            }
-            if (discount > 100) {
-                setMessage("Discount cannot exceed 100%.", false); return;
-            }
+            double fixedDiscount    = "fixed".equals(discountType) ? discount : 0.0;
+            double flexibleDiscount = "flexible".equals(discountType) ? discount : 0.0;
 
             String defaultPassword = username + "123";
-            String hashedPassword = hashPassword(defaultPassword);
+            String hashedPassword  = hashPassword(defaultPassword);
 
-            // Using the 18-parameter constructor
             MerchantAccount account = new MerchantAccount(
-                    id,
-                    name,
+                    id, name,
                     businessTypeField.getText().trim(),
                     registrationNumberField.getText().trim(),
-                    email,
-                    phoneField.getText().trim(),
+                    email, phoneField.getText().trim(),
                     faxField.getText().trim(),
                     addressField.getText().trim(),
-                    credit,
-                    0.0,
-                    "normal",
-                    "fixed",
-                    discount,
-                    0.0,
-                    Date.valueOf(LocalDate.now()),
-                    true,
-                    Date.valueOf(LocalDate.now()),
-                    username
+                    credit, 0.0, "normal",
+                    discountType, fixedDiscount, flexibleDiscount,
+                    Date.valueOf(LocalDate.now()), true,
+                    Date.valueOf(LocalDate.now()), username
             );
-
-            // Set password separately (since this constructor doesn't have password)
             account.setPassword(hashedPassword);
 
             if (accountService.addAccount(account)) {
@@ -393,80 +385,62 @@ public class AccountManagement extends BaseFrame implements Refreshable {
     }
 
     private void updateAccount() {
-        String id = merchantIdField.getText().trim();
-        if (id.isEmpty()) { setMessage("Load an account first.", false); return; }
-
-        String name = companyNameField.getText().trim();
+        String id    = merchantIdField.getText().trim();
+        String name  = companyNameField.getText().trim();
         String email = emailField.getText().trim();
         String phone = phoneField.getText().trim();
+        String discountType = discountTypeCombo.getSelectedItem().toString();
 
-
-        // Required field checks
-        if (name.isEmpty())  { setMessage("Company name is required.", false); return; }
-        if (email.isEmpty()) { setMessage("Email is required.", false); return; }
-
-        // Email format check
+        if (id.isEmpty())    { setMessage("Load an account first.", false);          return; }
+        if (name.isEmpty())  { setMessage("Company name is required.", false);       return; }
+        if (email.isEmpty()) { setMessage("Email is required.", false);              return; }
         if (!email.contains("@") || !email.contains(".")) {
             setMessage("Please enter a valid email address.", false); return;
         }
-
-        // Phone format check
         if (!phone.isEmpty() && !phone.matches("[0-9+\\-\\s()]+")) {
             setMessage("Phone number contains invalid characters.", false); return;
         }
-
-        // Credit limit validation
         if (creditLimitField.getText().trim().isEmpty()) {
             setMessage("Credit limit is required.", false); return;
         }
-
-        // Discount validation
         if (discountValueField.getText().trim().isEmpty()) {
             setMessage("Discount value is required.", false); return;
         }
 
         try {
-            double credit = Double.parseDouble(creditLimitField.getText().trim());
+            double credit   = Double.parseDouble(creditLimitField.getText().trim());
             double discount = Double.parseDouble(discountValueField.getText().trim());
 
-            if (credit < 0) {
-                setMessage("Credit limit cannot be negative.", false);
-                return;
-            }
+            if (credit < 0)         { setMessage("Credit limit cannot be negative.", false); return; }
             if (discount < 0 || discount > 100) {
-                setMessage("Discount must be between 0 and 100.", false);
-                return;
+                setMessage("Discount must be between 0 and 100.", false); return;
             }
+
+            double fixedDiscount    = "fixed".equals(discountType) ? discount : 0.0;
+            double flexibleDiscount = "flexible".equals(discountType) ? discount : 0.0;
 
             MerchantAccount existing = accountService.getAccount(id);
             if (existing == null) { setMessage("Account not found.", false); return; }
 
-            DiscountPlan plan = new FixedDiscountPlan("Fixed Plan",
-                    Double.parseDouble(discountValueField.getText().trim()));
-
-            // Get the existing account to retrieve current password
-            MerchantAccount existingAcc = accountService.getAccount(id);
-
-            // Use constructor #3 (12 parameters) - same as create
             MerchantAccount account = new MerchantAccount(
-                    id,                                           // merchantId
-                    companyNameField.getText().trim(),            // businessName
-                    emailField.getText().trim(),                  // email
-                    phoneField.getText().trim(),                  // phone
-                    faxField.getText().trim(),                    // fax
-                    addressField.getText().trim(),                // address
-                    Double.parseDouble(creditLimitField.getText().trim()), // creditLimit
-                    existingAcc.getOutstandingBalance(),             // outstandingBalance (keep existing)
-                    existingAcc.getAccountStatus(),                  // accountStatus (keep existing)
-                    Double.parseDouble(discountValueField.getText().trim()), // fixedDiscountRate
-                    username,                                     // username
-                    existing.getPassword()                        // password (keep existing)
+                    id,
+                    companyNameField.getText().trim(),
+                    emailField.getText().trim(),
+                    phoneField.getText().trim(),
+                    faxField.getText().trim(),
+                    addressField.getText().trim(),
+                    credit,
+                    existing.getOutstandingBalance(),
+                    existing.getAccountStatus(),
+                    fixedDiscount,
+                    username,
+                    existing.getPassword()
             );
-
-            // Preserve values that shouldn't be overwritten
+            account.setDiscountType(discountType);
+            account.setFlexibleDiscountRate(flexibleDiscount);
             account.setOutstandingBalance(existing.getOutstandingBalance());
             account.setStatus(existing.getStatus());
-            account.setPassword(existing.getPassword());  // Keep existing password
+            account.setPassword(existing.getPassword());
 
             if (accountService.updateAccount(account)) {
                 setMessage("Account updated successfully.", true);
@@ -508,6 +482,7 @@ public class AccountManagement extends BaseFrame implements Refreshable {
             try {
                 if (accountService.deleteDiscountPlan(id)) {
                     discountValueField.setText("0.0");
+                    discountTypeCombo.setSelectedItem("fixed");
                     setMessage("Discount plan deleted successfully.", true);
                 } else {
                     setMessage("Failed to delete discount plan.", false);
@@ -555,7 +530,6 @@ public class AccountManagement extends BaseFrame implements Refreshable {
         }
     }
 
-    // ── HELPERS ──────────────────────────────────────────────
     private void populateForm(MerchantAccount account) {
         merchantIdField.setText(account.getMerchantId());
         usernameField.setText(account.getUsername());
@@ -567,7 +541,18 @@ public class AccountManagement extends BaseFrame implements Refreshable {
         faxField.setText(account.getFax());
         addressField.setText(account.getAddress());
         creditLimitField.setText(String.valueOf(account.getCreditLimit()));
-        discountValueField.setText(String.valueOf(account.getDiscountPercentage()));
+
+        // Set discount type and value
+        String discountType = account.getDiscountType();
+        if (discountType == null) discountType = "fixed";
+        discountTypeCombo.setSelectedItem(discountType);
+
+        if ("fixed".equals(discountType)) {
+            discountValueField.setText(String.valueOf(account.getFixedDiscountRate()));
+        } else {
+            discountValueField.setText(String.valueOf(account.getFlexibleDiscountRate()));
+        }
+        toggleDiscountFields();
     }
 
     private void clearForm() {
@@ -583,6 +568,8 @@ public class AccountManagement extends BaseFrame implements Refreshable {
         contactPersonField.setText("");
         creditLimitField.setText("");
         discountValueField.setText("");
+        discountTypeCombo.setSelectedItem("fixed");
+        variableDiscountPanel.setVisible(false);
         balanceLabel.setText("0.00");
         statusLabel.setText("--");
         setMessage("", true);
@@ -633,24 +620,12 @@ public class AccountManagement extends BaseFrame implements Refreshable {
         return btn;
     }
 
-    private String generateTemporaryPassword() {
-        String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-        StringBuilder password = new StringBuilder();
-        for (int i = 0; i < 8; i++) {
-            int index = (int) (Math.random() * chars.length());
-            password.append(chars.charAt(index));
-        }
-        return password.toString();
-    }
-
     private String hashPassword(String password) {
         try {
             java.security.MessageDigest md = java.security.MessageDigest.getInstance("SHA-256");
             byte[] hash = md.digest(password.getBytes("UTF-8"));
             StringBuilder sb = new StringBuilder();
-            for (byte b : hash) {
-                sb.append(String.format("%02x", b));
-            }
+            for (byte b : hash) sb.append(String.format("%02x", b));
             return sb.toString();
         } catch (Exception e) {
             e.printStackTrace();
@@ -668,5 +643,4 @@ public class AccountManagement extends BaseFrame implements Refreshable {
             clearForm();
         }
     }
-
 }
