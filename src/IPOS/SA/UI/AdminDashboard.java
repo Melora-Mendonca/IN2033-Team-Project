@@ -34,9 +34,17 @@ public class AdminDashboard extends BaseFrame implements Refreshable{
 
     private void loadDashboardData() {
         try {
+            // Clear existing content before reloading
+            CenterPanel.removeAll();
+
             AdminDashboardData data = dashboardService.getDashboardData();
             createCardsPanel(data);
             createTables(data);
+
+            // Refresh the panel
+            CenterPanel.revalidate();
+            CenterPanel.repaint();
+
         } catch (Exception ex) {
             ex.printStackTrace();
             JOptionPane.showMessageDialog(this,

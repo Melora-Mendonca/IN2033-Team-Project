@@ -1,0 +1,11 @@
+SET FOREIGN_KEY_CHECKS=0;
+DELETE FROM recordpayment;
+DELETE FROM orderitem;
+DELETE FROM invoice;
+DELETE FROM `order`;
+DELETE FROM stockdelivery;
+DELETE FROM commercial_applications;
+DELETE FROM merchant;
+DELETE FROM catalogue;
+DELETE FROM userlogin WHERE username != 'admin';
+SET FOREIGN_KEY_CHECKS=1;

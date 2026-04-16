@@ -12,7 +12,7 @@ import java.nio.charset.StandardCharsets;
  */
 public class CommsClient {
 
-    private static final String BASE_URL = "http://localhost:8080/api/comms";
+    private static final String BASE_URL = "http://host.docker.internal:8080/api/comms";
 
     /**
      * Sends an email via the comms subsystem.

@@ -139,7 +139,8 @@ public class OrderService {
      */
     public List<Object[]> getAllOrders() throws Exception {
         List<Object[]> orders = new ArrayList<>();
-        ResultSet rs = db.query(
+        DBConnection freshDb = new DBConnection();
+        ResultSet rs = freshDb.query(
                 "SELECT o.order_id, m.company_name, o.order_date, o.status, o.final_amount, " +
                         "o.dispatched_date, o.courier_name, o.courier_ref_no, o.expected_delivery_date " +
                         "FROM `order` o JOIN merchant m ON o.merchant_id = m.merchant_id " +

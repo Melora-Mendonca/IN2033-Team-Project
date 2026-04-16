@@ -28,33 +28,24 @@ public class StaffAccountService {
      * @return true if the account was created successfully, false otherwise
      * @throws Exception if a database error occurs
      */
-    public boolean createStaff(Staff staff) throws Exception {
-        // Only check username uniqueness
+    public boolean createStaff(Staff staff, String plainPassword) throws Exception {
         if (usernameExists(staff.getUsername())) {
             return false;
         }
 
-        // Generate plain text password for email
-        String originalPassword = staff.getUsername() + "123";
+        String hashedPassword = hashPassword(plainPassword);
 
-        // Hash the default password to match authentication
-        String defaultPassword = hashPassword(staff.getUsername() + "123");
-
-        // Checks if account already exists
         ResultSet checkRs = db.query(
                 "SELECT user_id FROM userlogin WHERE user_id = ?",
                 staff.getStaffId()
         );
-
-        if (checkRs.next()) {
-            return false; // Account already exists
-        }
+        if (checkRs.next()) return false;
 
         int rowsAffected = db.update(
                 "INSERT INTO userlogin (username, password_hash, first_Name, sur_Name, email, role, is_Active, phone, address) " +
                         "VALUES (?, ?, ?, ?, ?, ?, 1, ?, ?)",
                 staff.getUsername(),
-                defaultPassword,
+                hashedPassword,
                 staff.getFirstName(),
                 staff.getSurName(),
                 staff.getEmail(),
@@ -63,12 +54,10 @@ public class StaffAccountService {
                 staff.getAddress()
         );
 
-        // Calls the emailService API to send an email to the staff with credentials
         if (rowsAffected > 0) {
-            sendStaffEmail(staff, originalPassword);
+            sendStaffEmail(staff, plainPassword);
             return true;
         }
-
         return false;
     }
 
