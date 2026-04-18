@@ -15,7 +15,6 @@ public class CatalogueItem {
     // how the item is packaged (box, bottle etc)
     private String packageType;
 
-
     // unit type (caps, ml etc)
     private String unit;
 

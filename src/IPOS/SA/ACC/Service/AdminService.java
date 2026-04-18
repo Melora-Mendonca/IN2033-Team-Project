@@ -29,19 +29,19 @@ public class AdminService {
     public AdminDashboardData getDashboardData() throws Exception {
         AdminDashboardData data = new AdminDashboardData();
 
-        // Get low stock count
+        // Gets the low stock count
         data.setLowStockCount(getLowStockCount());
 
-        // Get stock deliveries count for current month
+        // Gets the stock deliveries count for current month
         data.setStockDeliveriesCount(getStockDeliveriesCount());
 
-        // Get overdue payments count
+        // Gets the overdue payments count
         data.setOverduePaymentsCount(getOverduePaymentsCount());
 
-        // Get recent orders list
+        // Gets the recent orders list
         data.setRecentOrders(getRecentOrders());
 
-        // Get low stock items list
+        // Gets the low stock items list
         data.setLowStockItems(getLowStockItems());
 
         return data;
@@ -98,7 +98,7 @@ public class AdminService {
      */
     private int getOverduePaymentsCount() throws Exception {
         try {
-            // Query invoices that are overdue (due date passed and not fully paid)
+            // Queries invoices that are overdue
             ResultSet rs = db.query(
                     "SELECT COUNT(*) as count FROM invoice " +
                             "WHERE due_date < CURDATE() AND status != 'paid'"
@@ -122,7 +122,7 @@ public class AdminService {
         List<OrderSummary> orders = new ArrayList<>();
 
         try {
-            // Query the Order table with merchant details
+            // Queries the Order table with merchant details
             ResultSet rs = db.query(
                     "SELECT o.order_id, o.order_date, o.status, o.total_amount, m.company_name as merchant_name " +
                             "FROM `order` o " +
@@ -169,7 +169,7 @@ public class AdminService {
                             rs.getString("item_id"),
                             rs.getString("description"),
                             rs.getInt("availability"),
-                            rs.getInt("minimum_stock_level")  // Changed from stock_limit
+                            rs.getInt("minimum_stock_level")
                     ));
                 }
             }

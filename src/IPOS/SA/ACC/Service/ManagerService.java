@@ -30,19 +30,19 @@ public class ManagerService {
     public ManagerDashboardData getDashboardData() throws Exception {
         ManagerDashboardData data = new ManagerDashboardData();
 
-        // Gets low stock count
+        // Gets the low stock count
         data.setLowStockCount(getLowStockCount());
 
-        // Gets total invoices for current month
+        // Gets the total invoices for current month
         data.setTotalInvoices(getTotalInvoices());
 
-        // Gets total turnover for current month
+        // Gets the total turnover for current month
         data.setTotalTurnover(getTotalTurnover());
 
-        // Gets stock turnover count
+        // Gets the stock turnover count
         data.setStockTurnover(getStockTurnover());
 
-        // Gets low stock items list
+        // Gets the low stock items list
         data.setLowStockItems(getLowStockItems());
 
         return data;

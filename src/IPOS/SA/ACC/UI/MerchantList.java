@@ -14,6 +14,11 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * UI screen that displays a searchable table of all merchant accounts.
+ * Supports three caller contexts: DEFAULT (account management), ORDERS, and INVOICES,
+ * each of which adjusts the available action buttons and screen title accordingly.
+ */
 public class MerchantList extends BaseFrame implements Refreshable {
 
     private final AccountService accountService;
@@ -23,18 +28,39 @@ public class MerchantList extends BaseFrame implements Refreshable {
     private JLabel statusLabel;
     private final String callerContext;
 
+    /**
+     * Constructs a MerchantList screen with the DEFAULT caller context.
+     *
+     * @param fullname the display name of the logged-in user
+     * @param role the role of the logged-in user
+     * @param router the screen router used for navigation
+     */
     public MerchantList(String fullname, String role, ScreenRouter router) {
         this(fullname, role, "DEFAULT", router);
     }
 
+    /**
+     * Constructs a MerchantList screen with a specific caller context.
+     *
+     * @param fullname the display name of the logged-in user
+     * @param role the role of the logged-in user
+     * @param callerContext the context that opened this screen: "DEFAULT", "ORDERS", or "INVOICES"
+     * @param router the screen router used for navigation
+     */
     public MerchantList(String fullname, String role, String callerContext, ScreenRouter router) {
         super(fullname, role, getTitleForContext(callerContext), router);
         this.accountService = new AccountService();
         this.callerContext = callerContext;
-        buildContent();
-        loadMerchantData();
+        buildContent(); // creates the main form for the GUI
+        loadMerchantData(); // Loads the merchant records from the database
     }
 
+    /**
+     * Returns the screen title based on the caller context.
+     *
+     * @param callerContext the context that opened this screen
+     * @return a title string appropriate for the context
+     */
     private static String getTitleForContext(String callerContext) {
         switch (callerContext) {
             case "ORDERS": return "Select Merchant - View Orders";
@@ -43,15 +69,25 @@ public class MerchantList extends BaseFrame implements Refreshable {
         }
     }
 
+    /**
+     * Returns the header title displayed at the top of the screen.
+     *
+     * @return the header title string
+     */
     @Override
     protected String getHeaderTitle() {
         return "Merchant List";
     }
 
+    /**
+     * Builds and arranges all UI components for this screen.
+     * Includes a search bar, merchant table, and a context-sensitive button panel.
+     */
     private void buildContent() {
         CenterPanel.setLayout(new BorderLayout(0, 0));
         CenterPanel.setBackground(new Color(245, 247, 250));
 
+        // creates a Top bar with search controls
         JPanel topBar = new JPanel(new BorderLayout());
         topBar.setBackground(new Color(17, 24, 39));
         topBar.setBorder(new EmptyBorder(10, 16, 10, 16));
@@ -83,6 +119,7 @@ public class MerchantList extends BaseFrame implements Refreshable {
         searchPanel.add(refreshButton);
         topBar.add(searchPanel, BorderLayout.WEST);
 
+        // creates a Table setup – cells are not editable
         String[] columns = {"Merchant ID", "Business Name", "Email", "Phone", "Credit Limit", "Balance", "Status"};
         tableModel = new DefaultTableModel(columns, 0) {
             public boolean isCellEditable(int row, int column) { return false; }
@@ -98,6 +135,7 @@ public class MerchantList extends BaseFrame implements Refreshable {
         merchantTable.getTableHeader().setBackground(new Color(17, 24, 39));
         merchantTable.getTableHeader().setForeground(Color.WHITE);
 
+        // Row colour renderer: highlights suspended accounts in light red and defaulted accounts in darker red
         merchantTable.setDefaultRenderer(Object.class,
                 new javax.swing.table.DefaultTableCellRenderer() {
                     public Component getTableCellRendererComponent(JTable t, Object val,
@@ -120,6 +158,7 @@ public class MerchantList extends BaseFrame implements Refreshable {
         JScrollPane scroll = new JScrollPane(merchantTable);
         scroll.setBorder(BorderFactory.createEmptyBorder());
 
+        // creates a bottom panel with action buttons and status label
         JPanel bottomPanel = new JPanel(new BorderLayout());
         bottomPanel.setBackground(new Color(17, 24, 39));
         bottomPanel.setBorder(new EmptyBorder(10, 12, 10, 12));
@@ -127,6 +166,7 @@ public class MerchantList extends BaseFrame implements Refreshable {
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
         buttonPanel.setBackground(new Color(17, 24, 39));
 
+        // the buttons vary depending on which screen opened this list
         if ("DEFAULT".equals(callerContext)) {
             JButton viewDetailsButton = new JButton("View Details");
             JButton viewOrdersButton = new JButton("View Orders");
@@ -173,6 +213,7 @@ public class MerchantList extends BaseFrame implements Refreshable {
             buttonPanel.add(viewOrdersButton);
             buttonPanel.add(viewInvoicesButton);
 
+            // Create Account button is restricted to Administrators
             if (role.equals("Administrator")) {
                 JButton createButton = new JButton("Create Account");
                 styleBtn(createButton);
@@ -245,6 +286,10 @@ public class MerchantList extends BaseFrame implements Refreshable {
         CenterPanel.add(bottomPanel, BorderLayout.SOUTH);
     }
 
+    /**
+     * Loads all merchant accounts from the database and populates the table.
+     * Marks a merchant as OVERDUE if their balance exceeds their credit limit.
+     */
     private void loadMerchantData() {
         try {
             List<MerchantAccount> merchants = accountService.getAllAccounts();
@@ -272,6 +317,11 @@ public class MerchantList extends BaseFrame implements Refreshable {
         }
     }
 
+    /**
+     * Filters the merchant table by the value in the search field.
+     * Matches against merchant ID, business name, and email.
+     * Reloads all data if the search field is empty.
+     */
     private void searchMerchants() {
         String search = searchField.getText().trim().toLowerCase();
         if (search.isEmpty()) { loadMerchantData(); return; }
@@ -310,6 +360,11 @@ public class MerchantList extends BaseFrame implements Refreshable {
         }
     }
 
+    /**
+     * Applies a shared visual style to an action button.
+     *
+     * @param btn the button to style
+     */
     private void styleBtn(JButton btn) {
         btn.setBackground(new Color(30, 70, 90));
         btn.setForeground(Color.WHITE);
@@ -318,6 +373,10 @@ public class MerchantList extends BaseFrame implements Refreshable {
         btn.setFont(new Font("Segoe UI", Font.PLAIN, 12));
     }
 
+    /**
+     * Called by the screen router when this screen becomes visible.
+     * Clears the search field and reloads all merchant data.
+     */
     @Override
     public void onShow() {
         searchField.setText("");
