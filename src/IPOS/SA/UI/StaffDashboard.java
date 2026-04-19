@@ -9,46 +9,78 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 
-public class StaffDashboard extends BaseFrame implements Refreshable{
+// Claude AI was used in this class to help in the creation of the stat cards and the colour coded order tables //
+
+/**
+ * Staff Dashboard screen for IPOS-SA.
+ * Displayed after any staff member logs in who is not an Administrator
+ * or Director of Operations (Warehouse Employee, Delivery Employee,
+ * Accountant or Senior Accountant).
+ *
+ * Shows three summary stat cards and a recent orders table:
+ * - Stat cards: pending orders, recent orders (last 7 days), total value processed this month
+ * - Recent Orders table: latest orders with colour-coded status column
+ */
+public class StaffDashboard extends BaseFrame implements Refreshable {
+
+    /** Service used to load all dashboard data from the database. */
     private final StaffService dashboardService;
 
+    /**
+     * Constructor — builds the staff dashboard and loads all data.
+     *
+     * @param fullname the full name of the logged-in staff member
+     * @param role     the role of the logged-in user
+     * @param username the username of the logged-in user
+     * @param router   the screen router used for navigation
+     */
     public StaffDashboard(String fullname, String role, String username, ScreenRouter router) {
-        super(fullname, role, username,"Staff Dashboard", router);
+        super(fullname, role, username, "Staff Dashboard", router);
         this.dashboardService = new StaffService();
         createCenterContent();
     }
 
+    /**
+     * Triggers the initial data load when the screen is first built.
+     */
     private void createCenterContent() {
         loadDashboardData();
     }
 
+    /**
+     * Returns the personalised header title shown at the top of the screen.
+     *
+     * @return the header title string including the user's full name
+     */
     @Override
     protected String getHeaderTitle() {
         return "Welcome back, " + fullname;
     }
 
+    /**
+     * Loads all dashboard data from the database and rebuilds the
+     * stat cards and recent orders table. Clears the panel before
+     * reloading to prevent duplicate components on revisit.
+     */
     private void loadDashboardData() {
         try {
             StaffDashboardData data = dashboardService.getDashboardData();
 
-            // Clear CenterPanel
+            // Clear CenterPanel before rebuilding
             CenterPanel.removeAll();
 
-            // Create a main container with BoxLayout (vertical stacking)
+            // Main container stacks cards and orders table vertically
             JPanel mainContainer = new JPanel();
             mainContainer.setLayout(new BoxLayout(mainContainer, BoxLayout.Y_AXIS));
             mainContainer.setBackground(new Color(245, 247, 250));
 
-            // Add cards
             JPanel cardsPanel = createCardsPanel(data);
             mainContainer.add(cardsPanel);
             mainContainer.add(Box.createVerticalStrut(16));
 
-            // Add orders table
             JPanel tablePanel = createOrdersTable(data.getRecentOrderList());
             mainContainer.add(tablePanel);
 
-            // Add the main container to CenterPanel
             CenterPanel.add(mainContainer, BorderLayout.CENTER);
 
             // Force refresh
@@ -63,6 +95,14 @@ public class StaffDashboard extends BaseFrame implements Refreshable{
         }
     }
 
+    /**
+     * Builds the three summary stat cards at the top of the dashboard.
+     * Shows pending orders count, recent orders count (last 7 days)
+     * and total value processed this month.
+     *
+     * @param data the dashboard data containing the values for each card
+     * @return the assembled cards panel
+     */
     private JPanel createCardsPanel(StaffDashboardData data) {
         JPanel panel = new JPanel(new GridLayout(1, 3, 16, 16));
         panel.setBorder(BorderFactory.createEmptyBorder(16, 16, 16, 16));
@@ -88,12 +128,22 @@ public class StaffDashboard extends BaseFrame implements Refreshable{
         return panel;
     }
 
+    /**
+     * Builds a single stat card with a title, large numeric value and subtitle.
+     *
+     * @param title    the card heading
+     * @param value    the numeric value to display prominently
+     * @param subtitle the descriptive subtitle below the value
+     * @param bg       the card background colour
+     * @param titleFg  the foreground colour for the title and value labels
+     * @param subFg    the foreground colour for the subtitle label
+     * @return the assembled stat card panel
+     */
     private JPanel buildCard(String title, String value, String subtitle,
                              Color bg, Color titleFg, Color subFg) {
         JPanel card = new JPanel();
         card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
         card.setBackground(bg);
-        //card.setPreferredSize(new Dimension(350, 200));
         card.setMaximumSize(new Dimension(400, 200));
         card.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
@@ -121,6 +171,14 @@ public class StaffDashboard extends BaseFrame implements Refreshable{
         return card;
     }
 
+    /**
+     * Builds the Recent Orders table showing the latest orders with a
+     * colour-coded Status column matching the order workflow stages.
+     * Shows a placeholder row if no orders exist.
+     *
+     * @param orders the list of recent order summaries to display
+     * @return the assembled orders table panel
+     */
     private JPanel createOrdersTable(java.util.List<OrderSummary> orders) {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBackground(Color.WHITE);
@@ -209,12 +267,16 @@ public class StaffDashboard extends BaseFrame implements Refreshable{
         JScrollPane scroll = new JScrollPane(table);
         scroll.setBorder(BorderFactory.createEmptyBorder());
 
-        panel.add(title, BorderLayout.NORTH);
+        panel.add(title,  BorderLayout.NORTH);
         panel.add(scroll, BorderLayout.CENTER);
 
         return panel;
     }
 
+    /**
+     * Called by the screen router when this screen becomes visible.
+     * Reloads all dashboard data so counts and tables are always current.
+     */
     @Override
     public void onShow() {
         loadDashboardData();

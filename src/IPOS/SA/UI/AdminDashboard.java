@@ -11,6 +11,8 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.util.List;
 
+// AI (Claude) was used to implement the stat cards, colour-coded order status table and low stock table with red row highlighting.
+
 // Overview screen for Administrators: KPI cards + recent orders + low-stock table
 public class AdminDashboard extends BaseFrame implements Refreshable{
 

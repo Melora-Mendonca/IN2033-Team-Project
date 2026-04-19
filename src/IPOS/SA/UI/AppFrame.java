@@ -8,6 +8,8 @@ import IPOS.SA.RPT.UI.*;
 
 import javax.swing.*;
 import java.awt.*;
+
+// Claude AI was used in this form to assist with the logic behind the AppFrame constructor //
 /**
  * The main application frame for IPOS-SA.
  * Implemented as a singleton — only one instance exists throughout the application.

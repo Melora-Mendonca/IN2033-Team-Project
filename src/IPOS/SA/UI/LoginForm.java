@@ -7,6 +7,8 @@ import IPOS.SA.ACC.Service.AuthenticationService;
 import javax.swing.*;
 import java.awt.*;
 import java.util.List;
+
+// Claude AI was used in the role toggle buttons, login flow and with the stock warning pop up
 /**
  * Login screen for IPOS-SA.
  * The first screen shown when the application starts.

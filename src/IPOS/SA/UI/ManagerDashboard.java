@@ -8,6 +8,9 @@ import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.util.List;
+
+// AI (Claude) was used to implement the stat cards and low stock table.
+
 /**
  * Manager Dashboard screen for IPOS-SA.
  * Displayed after a Director of Operations logs in successfully.

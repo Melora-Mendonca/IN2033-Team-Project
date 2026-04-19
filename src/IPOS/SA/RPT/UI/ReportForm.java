@@ -24,24 +24,72 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 
+// AI (Claude) was used to implement the chart creation methods (bar, grouped bar and pie), the two-page printReport method, exportCSV, exportExcel with styled headers and alternating rows, and exportPDF with embedded chart image.
+
+/**
+ * Report generation screen for IPOS-SA.
+ * Allows staff to generate, view, print and export seven report types.
+ * Reports are displayed in a tabbed pane with a table view and a formatted
+ * text view with an embedded chart where applicable.
+ *
+ * Report types: Low Stock, Turnover, Merchant Orders, Merchant Activity,
+ * Invoices by Merchant, All Invoices and Stock Turnover.
+ *
+ * Supports exporting to CSV, Excel (.xlsx) and PDF.
+ * PDF and Excel exports include charts where available.
+ *
+ * Claude AI was used in this class to assist with the creation of methods to
+ * print the report as a PDF, CSV and Excel file, as well as in the creation
+ * of graphs for the report.
+ */
 public class ReportForm extends BaseFrame {
 
+    /** Service used to retrieve all report data from the database. */
     private final ReportService reportService;
 
+    /** Dropdown for selecting the report type to generate. */
     private JComboBox<String> reportTypeCombo;
+
+    /** Dropdown for selecting a merchant — enabled for merchant-specific reports. */
     private JComboBox<String> merchantCombo;
+
+    /** Date spinner for the start of the reporting period. */
     private JSpinner fromDateSpinner;
+
+    /** Date spinner for the end of the reporting period. */
     private JSpinner toDateSpinner;
+
+    /** Table for displaying report data in the table view tab. */
     private JTable reportTable;
+
+    /** Text area for displaying formatted report output in the formatted view tab. */
     private JTextArea reportTextArea;
+
+    /** Tabbed pane containing the table view and formatted view tabs. */
     private JTabbedPane tabbedPane;
+
+    /** Status bar label showing report generation status or export messages. */
     private JLabel statusLabel;
+
+    /** Panel containing the chart rendered for the current report. */
     private JPanel chartPanel;
 
+    /** The data rows from the most recently generated report. */
     private List<String[]> currentData;
+
+    /** The column headers from the most recently generated report. */
     private String[] currentColumns;
+
+    /** The type of the most recently generated report — used for export file naming. */
     private String currentReportType = "";
 
+    /**
+     * Constructor — builds the report screen and loads the merchant dropdown.
+     *
+     * @param fullname the full name of the logged-in user
+     * @param role     the role of the logged-in user
+     * @param router   the screen router used for navigation
+     */
     public ReportForm(String fullname, String role, ScreenRouter router) {
         super(fullname, role, "Report Viewer", router);
         this.reportService = new ReportService();
@@ -49,16 +97,24 @@ public class ReportForm extends BaseFrame {
         loadMerchants();
     }
 
+    /**
+     * Returns the title displayed in the page header.
+     *
+     * @return the header title string
+     */
     @Override
     protected String getHeaderTitle() {
         return "Report Generator";
     }
 
+    /**
+     * Builds and arranges all UI components for this screen.
+     * Includes a filter bar, tabbed report view and export buttons.
+     */
     private void buildContent() {
         CenterPanel.setLayout(new BorderLayout());
         CenterPanel.setBackground(new Color(245, 247, 250));
 
-        // ── FILTER BAR ────────────────────────────────────────
         JPanel filterPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 10));
         filterPanel.setBackground(new Color(17, 24, 39));
         filterPanel.setBorder(BorderFactory.createEmptyBorder(10, 16, 10, 16));
@@ -77,6 +133,8 @@ public class ReportForm extends BaseFrame {
                 "Stock Turnover"
         });
         reportTypeCombo.setPreferredSize(new Dimension(180, 30));
+
+        // Show or hide merchant dropdown based on selected report type
         reportTypeCombo.addActionListener(e -> updateMerchantDropdown());
 
         JLabel merchantLbl = new JLabel("Merchant:");
@@ -90,6 +148,7 @@ public class ReportForm extends BaseFrame {
         fromLbl.setForeground(Color.WHITE);
         fromLbl.setFont(new java.awt.Font("Segoe UI", java.awt.Font.PLAIN, 12));
 
+        // Default from date to 30 days ago
         fromDateSpinner = new JSpinner(new SpinnerDateModel());
         JSpinner.DateEditor fromEditor = new JSpinner.DateEditor(fromDateSpinner, "dd-MM-yyyy");
         fromDateSpinner.setEditor(fromEditor);
@@ -99,6 +158,7 @@ public class ReportForm extends BaseFrame {
         toLbl.setForeground(Color.WHITE);
         toLbl.setFont(new java.awt.Font("Segoe UI", java.awt.Font.PLAIN, 12));
 
+        // Default to date to today
         toDateSpinner = new JSpinner(new SpinnerDateModel());
         JSpinner.DateEditor toEditor = new JSpinner.DateEditor(toDateSpinner, "dd-MM-yyyy");
         toDateSpinner.setEditor(toEditor);
@@ -109,10 +169,9 @@ public class ReportForm extends BaseFrame {
         filterPanel.add(fromLbl);        filterPanel.add(fromDateSpinner);
         filterPanel.add(toLbl);          filterPanel.add(toDateSpinner);
 
-        // ── TABBED PANE ───────────────────────────────────────
         tabbedPane = new JTabbedPane();
 
-        // Table view
+        // Table view tab
         reportTable = new JTable();
         reportTable.setFont(new java.awt.Font("Segoe UI", java.awt.Font.PLAIN, 12));
         reportTable.setRowHeight(25);
@@ -121,19 +180,16 @@ public class ReportForm extends BaseFrame {
         reportTable.getTableHeader().setForeground(Color.WHITE);
         tabbedPane.addTab("Table View", new JScrollPane(reportTable));
 
-        // Formatted view
-        // Replace the formatted view tab with a split pane
+        // Formatted view tab — split between chart (top) and text output (bottom)
         JSplitPane formattedSplit = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
         formattedSplit.setResizeWeight(0.5);
         formattedSplit.setDividerSize(6);
 
-// Chart on top
         chartPanel = new JPanel(new BorderLayout());
         chartPanel.setBackground(Color.WHITE);
         chartPanel.setPreferredSize(new Dimension(800, 350));
         formattedSplit.setTopComponent(chartPanel);
 
-// Formatted text below
         reportTextArea = new JTextArea();
         reportTextArea.setFont(new java.awt.Font("Monospaced", java.awt.Font.PLAIN, 12));
         reportTextArea.setEditable(false);
@@ -141,7 +197,6 @@ public class ReportForm extends BaseFrame {
 
         tabbedPane.addTab("Formatted View", formattedSplit);
 
-        // ── BOTTOM BUTTONS ────────────────────────────────────
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 10));
         buttonPanel.setBackground(new Color(17, 24, 39));
         buttonPanel.setBorder(BorderFactory.createEmptyBorder(10, 12, 10, 12));
@@ -180,7 +235,10 @@ public class ReportForm extends BaseFrame {
         CenterPanel.add(buttonPanel,  BorderLayout.SOUTH);
     }
 
-    // ── DATA METHODS ─────────────────────────────────────────
+    /**
+     * Populates the merchant dropdown from the database.
+     * Called on construction and can be called again to refresh.
+     */
     private void loadMerchants() {
         try {
             List<String[]> merchants = reportService.getMerchantList();
@@ -192,6 +250,11 @@ public class ReportForm extends BaseFrame {
         }
     }
 
+    /**
+     * Enables or disables the merchant dropdown based on the selected report type.
+     * Only merchant-specific reports (Merchant Orders, Merchant Activity,
+     * Invoices by Merchant) require a merchant to be selected.
+     */
     private void updateMerchantDropdown() {
         String selected = (String) reportTypeCombo.getSelectedItem();
         boolean needsMerchant = selected.equals("Merchant Orders") ||
@@ -200,6 +263,11 @@ public class ReportForm extends BaseFrame {
         merchantCombo.setEnabled(needsMerchant);
     }
 
+    /**
+     * Generates the selected report and updates the table, formatted view and chart.
+     * Reads the current filter bar values and delegates to the appropriate
+     * ReportService method. For Merchant Activity the formatted view is shown directly.
+     */
     private void generateReport() {
         String reportType        = (String) reportTypeCombo.getSelectedItem();
         Date   fromDate          = (Date)   fromDateSpinner.getValue();
@@ -210,6 +278,7 @@ public class ReportForm extends BaseFrame {
             statusLabel.setText("Generating report...");
             currentReportType = reportType;
 
+            // Extract merchant ID from the "ID - Name" format in the dropdown
             String merchantId = merchantSelection != null && merchantSelection.contains(" - ")
                     ? merchantSelection.split(" - ")[0] : "";
 
@@ -246,6 +315,7 @@ public class ReportForm extends BaseFrame {
                     break;
                 }
                 case "Merchant Activity": {
+                    // Merchant Activity returns a pre-formatted text string — show directly
                     String text = reportService.getMerchantActivityReport(merchantId, fromDate, toDate);
                     reportTextArea.setText(text);
                     reportTextArea.setCaretPosition(0);
@@ -290,7 +360,15 @@ public class ReportForm extends BaseFrame {
         }
     }
 
-    // ── CHART ─────────────────────────────────────────────────
+    /**
+     * Builds and displays a JFreeChart for the current report in the chart panel.
+     * Chart type varies by report — bar charts for numeric data, pie chart for status breakdowns.
+     * Shows a "no chart available" label for report types without a chart.
+     *
+     * @param data       the report data rows
+     * @param columns    the report column headers
+     * @param reportType the type of report being displayed
+     */
     private void updateChart(List<String[]> data, String[] columns, String reportType) {
         chartPanel.removeAll();
         JFreeChart chart = null;
@@ -305,11 +383,13 @@ public class ReportForm extends BaseFrame {
                         "Item", "Quantity", 1, 4);
                 break;
             case "Stock Turnover":
+                // Grouped bar chart compares sold vs received per item
                 chart = createGroupedBarChart(data, "Stock Turnover",
                         "Item", "Quantity", 1, 2, 3, "Sold", "Received");
                 break;
             case "All Invoices":
             case "Invoices by Merchant":
+                // Pie chart shows proportion of each invoice status
                 chart = createPieChart(data, "Invoice Status Breakdown",
                         columns.length - 1);
                 break;
@@ -326,6 +406,7 @@ public class ReportForm extends BaseFrame {
             cp.setPreferredSize(new Dimension(800, 500));
             chartPanel.add(cp, BorderLayout.CENTER);
         } else {
+            // Show placeholder label for reports that do not have a chart
             JLabel noChart = new JLabel("No chart available for this report type.",
                     SwingConstants.CENTER);
             noChart.setFont(new java.awt.Font("Segoe UI", java.awt.Font.PLAIN, 14));
@@ -338,6 +419,17 @@ public class ReportForm extends BaseFrame {
         tabbedPane.setSelectedIndex(1);
     }
 
+    /**
+     * Creates a single-series vertical bar chart from the report data.
+     *
+     * @param data      the report data rows
+     * @param title     the chart title
+     * @param xLabel    the x-axis label
+     * @param yLabel    the y-axis label
+     * @param labelCol  the column index to use for bar labels
+     * @param valueCol  the column index to use for bar values
+     * @return the configured JFreeChart
+     */
     private JFreeChart createBarChart(List<String[]> data, String title,
                                       String xLabel, String yLabel,
                                       int labelCol, int valueCol) {
@@ -345,6 +437,7 @@ public class ReportForm extends BaseFrame {
         for (String[] row : data) {
             try {
                 double val = Double.parseDouble(row[valueCol].replaceAll("[^0-9.]", ""));
+                // Truncate long labels to 10 characters to prevent overlap
                 String lbl = row[labelCol].length() > 10
                         ? row[labelCol].substring(0, 10) : row[labelCol];
                 dataset.addValue(val, yLabel, lbl);
@@ -360,6 +453,21 @@ public class ReportForm extends BaseFrame {
         return chart;
     }
 
+    /**
+     * Creates a grouped bar chart with two series from the report data.
+     * Used for the Stock Turnover report to compare goods sold vs received.
+     *
+     * @param data    the report data rows
+     * @param title   the chart title
+     * @param xLabel  the x-axis label
+     * @param yLabel  the y-axis label
+     * @param labelCol the column index for bar labels
+     * @param col1    the column index for the first series values
+     * @param col2    the column index for the second series values
+     * @param series1 the label for the first series
+     * @param series2 the label for the second series
+     * @return the configured JFreeChart
+     */
     private JFreeChart createGroupedBarChart(List<String[]> data, String title,
                                              String xLabel, String yLabel,
                                              int labelCol, int col1, int col2,
@@ -385,8 +493,19 @@ public class ReportForm extends BaseFrame {
         return chart;
     }
 
+    /**
+     * Creates a pie chart from the status column of the report data.
+     * Counts occurrences of each unique status value to build the dataset.
+     *
+     * @param data      the report data rows
+     * @param title     the chart title
+     * @param statusCol the column index containing the status values
+     * @return the configured JFreeChart
+     */
     private JFreeChart createPieChart(List<String[]> data, String title, int statusCol) {
         DefaultPieDataset dataset = new DefaultPieDataset();
+
+        // Count how many rows have each status value
         java.util.Map<String, Integer> counts = new java.util.LinkedHashMap<>();
         for (String[] row : data) {
             String status = row[statusCol];
@@ -405,6 +524,12 @@ public class ReportForm extends BaseFrame {
         return chart;
     }
 
+    /**
+     * Applies a consistent visual style to a CategoryPlot bar chart.
+     * Sets background, grid, outline and series colours.
+     *
+     * @param chart the chart to style
+     */
     private void styleChart(JFreeChart chart) {
         chart.setBackgroundPaint(Color.WHITE);
         chart.getTitle().setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 16));
@@ -421,7 +546,13 @@ public class ReportForm extends BaseFrame {
         renderer.setMaximumBarWidth(0.1);
     }
 
-    // ── TABLE + FORMATTED VIEW ────────────────────────────────
+    /**
+     * Populates the report table and stores data for export.
+     * Switches the tab to the table view after loading.
+     *
+     * @param data    the report data rows
+     * @param columns the report column headers
+     */
     private void updateTableWithData(List<String[]> data, String[] columns) {
         currentData    = data;
         currentColumns = columns;
@@ -431,12 +562,27 @@ public class ReportForm extends BaseFrame {
         };
         for (String[] row : data) model.addRow(row);
         reportTable.setModel(model);
+
+        // Set a uniform default width for all columns
         for (int i = 0; i < reportTable.getColumnCount(); i++) {
             reportTable.getColumnModel().getColumn(i).setPreferredWidth(120);
         }
         tabbedPane.setSelectedIndex(0);
     }
 
+    /**
+     * Builds and displays the formatted text report in the text area.
+     * Includes a header with generation date and period, optional merchant details
+     * and a tabular layout of the data rows.
+     *
+     * @param title      the report title heading
+     * @param columns    the column headers
+     * @param data       the report data rows
+     * @param fromDate   the start of the reporting period
+     * @param toDate     the end of the reporting period
+     * @param merchantId the merchant ID — used to fetch and include merchant details,
+     *                   or empty string for non-merchant reports
+     */
     private void updateFormattedView(String title, String[] columns,
                                      List<String[]> data, Date fromDate, Date toDate,
                                      String merchantId) {
@@ -450,7 +596,7 @@ public class ReportForm extends BaseFrame {
         sb.append("Period:    ").append(sdf.format(fromDate))
                 .append(" to ").append(sdf.format(toDate)).append("\n");
 
-        // Add merchant details if provided
+        // Add merchant details if a merchant ID was provided
         if (merchantId != null && !merchantId.isEmpty()) {
             String[] merchant = reportService.getMerchantDetails(merchantId);
             if (merchant != null) {
@@ -466,9 +612,11 @@ public class ReportForm extends BaseFrame {
 
         sb.append("-".repeat(70)).append("\n\n");
 
+        // Column headers row
         for (String col : columns) sb.append(String.format("%-20s", col));
         sb.append("\n").append("-".repeat(70)).append("\n");
 
+        // Data rows
         for (String[] row : data) {
             for (String cell : row) sb.append(String.format("%-20s", cell != null ? cell : ""));
             sb.append("\n");
@@ -481,7 +629,12 @@ public class ReportForm extends BaseFrame {
         reportTextArea.setCaretPosition(0);
     }
 
-    // ── PRINT ─────────────────────────────────────────────────
+    /**
+     * Sends the report to the printer across two pages.
+     * Page 1 — title banner and chart.
+     * Page 2 — formatted text output.
+     * Uses landscape A4 orientation.
+     */
     private void printReport() {
         try {
             java.awt.print.PrinterJob job = java.awt.print.PrinterJob.getPrinterJob();
@@ -503,7 +656,6 @@ public class ReportForm extends BaseFrame {
 
                 if (pageIndex == 0) {
                     // Page 1; title + chart
-                    // Title
                     g2.setColor(new Color(14, 37, 48));
                     g2.fillRect(0, 0, (int) pageWidth, 36);
                     g2.setColor(Color.WHITE);
@@ -514,7 +666,7 @@ public class ReportForm extends BaseFrame {
                     g2.setFont(new java.awt.Font("Segoe UI", java.awt.Font.PLAIN, 9));
                     g2.drawString("Generated: " + new SimpleDateFormat("dd-MM-yyyy HH:mm").format(new Date()), 12, 50);
 
-                    // Chart
+                    // Render the chart onto the page if one is available
                     if (chartPanel.getComponentCount() > 0 &&
                             chartPanel.getComponent(0) instanceof ChartPanel) {
                         ChartPanel cp    = (ChartPanel) chartPanel.getComponent(0);
@@ -542,7 +694,7 @@ public class ReportForm extends BaseFrame {
                     String[] lines = reportTextArea.getText().split("\n");
                     int y = 52;
                     for (String line : lines) {
-                        if (y > pageHeight - 20) break;
+                        if (y > pageHeight - 20) break; // Stop if we reach the page bottom
                         g2.drawString(line, 0, y);
                         y += 10;
                     }
@@ -565,7 +717,11 @@ public class ReportForm extends BaseFrame {
         }
     }
 
-    // ── CSV EXPORT ────────────────────────────────────────────
+    /**
+     * Exports the current report data to a CSV file.
+     * Prompts the user to select a save location via a file chooser.
+     * Each cell value is quoted to handle commas in data.
+     */
     private void exportCSV() {
         if (currentData == null || currentData.isEmpty()) {
             statusLabel.setText("Generate a report first.");
@@ -577,7 +733,10 @@ public class ReportForm extends BaseFrame {
         if (chooser.showSaveDialog(this) != JFileChooser.APPROVE_OPTION) return;
 
         try (PrintWriter writer = new PrintWriter(new FileWriter(chooser.getSelectedFile()))) {
+            // Write column headers
             writer.println(String.join(",", currentColumns));
+
+            // Write each data row with quoted values
             for (String[] row : currentData) {
                 StringBuilder sb = new StringBuilder();
                 for (int i = 0; i < row.length; i++) {
@@ -595,7 +754,11 @@ public class ReportForm extends BaseFrame {
         }
     }
 
-    // ── EXCEL EXPORT ──────────────────────────────────────────
+    /**
+     * Exports the current report data to an Excel (.xlsx) file.
+     * Includes a title row, generation date, styled column headers and
+     * alternating row colours. Columns are auto-sized after population.
+     */
     private void exportExcel() {
         if (currentData == null || currentData.isEmpty()) {
             statusLabel.setText("Generate a report first.");
@@ -609,7 +772,7 @@ public class ReportForm extends BaseFrame {
         try (XSSFWorkbook workbook = new XSSFWorkbook()) {
             XSSFSheet sheet = workbook.createSheet(currentReportType);
 
-            // Header style
+            // Dark header cell style with white bold text
             XSSFCellStyle headerStyle = workbook.createCellStyle();
             headerStyle.setFillForegroundColor(new XSSFColor(new byte[]{14, 37, 48}, null));
             headerStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
@@ -620,7 +783,7 @@ public class ReportForm extends BaseFrame {
             headerFont.setFontName("Segoe UI");
             headerStyle.setFont(headerFont);
 
-            // Alternating row style
+            // Light grey alternating row style
             XSSFCellStyle altStyle = workbook.createCellStyle();
             altStyle.setFillForegroundColor(new XSSFColor(new byte[]{(byte)245, (byte)247, (byte)250}, null));
             altStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
@@ -637,15 +800,15 @@ public class ReportForm extends BaseFrame {
             titleStyle.setFont(titleFont);
             titleCell.setCellStyle(titleStyle);
 
-            // Date row
+            // Generation date row
             Row dateRow = sheet.createRow(1);
             dateRow.createCell(0).setCellValue(
                     "Generated: " + new SimpleDateFormat("dd-MM-yyyy HH:mm").format(new Date()));
 
-            // Blank row
+            // Blank spacer row
             sheet.createRow(2);
 
-            // Header row
+            // Column header row
             Row headerRow = sheet.createRow(3);
             for (int i = 0; i < currentColumns.length; i++) {
                 Cell cell = headerRow.createCell(i);
@@ -653,23 +816,22 @@ public class ReportForm extends BaseFrame {
                 cell.setCellStyle(headerStyle);
             }
 
-            // Data rows
+            // Data rows with alternating row shading
             for (int i = 0; i < currentData.size(); i++) {
                 Row row = sheet.createRow(i + 4);
                 String[] rowData = currentData.get(i);
                 for (int j = 0; j < rowData.length; j++) {
                     Cell cell = row.createCell(j);
                     cell.setCellValue(rowData[j] != null ? rowData[j] : "");
-                    if (i % 2 == 1) cell.setCellStyle(altStyle);
+                    if (i % 2 == 1) cell.setCellStyle(altStyle); // Apply to odd rows only
                 }
             }
 
-            // Auto size columns
+            // Auto size all columns to fit content
             for (int i = 0; i < currentColumns.length; i++) {
                 sheet.autoSizeColumn(i);
             }
 
-            // Write file
             try (FileOutputStream fos = new FileOutputStream(chooser.getSelectedFile())) {
                 workbook.write(fos);
             }
@@ -685,8 +847,14 @@ public class ReportForm extends BaseFrame {
         }
     }
 
-    // ── PDF EXPORT ────────────────────────────────────────────
+    /**
+     * Exports the current report to a PDF file.
+     * Includes a title banner, generation date, chart image (if available)
+     * and a styled data table with alternating row colours.
+     * Prompts the user to open the PDF after export.
+     */
     private void exportPDF() {
+        // Warn user to close the PDF if it is already open before overwriting
         JOptionPane.showMessageDialog(this,
                 "If the PDF is already open, please close it before exporting.",
                 "Before You Export", JOptionPane.INFORMATION_MESSAGE);
@@ -705,7 +873,7 @@ public class ReportForm extends BaseFrame {
             PdfWriter.getInstance(document, new FileOutputStream(chooser.getSelectedFile()));
             document.open();
 
-            // Fonts
+            // Define fonts for the PDF
             com.itextpdf.text.Font titleFont  = new com.itextpdf.text.Font(
                     com.itextpdf.text.Font.FontFamily.HELVETICA, 18,
                     com.itextpdf.text.Font.BOLD, BaseColor.WHITE);
@@ -719,7 +887,7 @@ public class ReportForm extends BaseFrame {
                     com.itextpdf.text.Font.FontFamily.HELVETICA, 10,
                     com.itextpdf.text.Font.NORMAL, BaseColor.GRAY);
 
-            // Title banner
+            // Dark navy title banner spanning the full page width
             PdfPTable titleTable = new PdfPTable(1);
             titleTable.setWidthPercentage(100);
             PdfPCell titleCell = new PdfPCell(
@@ -730,7 +898,7 @@ public class ReportForm extends BaseFrame {
             titleTable.addCell(titleCell);
             document.add(titleTable);
 
-            // Subtitle
+            // Generation metadata
             document.add(new Paragraph(
                     "Generated: " + new SimpleDateFormat("dd-MM-yyyy HH:mm").format(new Date()),
                     subFont));
@@ -738,12 +906,13 @@ public class ReportForm extends BaseFrame {
                     "Total records: " + currentData.size(), subFont));
             document.add(Chunk.NEWLINE);
 
-            // Add chart image to PDF if available
-            if (chartPanel.getComponentCount() > 0 && chartPanel.getComponent(0) instanceof ChartPanel) {
+            // Embed chart image in PDF if one is available
+            if (chartPanel.getComponentCount() > 0 &&
+                    chartPanel.getComponent(0) instanceof ChartPanel) {
                 ChartPanel cp = (ChartPanel) chartPanel.getComponent(0);
                 JFreeChart chart = cp.getChart();
 
-                // Render chart to image
+                // Render chart to a buffered image then convert to iText image
                 java.awt.image.BufferedImage chartImage = chart.createBufferedImage(700, 350);
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
                 javax.imageio.ImageIO.write(chartImage, "png", baos);
@@ -759,7 +928,7 @@ public class ReportForm extends BaseFrame {
             table.setWidthPercentage(100);
             table.setSpacingBefore(10);
 
-            // Header row
+            // Column header row with dark blue background
             for (String col : currentColumns) {
                 PdfPCell cell = new PdfPCell(new Phrase(col, headerFont));
                 cell.setBackgroundColor(new BaseColor(17, 54, 74));
@@ -768,7 +937,7 @@ public class ReportForm extends BaseFrame {
                 table.addCell(cell);
             }
 
-            // Data rows
+            // Data rows with alternating shading
             boolean alternate = false;
             for (String[] row : currentData) {
                 for (String cellVal : row) {
@@ -786,7 +955,6 @@ public class ReportForm extends BaseFrame {
 
             document.add(table);
 
-            // Footer
             document.add(Chunk.NEWLINE);
             document.add(new Paragraph(
                     "InfoPharma Ordering System — IPOS-SA Report", subFont));
@@ -798,7 +966,7 @@ public class ReportForm extends BaseFrame {
                     "Exported to:\n" + chooser.getSelectedFile().getAbsolutePath(),
                     "Export Successful", JOptionPane.INFORMATION_MESSAGE);
 
-            // Open PDF
+            // Offer to open the PDF immediately after export
             int open = JOptionPane.showConfirmDialog(this,
                     "Open PDF now?", "Open Report", JOptionPane.YES_NO_OPTION);
             if (open == JOptionPane.YES_OPTION) {
@@ -818,7 +986,11 @@ public class ReportForm extends BaseFrame {
         }
     }
 
-    // HELPERS
+    /**
+     * Applies a consistent visual style to an action button.
+     *
+     * @param btn the button to style
+     */
     private void styleBtn(JButton btn) {
         btn.setBackground(new Color(30, 70, 90));
         btn.setForeground(Color.WHITE);

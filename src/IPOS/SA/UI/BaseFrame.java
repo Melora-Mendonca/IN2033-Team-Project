@@ -1,14 +1,13 @@
 package IPOS.SA.UI;
 
-import IPOS.SA.ACC.UI.*;
-import IPOS.SA.CAT.UI.Catalogue;
 import IPOS.SA.ORD.UI.*;
-import IPOS.SA.RPT.UI.*;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+
+// Claude AI was used in this form in the role based navigation between forms as well as in the expandable nav panel functionality//
 
 // Shared layout: header, role-based sidebar nav, and a CenterPanel for each screen's content
 public abstract class BaseFrame extends JPanel {

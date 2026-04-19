@@ -5,6 +5,8 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 
+// AI (Claude) was used to implement the HTTP POST logic, JSON body construction and the async send method.
+
 /**
  * Service responsible for sending emails via the IPOS-PU email API.
  * Communicates with the IPOS-PU REST endpoint to deliver emails

@@ -9,20 +9,40 @@ import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Service class responsible for managing commercial membership applications.
+ * Provides methods to retrieve, approve and reject applications, create
+ * merchant accounts from approved applications and send notification emails
+ * to applicants via the IPOS-PU email service.
+ */
 public class CommercialAppService {
 
+    /** Database connection used for all queries and updates. */
     private final DBConnection db;
 
+    /**
+     * Default constructor — initialises the service with a database connection.
+     */
     public CommercialAppService() {
         this.db = new DBConnection();
     }
 
+    /**
+     * Retrieves a filtered list of commercial applications.
+     * Supports filtering by status and searching by company name or email.
+     * Results are ordered by application date descending.
+     *
+     * @param status the status to filter by — "All" returns all applications
+     * @param search the search text to match against company name or email
+     * @return list of matching CommercialApplication objects
+     * @throws Exception if a database error occurs
+     */
     // Gets all applications with optional status and search filter
-    public List<CommercialApplication> getApplications(String status, String search) throws Exception {
+    public List<CommercialApplication> getApplications(String status,
+                                                       String search) throws Exception {
         List<CommercialApplication> applications = new ArrayList<>();
 
-        String sql =
-                "SELECT * FROM commercial_applications WHERE 1=1";
+        String sql = "SELECT * FROM commercial_applications WHERE 1=1";
 
         if (!status.equals("All"))  sql += " AND status = '" + status + "'";
         if (!search.isEmpty())      sql += " AND (company_name LIKE '%" + search +
@@ -36,6 +56,13 @@ public class CommercialAppService {
         return applications;
     }
 
+    /**
+     * Retrieves a single commercial application by its ID.
+     *
+     * @param applicationId the unique application identifier
+     * @return the CommercialApplication if found, null otherwise
+     * @throws Exception if a database error occurs
+     */
     // Gets a single application by ID
     public CommercialApplication getApplication(int applicationId) throws Exception {
         ResultSet rs = db.query(
@@ -45,6 +72,17 @@ public class CommercialAppService {
         return null;
     }
 
+    /**
+     * Approves or rejects a commercial application.
+     * Updates the status, review date, review notes and reviewer ID.
+     *
+     * @param applicationId the unique application identifier
+     * @param decision  the decision — "approved" or "rejected"
+     * @param notes optional review notes from the reviewer
+     * @param reviewedBy  the user ID of the staff member making the decision
+     * @return true if the update was successful
+     * @throws Exception if a database error occurs
+     */
     // Approves or rejects an application
     public boolean processApplication(int applicationId, String decision,
                                       String notes, int reviewedBy) throws Exception {
@@ -56,6 +94,14 @@ public class CommercialAppService {
         return rows > 0;
     }
 
+    /**
+     * Sends an approval notification email to the applicant via the IPOS-PU email service.
+     * Informs the applicant their application has been approved and provides their merchant ID.
+     *
+     * @param email the applicant's email address
+     * @param companyName the applicant's company name
+     * @param merchantId  the newly created merchant account ID
+     */
     public void sendApprovalEmail(String email, String companyName, String merchantId) {
         String content = "Dear " + companyName + ",\n\n"
                 + "We are pleased to inform you that your commercial application has been approved.\n\n"
@@ -82,6 +128,14 @@ public class CommercialAppService {
         }
     }
 
+    /**
+     * Sends a rejection notification email to the applicant via the IPOS-PU email service.
+     * Includes the reviewer's notes if provided.
+     *
+     * @param email the applicant's email address
+     * @param companyName the applicant's company name
+     * @param notes optional rejection notes from the reviewer
+     */
     public void sendRejectionEmail(String email, String companyName, String notes) {
         String content = "Dear " + companyName + ",\n\n"
                 + "We regret to inform you that your commercial application has not been approved at this time.\n\n"
@@ -107,6 +161,16 @@ public class CommercialAppService {
         }
     }
 
+    /**
+     * Creates a new merchant account from an approved commercial application.
+     * Checks if a merchant with the same email already exists to prevent duplicates.
+     * Generates a merchant ID, hashes a default password and inserts the merchant record.
+     * Sends a welcome email with login credentials on successful creation.
+     *
+     * @param applicationId the ID of the approved application to create a merchant from
+     * @return the newly created merchant ID, or the existing merchant ID if already created
+     * @throws Exception if the application is not found or the merchant creation fails
+     */
     // Creates a merchant account from an approved application
     public String createMerchantFromApplication(int applicationId) throws Exception {
         CommercialApplication app = getApplication(applicationId);
@@ -154,18 +218,29 @@ public class CommercialAppService {
         throw new Exception("Failed to create merchant account");
     }
 
+    /**
+     * Sends a welcome email to a newly created merchant with their login credentials.
+     * Called automatically after a merchant account is created from an application.
+     *
+     * @param app the approved commercial application
+     * @param originalPassword the plain text default password
+     * @param merchantId the newly assigned merchant ID
+     */
     // Add this method to send merchant creation email
-    private void sendMerchantFromApplicationEmail(CommercialApplication app, String originalPassword, String merchantId) {
-        String emailContent = buildMerchantFromApplicationEmailContent(app, originalPassword, merchantId);
+    private void sendMerchantFromApplicationEmail(CommercialApplication app,
+                                                  String originalPassword,
+                                                  String merchantId) {
+        String emailContent = buildMerchantFromApplicationEmailContent(
+                app, originalPassword, merchantId);
 
         try {
             // Using IPOS-PU email API
             boolean emailSent = IPOSPUEmailClient.produceEmail(
-                    app.getEmail(),                          // recipient
-                    emailContent,                            // email body
-                    merchantId,                              // reference (merchant ID)
-                    "IPOS-SA",                               // sender
-                    "MerchantCreation"                       // subsystem
+                    app.getEmail(),       // recipient
+                    emailContent,         // email body
+                    merchantId,           // reference (merchant ID)
+                    "IPOS-SA",            // sender
+                    "MerchantCreation"    // subsystem
             );
 
             if (emailSent) {
@@ -174,12 +249,24 @@ public class CommercialAppService {
                 System.err.println("Failed to send merchant email to " + app.getEmail());
             }
         } catch (IOException e) {
-            System.err.println("Email service error for merchant " + app.getEmail() + ": " + e.getMessage());
+            System.err.println("Email service error for merchant " +
+                    app.getEmail() + ": " + e.getMessage());
         }
     }
 
+    /**
+     * Builds the email body for the merchant welcome email.
+     * Includes merchant account details and login credentials.
+     *
+     * @param app the approved commercial application
+     * @param originalPassword the plain text default password
+     * @param merchantId  the newly assigned merchant ID
+     * @return the formatted email body as a string
+     */
     // Add this method to build the email content
-    private String buildMerchantFromApplicationEmailContent(CommercialApplication app, String originalPassword, String merchantId) {
+    private String buildMerchantFromApplicationEmailContent(CommercialApplication app,
+                                                            String originalPassword,
+                                                            String merchantId) {
         return "Dear " + app.getCompanyName() + ",\n\n"
                 + "Congratulations! Your commercial application has been approved and your merchant account has been created.\n\n"
                 + "Merchant Account Details:\n"
@@ -199,6 +286,13 @@ public class CommercialAppService {
                 + "Regards,\nIPOS System Administrator";
     }
 
+    /**
+     * Returns the number of applications currently awaiting review.
+     * Used by dashboard screens to display the pending applications count.
+     *
+     * @return the count of pending applications
+     * @throws Exception if a database error occurs
+     */
     // Gets count of pending applications for dashboard
     public int getPendingCount() throws Exception {
         ResultSet rs = db.query(
@@ -207,9 +301,17 @@ public class CommercialAppService {
         return 0;
     }
 
+    /**
+     * Hashes a plain text password using SHA-256 encoding.
+     * Returns the hex string representation of the hash.
+     *
+     * @param password the plain text password to hash
+     * @return the SHA-256 hashed password as a hex string
+     */
     private String hashPassword(String password) {
         try {
-            java.security.MessageDigest md = java.security.MessageDigest.getInstance("SHA-256");
+            java.security.MessageDigest md =
+                    java.security.MessageDigest.getInstance("SHA-256");
             byte[] hash = md.digest(password.getBytes("UTF-8"));
             StringBuilder sb = new StringBuilder();
             for (byte b : hash) sb.append(String.format("%02x", b));
@@ -220,6 +322,15 @@ public class CommercialAppService {
         }
     }
 
+    /**
+     * Extracts a CommercialApplication object from the current row of a ResultSet.
+     * Handles nullable date and integer fields safely.
+     * Used as a shared helper to avoid duplicated mapping code.
+     *
+     * @param rs the ResultSet positioned at the row to extract
+     * @return a fully populated CommercialApplication object
+     * @throws Exception if a database error occurs
+     */
     // Extracts a CommercialApplication from a ResultSet row
     private CommercialApplication extractFromResultSet(ResultSet rs) throws Exception {
         CommercialApplication app = new CommercialApplication();

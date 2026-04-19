@@ -2,6 +2,9 @@ package IPOS.SA.UI;
 
 import javax.swing.*;
 import java.awt.*;
+
+// AI (Claude) was used to implement the CardLayout navigation and Refreshable onShow() call pattern.
+
 /**
  * Handles navigation between screens in IPOS-SA using a CardLayout.
  * Each screen is registered as a card with a unique name constant

@@ -16,18 +16,40 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * Service class responsible for all invoice operations in IPOS-SA.
+ * Handles invoice generation, retrieval, filtering and email notifications
+ * to merchants when invoices are created.
+ */
 public class InvoiceService {
+
+    /** Database connection used for all queries and updates. */
     private DBConnection db;
 
+    /**
+     * Default constructor — initialises the service with a database connection.
+     */
     public InvoiceService() {
         this.db = new DBConnection();
     }
 
+    /**
+     * Generates a new invoice for an accepted order and saves it to the database.
+     * The invoice date is set to today and the due date is 30 days from today.
+     * The invoice is created with status unpaid and amount paid of zero.
+     *
+     * @param order       the order to generate an invoice for
+     * @param account     the merchant account the order belongs to
+     * @param finalAmount the final order value after discount
+     * @return the newly created Invoice object
+     * @throws Exception if a database error occurs
+     */
     // Creates invoice record and persists to DB; due date is 30 days from today
-    public Invoice generateInvoice(Order order, MerchantAccount account, double finalAmount) throws Exception {
-        String invoiceId = "INV-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+    public Invoice generateInvoice(Order order, MerchantAccount account,
+                                   double finalAmount) throws Exception {
+        String invoiceId  = "INV-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
         LocalDate invoiceDate = LocalDate.now();
-        LocalDate dueDate = invoiceDate.plusDays(30);
+        LocalDate dueDate     = invoiceDate.plusDays(30);
 
         Invoice invoice = new Invoice(
                 invoiceId,
@@ -57,6 +79,16 @@ public class InvoiceService {
         return invoice;
     }
 
+    /**
+     * Retrieves all invoices from the database with optional status and search filtering.
+     * Joins with the order and merchant tables to include the merchant's company name.
+     * Results are ordered by invoice date descending.
+     *
+     * @param status the status to filter by — "All" returns all invoices
+     * @param search the search text to match against invoice ID or merchant name
+     * @return list of invoice rows, each containing 9 fields for the table display
+     * @throws Exception if a database error occurs
+     */
     public List<Object[]> getAllInvoices(String status, String search) throws Exception {
         List<Object[]> rows = new ArrayList<>();
         Connection conn = new DBConnection().getConn();
@@ -93,11 +125,31 @@ public class InvoiceService {
         return rows;
     }
 
+    /**
+     * Retrieves a single invoice by its ID including all line items.
+     * Delegates to InvoiceDBConnector which joins with the order table
+     * to retrieve the merchant ID and loads order items via OrderDBConnector.
+     *
+     * @param invoiceId the unique invoice identifier
+     * @return the fully populated Invoice object, or null if not found
+     * @throws Exception if a database error occurs
+     */
     public Invoice getInvoiceById(String invoiceId) throws Exception {
         InvoiceDBConnector db = new InvoiceDBConnector();
         return db.getInvoiceById(invoiceId);
     }
 
+    /**
+     * Retrieves invoices for a specific merchant with optional status and search filtering.
+     * Joins with the order and merchant tables to filter by merchant ID.
+     * Results are ordered by invoice date descending.
+     *
+     * @param merchantId the unique merchant identifier to filter by
+     * @param status     the status to filter by — "All" returns all statuses
+     * @param search     the search text to match against invoice ID
+     * @return list of invoice rows for the specified merchant
+     * @throws Exception if a database error occurs
+     */
     public List<Object[]> getMerchantInvoices(String merchantId,
                                               String status,
                                               String search) throws Exception {
@@ -133,10 +185,23 @@ public class InvoiceService {
         return rows;
     }
 
+    /**
+     * Updates the days overdue count and payment status for all unpaid invoices.
+     * Delegates to InvoiceDBConnector which runs a single SQL UPDATE using DATEDIFF.
+     * Called on Refresh in InvoiceListFrame to keep invoice statuses current.
+     */
     public void updateOverdueDays() {
         new InvoiceDBConnector().updateOverdueDays();
     }
 
+    /**
+     * Generates an invoice for an order and sends a notification email to the merchant.
+     * Looks up the order and merchant details, inserts the invoice record and
+     * sends a formatted invoice email via the IPOS-PU email service.
+     *
+     * @param orderId the unique order identifier to generate an invoice for
+     * @throws Exception if the order is not found or a database error occurs
+     */
     // Used by the order API to auto-generate an invoice and email the merchant
     public void generateInvoiceForOrder(String orderId) throws Exception {
         DBConnection db = new DBConnection();
@@ -150,10 +215,10 @@ public class InvoiceService {
 
         if (!rs.next()) throw new Exception("Order not found: " + orderId);
 
-        double finalAmount = rs.getDouble("final_amount");
+        double finalAmount   = rs.getDouble("final_amount");
         String merchantEmail = rs.getString("email");
-        String companyName = rs.getString("company_name");
-        String merchantId = rs.getString("merchant_id");
+        String companyName   = rs.getString("company_name");
+        String merchantId    = rs.getString("merchant_id");
         java.sql.Date orderDate = rs.getDate("order_date");
 
         // Generate unique invoice ID
@@ -168,23 +233,38 @@ public class InvoiceService {
 
         // Calls the emailService API to send an invoice email to the merchant
         if (rowsAffected > 0) {
-            sendInvoiceEmail(merchantEmail, companyName, merchantId, invoiceId, orderId, finalAmount, orderDate);
+            sendInvoiceEmail(merchantEmail, companyName, merchantId,
+                    invoiceId, orderId, finalAmount, orderDate);
         }
     }
 
+    /**
+     * Sends an invoice notification email to a merchant via the IPOS-PU email service.
+     *
+     * @param merchantEmail the merchant's email address
+     * @param companyName   the merchant's company name
+     * @param merchantId    the merchant's unique identifier
+     * @param invoiceId     the unique invoice identifier
+     * @param orderId       the associated order identifier
+     * @param amount        the total invoice amount
+     * @param orderDate     the date the order was placed
+     */
     // Add this method to send invoice email
-    private void sendInvoiceEmail(String merchantEmail, String companyName, String merchantId,
-                                  String invoiceId, String orderId, double amount, java.sql.Date orderDate) {
-        String emailContent = buildInvoiceEmailContent(companyName, merchantId, invoiceId, orderId, amount, orderDate);
+    private void sendInvoiceEmail(String merchantEmail, String companyName,
+                                  String merchantId, String invoiceId,
+                                  String orderId, double amount,
+                                  java.sql.Date orderDate) {
+        String emailContent = buildInvoiceEmailContent(
+                companyName, merchantId, invoiceId, orderId, amount, orderDate);
 
         try {
             // Using IPOS-PU email API
             boolean emailSent = IPOSPUEmailClient.produceEmail(
-                    merchantEmail,                           // recipient
-                    emailContent,                            // email body
-                    invoiceId,                               // reference (invoice ID)
-                    "IPOS-SA",                               // sender
-                    "Invoicing"                              // subsystem
+                    merchantEmail,   // recipient
+                    emailContent,    // email body
+                    invoiceId,       // reference (invoice ID)
+                    "IPOS-SA",       // sender
+                    "Invoicing"      // subsystem
             );
 
             if (emailSent) {
@@ -193,10 +273,23 @@ public class InvoiceService {
                 System.err.println("Failed to send invoice email to " + merchantEmail);
             }
         } catch (IOException e) {
-            System.err.println("Email service error for invoice " + invoiceId + ": " + e.getMessage());
+            System.err.println("Email service error for invoice " +
+                    invoiceId + ": " + e.getMessage());
         }
     }
 
+    /**
+     * Builds the email body for an invoice notification email.
+     * Includes order details, invoice details and payment instructions.
+     *
+     * @param companyName the merchant's company name
+     * @param merchantId  the merchant's unique identifier
+     * @param invoiceId   the unique invoice identifier
+     * @param orderId     the associated order identifier
+     * @param amount      the total invoice amount
+     * @param orderDate   the date the order was placed
+     * @return the formatted email body as a string
+     */
     // Add this method to build the invoice email content
     private String buildInvoiceEmailContent(String companyName, String merchantId,
                                             String invoiceId, String orderId,
@@ -218,17 +311,25 @@ public class InvoiceService {
                 + "Invoice ID: " + invoiceId + "\n"
                 + "Invoice Date: " + invoiceDate + "\n"
                 + "Due Date: " + dueDate + "\n"
-                + "Total Amount: $" + String.format("%.2f", amount) + "\n"
-                + "Amount Paid: $0.00\n"
+                + "Total Amount: £" + String.format("%.2f", amount) + "\n"
+                + "Amount Paid: £0.00\n"
                 + "Status: Unpaid\n\n"
                 + "Please make payment by the due date to avoid late fees.\n\n"
                 + "If you have already made payment, please disregard this notice.\n\n"
                 + "Regards,\nIPOS System Administrator";
     }
 
+    /**
+     * Returns a brief invoice summary string for a given order ID.
+     * Used by the REST API to return invoice details to IPOS-CA.
+     *
+     * @param orderId the order ID to look up the invoice for
+     * @return a formatted summary string, or an error/not found message
+     */
     public String getInvoiceAsString(String orderId) {
         try {
-            ResultSet rs = db.query("SELECT * FROM invoice WHERE order_id = ?", orderId);
+            ResultSet rs = db.query(
+                    "SELECT * FROM invoice WHERE order_id = ?", orderId);
             if (rs.next()) {
                 return "Invoice ID: " + rs.getString("invoice_id") +
                         ", Total: £" + rs.getDouble("total_amount") +

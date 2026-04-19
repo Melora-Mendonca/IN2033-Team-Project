@@ -16,6 +16,8 @@ import IPOS.SA.ORD.Model.Order;
 import IPOS.SA.ORD.Model.OrderItem;
 import IPOS.SA.ACC.Model.MerchantAccount;
 
+// AI (Claude) was used to implement all REST endpoints, JSON parsing and query parameter extraction.
+
 /**
  * REST API server for IPOS-SA inter-system communication.
  * Listens on port 8081 and exposes endpoints for IPOS-CA and IPOS-PU
