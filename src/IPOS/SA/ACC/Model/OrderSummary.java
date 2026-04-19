@@ -1,12 +1,25 @@
 package IPOS.SA.ACC.Model;
 
+/**
+ * Represents a summary of an order for display in the Admin Dashboard.
+ * Contains key order details shown in the recent orders table.
+ */
 public class OrderSummary {
-    private String orderId;
-    private String merchantName;
-    private String orderDate;
-    private String status;
-    private double totalAmount;
+    private String orderId; // The unique ID of the order
+    private String merchantName; // the name of the ordering merchant
+    private String orderDate; // the date the order was placed
+    private String status; // the current status of the order
+    private double totalAmount; // the total cost of the order
 
+    /**
+     * Constructor — creates an order summary with all required fields.
+     *
+     * @param orderId      the unique order identifier
+     * @param merchantName the name of the merchant
+     * @param orderDate    the date the order was placed
+     * @param status       the current order status
+     * @param totalAmount  the total order value
+     */
     public OrderSummary(String orderId, String merchantName, String orderDate,
                         String status, double totalAmount) {
         this.orderId = orderId;

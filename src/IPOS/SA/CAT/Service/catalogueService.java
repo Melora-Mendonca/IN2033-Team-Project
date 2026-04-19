@@ -77,7 +77,22 @@ public class catalogueService {
 
     // Save a new item
     public boolean saveItem(CatalogueItem item) throws Exception {
-        // Check if item already exists
+        CatalogueItem inactive = loadInactiveItem(item.getItemId());
+        if (inactive != null) {
+            // Reactivate and update with new details
+            db.update("UPDATE catalogue SET is_active = 1, description = ?, " +
+                            "package_type = ?, unit = ?, unit_per_pack = ?, package_cost = ?, " +
+                            "availability = ?, minimum_stock_level = ? WHERE item_id = ?",
+                    item.getDescription(),
+                    item.getPackageType(),
+                    item.getUnit(),
+                    item.getUnitsInPack(),
+                    item.getPackageCost(),
+                    item.getAvailabilityPacks(),
+                    item.getStockLimitPacks(),
+                    item.getItemId());
+            return true;
+        } // Check if item already exists
         if (itemExists(item.getItemId())) {
             return false;
         }
@@ -122,7 +137,7 @@ public class catalogueService {
         return rowsAffected > 0;
     }
 
-    // Deactivate an item (soft delete)
+    // Deactivate an item (delete)
     public boolean deactivateItem(String itemId) throws Exception {
         if (!itemExists(itemId)) {
             return false;
@@ -247,5 +262,38 @@ public class catalogueService {
                 rs.getInt("availability"),
                 rs.getInt("minimum_stock_level")
         );
+    }
+
+    public double getItemPrice(String itemId) {
+        try {
+            DBConnection db = new DBConnection();
+            ResultSet rs = db.query("SELECT package_cost FROM catalogue WHERE item_id = ? AND is_active = 1", itemId);
+            if (rs.next()) return rs.getDouble("package_cost");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return 0.0;
+    }
+
+    public CatalogueItem loadInactiveItem(String id) {
+        try {
+            ResultSet rs = db.query(
+                    "SELECT * FROM catalogue WHERE item_id = ? AND is_active = 0", id);
+            if (rs.next()) {
+                return new CatalogueItem(
+                        rs.getString("item_id"),
+                        rs.getString("description"),
+                        rs.getString("package_type"),
+                        rs.getString("unit"),
+                        rs.getInt("unit_per_pack"),
+                        rs.getDouble("package_cost"),
+                        rs.getInt("availability"),
+                        rs.getInt("minimum_stock_level")
+                );
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 }

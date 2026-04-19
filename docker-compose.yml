@@ -22,7 +22,8 @@ services:
     build: .
     container_name: ipos-sa-app
     depends_on:
-      - mysql
+      mysql:
+        condition: service_healthy
     environment:
       DB_HOST: mysql
       DB_PORT: 3306
@@ -33,6 +34,10 @@ services:
       - "8081:8081"
       - "5900:5900"
       - "6082:6082"
+    volumes:
+      - ./exports:/app/exports
+    extra_hosts:
+        - "host.docker.internal:host-gateway"
     stdin_open: true
     tty: true
 volumes:

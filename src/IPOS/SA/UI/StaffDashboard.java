@@ -70,7 +70,8 @@ public class StaffDashboard extends BaseFrame implements Refreshable{
     }
 
     private JPanel createCardsPanel(StaffDashboardData data) {
-        JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 16, 16));
+        JPanel panel = new JPanel(new GridLayout(1, 3, 16, 16));
+        panel.setBorder(BorderFactory.createEmptyBorder(16, 16, 16, 16));
         panel.setBackground(new Color(245, 247, 250));
         panel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 250));
         panel.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -98,7 +99,7 @@ public class StaffDashboard extends BaseFrame implements Refreshable{
         JPanel card = new JPanel();
         card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
         card.setBackground(bg);
-        card.setPreferredSize(new Dimension(350, 200));
+        //card.setPreferredSize(new Dimension(350, 200));
         card.setMaximumSize(new Dimension(400, 200));
         card.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 

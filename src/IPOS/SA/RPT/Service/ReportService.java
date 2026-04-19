@@ -19,19 +19,27 @@ public class ReportService {
         List<String[]> data = new ArrayList<>();
         ResultSet rs = db.query(
                 "SELECT item_id, description, package_type, unit, " +
-                        "availability, minimum_stock_level " +
+                        "availability, minimum_stock_level, buffer_percent " +
                         "FROM catalogue WHERE availability <= minimum_stock_level AND is_active = 1 " +
                         "ORDER BY (minimum_stock_level - availability) DESC"
         );
 
         while (rs.next()) {
+
+            int availability = rs.getInt("availability");
+            int minLevel = rs.getInt("minimum_stock_level");
+            double buffer = rs.getDouble("buffer_percent"); // from DB
+            int recommended = calculateRecommendedOrder(availability, minLevel, buffer);
+
+
             data.add(new String[]{
                     rs.getString("item_id"),
                     rs.getString("description"),
                     rs.getString("package_type"),
                     rs.getString("unit"),
                     String.valueOf(rs.getInt("availability")),
-                    String.valueOf(rs.getInt("minimum_stock_level"))
+                    String.valueOf(rs.getInt("minimum_stock_level")),
+                    String.valueOf(recommended)
             });
         }
         return data;
@@ -320,5 +328,39 @@ public class ReportService {
         String description = "";
         int sold = 0;
         double revenue = 0;
+    }
+
+    private int calculateRecommendedOrder(int availability, int minStockLevel, double bufferPercent) {
+        double targetStock = minStockLevel * (1 + bufferPercent / 100.0);
+        int recommended = (int) Math.ceil(targetStock - availability);
+        return Math.max(0, recommended); // never negative
+    }
+
+    public String[] getMerchantDetails(String merchantId) {
+        try {
+            DBConnection db = new DBConnection();
+            ResultSet rs = db.query(
+                    "SELECT merchant_id, company_name, business_type, registration_number, " +
+                            "email, phone, address, credit_limit, outstanding_balance, account_status " +
+                            "FROM merchant WHERE merchant_id = ?", merchantId);
+
+            if (rs.next()) {
+                return new String[]{
+                        rs.getString("merchant_id"),
+                        rs.getString("company_name"),
+                        rs.getString("business_type"),
+                        rs.getString("registration_number"),
+                        rs.getString("email"),
+                        rs.getString("phone"),
+                        rs.getString("address"),
+                        String.format("£%.2f", rs.getDouble("credit_limit")),
+                        String.format("£%.2f", rs.getDouble("outstanding_balance")),
+                        rs.getString("account_status")
+                };
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 }

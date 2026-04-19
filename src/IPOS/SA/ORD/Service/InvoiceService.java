@@ -226,7 +226,7 @@ public class InvoiceService {
 
     public String getInvoiceAsString(String orderId) {
         try {
-            ResultSet rs = db.query("SELECT * FROM Invoice WHERE order_id = ?", orderId);
+            ResultSet rs = db.query("SELECT * FROM invoice WHERE order_id = ?", orderId);
             if (rs.next()) {
                 return "Invoice ID: " + rs.getString("invoice_id") +
                         ", Total: £" + rs.getDouble("total_amount") +

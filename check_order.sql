@@ -1,0 +1,1 @@
+﻿SELECT order_id, merchant_id, status FROM `order` WHERE order_id='ORD_1776240589577';

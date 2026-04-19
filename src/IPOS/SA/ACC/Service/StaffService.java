@@ -131,9 +131,6 @@ public class StaffService {
             }
         } catch (Exception e) {
             System.err.println("Orders table error: " + e.getMessage());
-            // Return sample data if table doesn't exist
-            orders.add(new OrderSummary("ORD-001", "Sample Merchant", "2024-01-15", "Processing", 250.00));
-            orders.add(new OrderSummary("ORD-002", "Sample Merchant", "2024-01-14", "Delivered", 180.50));
         }
 
         return orders;

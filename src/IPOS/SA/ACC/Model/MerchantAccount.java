@@ -5,32 +5,60 @@ import IPOS.SA.ACC.AccountStatus;
 import java.sql.Date;
 import java.time.LocalDate;
 
+/**
+ * Represents a merchant account in the IPOS-SA system.
+ * Stores all business details, financial information, discount plan
+ * and account status for a registered merchant.
+ *
+ */
 public class MerchantAccount {
 
-    private final String merchantId;
-    private String businessName;
-    private String email;
-    private String phone;
-    private String fax;
-    private String address;
-    private double creditLimit;
-    private double outstandingBalance;
-    private DiscountPlan discountPlan;
-    private AccountStatus status;
-    private double discountPercentage; // For database storage
-    private String businessType;
-    private String registrationNumber;
-    private String accountStatus;
-    private String discountType;
-    private double fixedDiscountRate;
-    private double flexibleDiscountRate;
-    private java.sql.Date registrationDate;
-    private boolean isActive;
-    private java.sql.Date lastPaymentDate;
-    private String username;
-    private String password;
+    private final String merchantId; // the Unique ID for the merchant
+    private String businessName; // the registered business name for the merchant
+    private String email; // the merchant's email for contact
+    private String phone; // the merchant's phone number for contact
+    private String fax; // the merchant's fax for contact
+    private String address; // the merchant's registered address
+    private double creditLimit; // the max credit limit allowed for this merchant
+    private double outstandingBalance; // the current unpaid balance for the merchant that they owe
+    private DiscountPlan discountPlan; // the discount plan assigned to the merchant
+    private AccountStatus status; // the current status of the account, either normal, suspended or in default
+    private double discountPercentage; // the discount percentage applied to orders placed by the merchant
+    private String businessType; // the type of business
+    private String registrationNumber; // the company registration number
+    private String accountStatus; // the account status stored as a string
+    private String discountType; // the type of discount assigned to the merchant, either fixed or flexible
+    private double fixedDiscountRate;  // the fixed discount percentage
+    private double flexibleDiscountRate; // the flexible discount percentage
+    private java.sql.Date registrationDate; // the date that the merchant registered - the date the commercial application was accepted
+    private boolean isActive; // whether the merchant account is currently active or not
+    private java.sql.Date lastPaymentDate; // the date that the merchant last made a payment
+    private String username; // the username of the merchant
+    private String password; // ther password of the merchant
 
-    // Original constructor
+    /**
+     * Original constructor - used when creating a new merchant account with a username
+     *
+     * @param merchantId          unique merchant identifier
+     * @param businessName        registered business name
+     * @param businessType        type of business
+     * @param registrationNumber  company registration number
+     * @param email               contact email
+     * @param phone               contact phone number
+     * @param fax                 fax number
+     * @param address             registered address
+     * @param creditLimit         maximum credit allowed
+     * @param outstandingBalance  current outstanding balance
+     * @param accountStatus       account status string
+     * @param discountType        discount plan type — "fixed" or "flexible"
+     * @param fixedDiscountRate   fixed discount percentage
+     * @param flexibleDiscountRate flexible discount percentage
+     * @param registrationDate    date account was registered
+     * @param isActive            whether account is active
+     * @param lastPaymentDate     date of last payment
+     * @param username            login username for IPOS-CA
+     */
+
     public MerchantAccount(String merchantId,
                            String businessName,
                            String businessType,
@@ -68,6 +96,7 @@ public class MerchantAccount {
         this.isActive = isActive;
         this.lastPaymentDate = lastPaymentDate;
 
+
         // Set discount percentage based on discount type
         if ("fixed".equals(discountType)) {
             this.discountPercentage = fixedDiscountRate;  // ← This sets the discount
@@ -78,7 +107,28 @@ public class MerchantAccount {
         }
     }
 
-        // Constructor for database loading
+    /**
+     * Database loading constructor — used when retrieving a full merchant
+     * record from the database, without a username field.
+     *
+     * @param merchantId          unique merchant identifier
+     * @param businessName        registered business name
+     * @param businessType        type of business
+     * @param registrationNumber  company registration number
+     * @param email               contact email
+     * @param phone               contact phone number
+     * @param fax                 fax number
+     * @param address             registered address
+     * @param creditLimit         maximum credit allowed
+     * @param outstandingBalance  current outstanding balance
+     * @param accountStatus       account status string
+     * @param discountType        discount plan type
+     * @param fixedDiscountRate   fixed discount percentage
+     * @param flexibleDiscountRate flexible discount percentage
+     * @param registrationDate    date account was registered
+     * @param isActive            whether account is active
+     * @param lastPaymentDate     date of last payment
+     */
     public MerchantAccount(String merchantId,
                            String businessName,
                            String businessType,
@@ -123,14 +173,14 @@ public class MerchantAccount {
             this.discountPlan = new FixedDiscountPlan("Flexible Plan", flexibleDiscountRate);
         }
 
-        // Set status
+        // Set status by converting accountStatus string to AccountStatus enum
         if (accountStatus != null) {
             this.status = AccountStatus.valueOf(accountStatus.toUpperCase());
         } else {
             this.status = AccountStatus.NORMAL;
         }
 
-        // Convert sql.Date to LocalDate
+        // Sets the default last payment date the today if a date is not provided
         if (lastPaymentDate != null) {
             this.lastPaymentDate = Date.valueOf(lastPaymentDate.toLocalDate());
         } else {
@@ -138,7 +188,23 @@ public class MerchantAccount {
         }
     }
 
-    // Constructor for loading from database (simplified version used in getAccount)
+    /**
+     * Simplified constructor — used for lightweight account retrieval
+     * where only key fields are needed, including username and password.
+     *
+     * @param merchantId         unique merchant identifier
+     * @param businessName       registered business name
+     * @param email              contact email
+     * @param phone              contact phone number
+     * @param fax                fax number
+     * @param address            registered address
+     * @param creditLimit        maximum credit allowed
+     * @param outstandingBalance current outstanding balance
+     * @param accountStatus      account status string
+     * @param fixedDiscountRate  fixed discount percentage
+     * @param username           login username for IPOS-CA
+     * @param password           hashed login password for IPOS-CA
+     */
     public MerchantAccount(String merchantId,
                            String businessName,
                            String email,
@@ -166,6 +232,7 @@ public class MerchantAccount {
         this.username = username;
         this.password = password;
 
+        // Converts accountStatus string to AccountStatus Enum
         if (accountStatus != null) {
             this.status = AccountStatus.valueOf(accountStatus.toUpperCase());
         } else {
@@ -211,12 +278,31 @@ public class MerchantAccount {
     public void setFax(String fax) { this.fax = fax; }
     public void setAddress(String address) { this.address = address; }
     public void setCreditLimit(double creditLimit) { this.creditLimit = creditLimit; }
+
+    /**
+     * Sets the discount plan and updates the discount percentage accordingly.
+     *
+     * @param discountPlan the new discount plan
+     */
     public void setDiscountPlan(DiscountPlan discountPlan) {
         this.discountPlan = discountPlan;
         if (discountPlan instanceof FixedDiscountPlan) {
             this.discountPercentage = ((FixedDiscountPlan) discountPlan).getPercentage();
         }
     }
+
+        public void setDiscountType(String discountType) {
+            this.discountType = discountType;
+        }
+
+        public void setFlexibleDiscountRate(double flexibleDiscountRate) {
+            this.flexibleDiscountRate = flexibleDiscountRate;
+        }
+
+        public void setFixedDiscountRate(double fixedDiscountRate) {
+            this.fixedDiscountRate = fixedDiscountRate;
+        }
+
     public void setUsername(String username) {
         this.username = username;
     }
@@ -232,10 +318,25 @@ public class MerchantAccount {
     public void setDiscountPercentage(double discountPercentage) { this.discountPercentage = discountPercentage; }
 
     // Business methods
+
+    /**
+     * Checks whether the merchant is eligible to place an order.
+     * The account must be in NORMAL status and the new order must not
+     * exceed the merchant's credit limit.
+     *
+     * @param orderValue the value of the new order
+     * @return true if the merchant can place the order
+     */
     public boolean canPlaceOrder(double orderValue) {
         return status == AccountStatus.NORMAL && (outstandingBalance + orderValue) <= creditLimit;
     }
-
+    /**
+    * Records a payment made by the merchant.
+    * Reduces the outstanding balance by the payment amount.
+    * Balance cannot go below zero.
+    *
+    * @param paymentAmount the amount paid by the merchant
+    */
     public void recordPayment(double paymentAmount) {
         outstandingBalance -= paymentAmount;
         if (outstandingBalance <= 0) {

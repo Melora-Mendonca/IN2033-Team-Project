@@ -35,13 +35,13 @@ public class AccountService {
             return false;
         }
 
-        // Generate plain text password for email
+        // Generates a plain text password for email
         String originalPassword = account.getUsername() + "123";
 
-        // Hash the default password to match authentication
+        // Hashes the default password to match the authentication
         String defaultPassword = hashPassword(account.getUsername() + "123");
 
-        // Checks if account already exists
+        // Checks if the account already exists
         ResultSet checkRs = db.query(
                 "SELECT merchant_id FROM merchant WHERE merchant_id = ?",
                 account.getMerchantId()
@@ -51,7 +51,7 @@ public class AccountService {
             return false; // Account already exists
         }
 
-        // Inserts new merchant account if account doesnt exist
+        // Inserts new merchant account if account doesn't exist
         int rowsAffected = db.update(
                 "INSERT INTO merchant (merchant_id, company_name, business_type, registration_number, " +
                         "email, phone, fax, address, credit_limit, outstanding_balance, " +
@@ -69,8 +69,8 @@ public class AccountService {
                 account.getCreditLimit(),
                 account.getOutstandingBalance(),
                 account.getAccountStatus(),
-                account.getDiscountType(),        // ← "fixed"
-                account.getFixedDiscountRate(),   // ← discount value from form
+                account.getDiscountType(),
+                account.getFixedDiscountRate(),
                 account.getFlexibleDiscountRate(),
                 account.getRegistrationDate(),
                 account.isActive() ? 1 : 0,
@@ -79,7 +79,7 @@ public class AccountService {
                 defaultPassword
         );
 
-        // Calls the emailService API to send an email to the staff with credentials
+        // Calls the emailService API to send an email to the merchant with their login credentials
         if (rowsAffected > 0) {
             sendMerchantEmail(account, originalPassword);
             return true;
@@ -88,12 +88,18 @@ public class AccountService {
         return false;
     }
 
-    // Add this method to send merchant email
+    /**
+     * Sends an email to the newly created merchant via the IPOS-PU email service.
+     * Email contains the merchant's login credentials and company information.
+     *
+     * @param merchant the merchant account that was created
+     * @param originalPassword the plain text default password to include in the email
+     */
     private void sendMerchantEmail(MerchantAccount merchant, String originalPassword) {
         String emailContent = buildMerchantEmailContent(merchant, originalPassword);
 
         try {
-            // Using your email service API (IPOS-PU)
+            // Using the email service API (IPOS-PU)
             boolean emailSent = IPOSPUEmailClient.produceEmail(
                     merchant.getEmail(),
                     emailContent,
@@ -112,7 +118,14 @@ public class AccountService {
         }
     }
 
-    // Add this method to build the email content
+    /**
+     * Builds the email body content for the merchant welcome email.
+     * Includes login credentials and company information.
+     *
+     * @param merchant the merchant account
+     * @param originalPassword the plain text default password
+     * @return the formatted email body as a string
+     */
     private String buildMerchantEmailContent(MerchantAccount merchant, String originalPassword) {
         return "Dear " + merchant.getBusinessName() + ",\n\n"
                 + "Your merchant account has been created in IPOS system.\n\n"
@@ -128,7 +141,13 @@ public class AccountService {
                 + "Regards,\nIPOS System Administrator";
     }
 
-    // Add this helper method
+    /**
+     * Hashes a plain text password using SHA-256 encoding.
+     * Returns the hex string representation of the hash.
+     *
+     * @param password the plain text password to hash
+     * @return the SHA-256 hashed password as a hex string
+     */
     private String hashPassword(String password) {
         try {
             java.security.MessageDigest md = java.security.MessageDigest.getInstance("SHA-256");
@@ -193,7 +212,8 @@ public class AccountService {
         int rowsAffected = db.update(
                 "UPDATE merchant SET company_name=?, business_type=?, registration_number=?, " +
                         "email=?, phone=?, fax=?, address=?, credit_limit=?, " +
-                        "fixed_discount_rate=? WHERE merchant_id=?",
+                        "discount_type=?, fixed_discount_rate=?, flexible_discount_rate=? " +
+                        "WHERE merchant_id=?",
                 account.getBusinessName(),
                 account.getBusinessType(),
                 account.getRegistrationNumber(),
@@ -202,7 +222,9 @@ public class AccountService {
                 account.getFax(),
                 account.getAddress(),
                 account.getCreditLimit(),
-                account.getDiscountPercentage(),
+                account.getDiscountType(),
+                account.getFixedDiscountRate(),
+                account.getFlexibleDiscountRate(),
                 account.getMerchantId()
         );
         return rowsAffected > 0;
@@ -212,7 +234,7 @@ public class AccountService {
      * Updates the status of a merchant account when suspended or reinstated.
      *
      * @param merchantId the merchant ID
-     * @param status     the new account status
+     * @param status the new account status
      * @return true if update was successful
      * @throws Exception if a database error occurs
      */
@@ -346,9 +368,24 @@ public class AccountService {
         return accounts;
     }
 
+    /**
+     * Adds an amount to the merchant's outstanding balance.
+     * Called when a new order is accepted to update the balance accordingly.
+     *
+     * @param merchantId the unique merchant identifier
+     * @param finalTotal the order amount to add to the balance
+     */
     public void addToBalance(String merchantId, double finalTotal) {
     }
 
+    /**
+     * Checks whether a merchant is eligible to place a new order.
+     * Validates that the account is active and within the credit limit.
+     *
+     * @param account the merchant account to check
+     * @param grossTotal the total value of the proposed order
+     * @return true if the merchant can place the order
+     */
     public boolean canMerchantPlaceOrder(MerchantAccount account, double grossTotal) {
         return true;
     }
@@ -368,6 +405,13 @@ public class AccountService {
         return rs.next();
     }
 
+    /**
+     * Retrieves the credit limit for a merchant account.
+     *
+     * @param merchantId the unique merchant identifier
+     * @return the credit limit, or 0.0 if the merchant is not found
+     * @throws Exception if a database error occurs
+     */
     public double getCreditLimit(String merchantId) throws Exception {
         ResultSet rs = db.query("SELECT credit_limit FROM merchant WHERE merchant_id = ?", merchantId);
         if (rs.next()) {
@@ -376,6 +420,13 @@ public class AccountService {
         return 0.0;
     }
 
+    /**
+     * Retrieves the credit limit for a merchant account.
+     *
+     * @param merchantId the unique merchant identifier
+     * @return the credit limit, or 0.0 if the merchant is not found
+     * @throws Exception if a database error occurs
+     */
     public String getAccountStatus(String merchantId) throws Exception {
         ResultSet rs = db.query("SELECT account_status FROM merchant WHERE merchant_id = ?", merchantId);
         if (rs.next()) {
@@ -383,7 +434,13 @@ public class AccountService {
         }
         return "normal";
     }
-
+    /**
+     * Retrieves the applicable discount rate for a merchant based on their discount type.
+     * Returns the fixed discount rate for fixed plans, or the flexible rate for flexible plans.
+     *
+     * @param merchantId the unique merchant identifier
+     * @return the discount rate percentage, or 0.0 if not found or an error occurs
+     */
     public double getDiscountRate(String merchantId) {
         try {
             ResultSet rs = db.query(
@@ -404,6 +461,12 @@ public class AccountService {
         return 0.0;
     }
 
+    /**
+     * Automatically updates merchant account statuses based on payment overdue rules.
+     * Called on login for Administrator and Director of Operations.
+     *
+     * @throws Exception if a database error occurs
+     */
     public void AutoUpdateStatus() throws Exception {
         ResultSet rs = db.query(
                 "SELECT DISTINCT m.merchant_id, m.company_name, m.account_status, " +
@@ -423,14 +486,18 @@ public class AccountService {
             if (currentStatus == null) continue;
             String newStatus = null;
 
+            // if balance is 0 and account is suspended, it is returned to normal
             if (balance <= 0 && currentStatus.equals("suspended")){
                 newStatus = "normal";
+                // if the account is overdue for payment by 30 days or more, it is flagged as in default
             } else if (daysOverdue > 30 && (currentStatus.equals("normal") || currentStatus.equals("suspended"))){
                 newStatus = "in_default";
+                // if the account is overdue for 15 to 30 days from the date of purchase, it is marked as suspended
             } else if (daysOverdue >= 15 && daysOverdue <= 30 && currentStatus.equals("normal")){
                 newStatus = "suspended";
             }
 
+            // Sets the status in the database for that merchant
             if (newStatus != null) {
                 db.update("UPDATE merchant SET account_status = ? WHERE merchant_id = ?", newStatus, merchantId);
             }

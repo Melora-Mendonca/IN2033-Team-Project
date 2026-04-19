@@ -20,7 +20,7 @@ public class InvoiceDisplayFrame extends JFrame {
         this.invoice = invoice;
         setTitle("Invoice — " + invoice.getInvoiceId());
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        setSize(750, 600);
+        setSize(750, 550);  // reduce height
         setLocationRelativeTo(null);
         buildUI();
         setVisible(true);
@@ -202,6 +202,15 @@ public class InvoiceDisplayFrame extends JFrame {
         printBtn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         printBtn.addActionListener(e -> printInvoice());
 
+        JButton closeBtn = new JButton("Close");
+        closeBtn.setFont(new Font("Segoe UI", Font.BOLD, 12));
+        closeBtn.setBackground(new Color(107, 114, 128));
+        closeBtn.setForeground(Color.WHITE);
+        closeBtn.setFocusPainted(false);
+        closeBtn.setBorderPainted(false);
+        closeBtn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        closeBtn.addActionListener(e -> dispose());
+        footer.add(closeBtn);
         footer.add(printBtn);
         return footer;
     }

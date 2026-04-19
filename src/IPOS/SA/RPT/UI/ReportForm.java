@@ -219,10 +219,10 @@ public class ReportForm extends BaseFrame {
             switch (reportType) {
                 case "Low Stock Report": {
                     data    = reportService.getLowStockReport();
-                    columns = new String[]{"Item ID", "Description", "Package", "Unit", "Stock", "Min Level"};
+                    columns = new String[]{"Item ID", "Description", "Package", "Unit", "Stock", "Min Level", "Recommended Min Order"};
                     if (data.isEmpty()) data.add(new String[]{"No low stock items found", "", "", "", "", ""});
                     updateTableWithData(data, columns);
-                    updateFormattedView("LOW STOCK REPORT", columns, data, fromDate, toDate);
+                    updateFormattedView("LOW STOCK REPORT", columns, data, fromDate, toDate, "");
                     updateChart(data, columns, reportType);
                     break;
                 }
@@ -231,16 +231,17 @@ public class ReportForm extends BaseFrame {
                     columns = new String[]{"Period", "Orders", "Items Sold", "Revenue (£)"};
                     if (data.isEmpty()) data.add(new String[]{"No data found", "", "", ""});
                     updateTableWithData(data, columns);
-                    updateFormattedView("TURNOVER REPORT", columns, data, fromDate, toDate);
+                    updateFormattedView("TURNOVER REPORT", columns, data, fromDate, toDate, "");
                     updateChart(data, columns, reportType);
                     break;
                 }
                 case "Merchant Orders": {
                     data    = reportService.getMerchantOrdersReport(merchantId, fromDate, toDate);
-                    columns = new String[]{"Order ID", "Date", "Amount (£)", "Dispatched", "Status"};
-                    if (data.isEmpty()) data.add(new String[]{"No orders found", "", "", "", ""});
+                    String[] merchant = reportService.getMerchantDetails(merchantId);
+                    columns = new String[]{"Order ID", "Date", "Amount (£)", "Dispatched", "Delivered", "Status"};
+                    if (data.isEmpty()) data.add(new String[]{"No orders found", "", "", "", "", ""});
                     updateTableWithData(data, columns);
-                    updateFormattedView("MERCHANT ORDERS REPORT", columns, data, fromDate, toDate);
+                    updateFormattedView("MERCHANT ORDERS REPORT", columns, data, fromDate, toDate, merchantId);
                     updateChart(data, columns, reportType);
                     break;
                 }
@@ -256,7 +257,7 @@ public class ReportForm extends BaseFrame {
                     columns = new String[]{"Invoice ID", "Date", "Due Date", "Order ID", "Total (£)", "Paid (£)", "Status"};
                     if (data.isEmpty()) data.add(new String[]{"No invoices found", "", "", "", "", "", ""});
                     updateTableWithData(data, columns);
-                    updateFormattedView("INVOICES BY MERCHANT", columns, data, fromDate, toDate);
+                    updateFormattedView("INVOICES BY MERCHANT", columns, data, fromDate, toDate, merchantId);
                     updateChart(data, columns, reportType);
                     break;
                 }
@@ -265,7 +266,7 @@ public class ReportForm extends BaseFrame {
                     columns = new String[]{"Invoice ID", "Merchant", "Date", "Due Date", "Order ID", "Total (£)", "Paid (£)", "Status"};
                     if (data.isEmpty()) data.add(new String[]{"No invoices found", "", "", "", "", "", "", ""});
                     updateTableWithData(data, columns);
-                    updateFormattedView("ALL INVOICES REPORT", columns, data, fromDate, toDate);
+                    updateFormattedView("ALL INVOICES REPORT", columns, data, fromDate, toDate, "");
                     updateChart(data, columns, reportType);
                     break;
                 }
@@ -274,7 +275,7 @@ public class ReportForm extends BaseFrame {
                     columns = new String[]{"Item ID", "Description", "Sold", "Received", "Net Change", "Revenue (£)"};
                     if (data.isEmpty()) data.add(new String[]{"No stock movement found", "", "", "", "", ""});
                     updateTableWithData(data, columns);
-                    updateFormattedView("STOCK TURNOVER REPORT", columns, data, fromDate, toDate);
+                    updateFormattedView("STOCK TURNOVER REPORT", columns, data, fromDate, toDate, "");
                     updateChart(data, columns, reportType);
                     break;
                 }
@@ -437,7 +438,8 @@ public class ReportForm extends BaseFrame {
     }
 
     private void updateFormattedView(String title, String[] columns,
-                                     List<String[]> data, Date fromDate, Date toDate) {
+                                     List<String[]> data, Date fromDate, Date toDate,
+                                     String merchantId) {
         SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy");
         StringBuilder sb = new StringBuilder();
 
@@ -447,6 +449,21 @@ public class ReportForm extends BaseFrame {
         sb.append("Generated: ").append(sdf.format(new Date())).append("\n");
         sb.append("Period:    ").append(sdf.format(fromDate))
                 .append(" to ").append(sdf.format(toDate)).append("\n");
+
+        // Add merchant details if provided
+        if (merchantId != null && !merchantId.isEmpty()) {
+            String[] merchant = reportService.getMerchantDetails(merchantId);
+            if (merchant != null) {
+                sb.append("-".repeat(70)).append("\n");
+                sb.append("Merchant:      ").append(merchant[1]).append("\n");
+                sb.append("Business Type: ").append(merchant[2]).append("\n");
+                sb.append("Email:         ").append(merchant[4]).append("\n");
+                sb.append("Credit Limit:  ").append(merchant[7]).append("\n");
+                sb.append("Balance:       ").append(merchant[8]).append("\n");
+                sb.append("Status:        ").append(merchant[9]).append("\n");
+            }
+        }
+
         sb.append("-".repeat(70)).append("\n\n");
 
         for (String col : columns) sb.append(String.format("%-20s", col));
@@ -555,8 +572,8 @@ public class ReportForm extends BaseFrame {
             return;
         }
 
-        JFileChooser chooser = new JFileChooser();
-        chooser.setSelectedFile(new File(currentReportType.replace(" ", "_") + ".csv"));
+        JFileChooser chooser = new JFileChooser("/app/exports");
+        chooser.setSelectedFile(new File("/app/exports/" + currentReportType.replace(" ", "_") + ".csv"));
         if (chooser.showSaveDialog(this) != JFileChooser.APPROVE_OPTION) return;
 
         try (PrintWriter writer = new PrintWriter(new FileWriter(chooser.getSelectedFile()))) {
@@ -585,8 +602,8 @@ public class ReportForm extends BaseFrame {
             return;
         }
 
-        JFileChooser chooser = new JFileChooser();
-        chooser.setSelectedFile(new File(currentReportType.replace(" ", "_") + ".xlsx"));
+        JFileChooser chooser = new JFileChooser("/app/exports");
+        chooser.setSelectedFile(new File("/app/exports/" + currentReportType.replace(" ", "_") + ".xlsx"));
         if (chooser.showSaveDialog(this) != JFileChooser.APPROVE_OPTION) return;
 
         try (XSSFWorkbook workbook = new XSSFWorkbook()) {
@@ -679,8 +696,8 @@ public class ReportForm extends BaseFrame {
             return;
         }
 
-        JFileChooser chooser = new JFileChooser();
-        chooser.setSelectedFile(new File(currentReportType.replace(" ", "_") + ".pdf"));
+        JFileChooser chooser = new JFileChooser("/app/exports");
+        chooser.setSelectedFile(new File("/app/exports/" + currentReportType.replace(" ", "_") + ".pdf"));
         if (chooser.showSaveDialog(this) != JFileChooser.APPROVE_OPTION) return;
 
         try {
@@ -785,7 +802,14 @@ public class ReportForm extends BaseFrame {
             int open = JOptionPane.showConfirmDialog(this,
                     "Open PDF now?", "Open Report", JOptionPane.YES_NO_OPTION);
             if (open == JOptionPane.YES_OPTION) {
-                java.awt.Desktop.getDesktop().open(chooser.getSelectedFile());
+                if (java.awt.Desktop.isDesktopSupported()) {
+                    java.awt.Desktop.getDesktop().open(chooser.getSelectedFile());
+                } else {
+                    JOptionPane.showMessageDialog(this,
+                            "File saved to:\n" + chooser.getSelectedFile().getAbsolutePath() +
+                                    "\n\nTo view it, check the exports folder on your host machine.",
+                            "File Saved", JOptionPane.INFORMATION_MESSAGE);
+                }
             }
 
         } catch (Exception e) {

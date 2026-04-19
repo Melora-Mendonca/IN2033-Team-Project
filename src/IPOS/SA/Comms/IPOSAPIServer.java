@@ -12,6 +12,9 @@ import java.io.*;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.Executors;
+import IPOS.SA.ORD.Model.Order;
+import IPOS.SA.ORD.Model.OrderItem;
+import IPOS.SA.ACC.Model.MerchantAccount;
 
 public class IPOSAPIServer {
 
@@ -128,7 +131,7 @@ public class IPOSAPIServer {
             if ("POST".equals(exchange.getRequestMethod())) {
                 try {
                     String body = readBody(exchange);
-                    String itemId = extractValue(body, "itemID");
+                    String itemId = extractValue(body, "itemId");
                     int quantity = Integer.parseInt(extractValue(body, "quantity"));
                     boolean success = catalogueService.UpdateCatalogue(itemId, quantity);
                     if (success) {
@@ -153,10 +156,56 @@ public class IPOSAPIServer {
             if ("POST".equals(exchange.getRequestMethod())) {
                 try {
                     String body = readBody(exchange);
-                    String merchantId = extractValue(body, "merchantID");
-                    String orderDetails = extractValue(body, "orderDetails");
+                    String merchantId = extractValue(body, "merchantId");
+
+                    // Get merchant account
+                    MerchantAccount account = accountService.getAccount(merchantId);
+                    if (account == null) {
+                        sendResponse(exchange, 400, "{\"error\":\"Merchant not found: " + merchantId + "\"}");
+                        return;
+                    }
+
+                    // Generate order ID
                     String orderId = "ORD_" + System.currentTimeMillis();
-                    sendResponse(exchange, 200, "{\"orderId\":\"" + orderId + "\"}");
+
+                    // Parse items array
+                    java.util.List<OrderItem> orderItems = new java.util.ArrayList<>();
+                    int itemsStart = body.indexOf("\"items\"");
+                    if (itemsStart != -1) {
+                        int arrStart = body.indexOf("[", itemsStart);
+                        int arrEnd   = body.indexOf("]", arrStart);
+                        String itemsArr = body.substring(arrStart + 1, arrEnd);
+                        String[] itemObjs = itemsArr.split("\\},\\s*\\{");
+                        for (String itemObj : itemObjs) {
+                            String cleaned = itemObj.replace("{", "").replace("}", "");
+                            String itemId  = extractValue("{" + cleaned + "}", "itemId");
+                            String qtyStr  = extractValue("{" + cleaned + "}", "quantity");
+                            if (!itemId.isEmpty() && !qtyStr.isEmpty()) {
+                                int qty      = Integer.parseInt(qtyStr);
+                                double price = catalogueService.getItemPrice(itemId);
+
+                                System.out.println("=== PlaceOrder Debug ===");
+                                System.out.println("itemId: [" + itemId + "]");
+                                System.out.println("qty: " + qty);
+                                System.out.println("price: " + price);
+                                orderItems.add(new OrderItem(itemId, qty, price));
+                            }
+                        }
+                    }
+
+                    // Build order object
+                    Order order = new Order(orderId, merchantId, java.time.LocalDate.now(), orderItems);
+
+                    // Get discount rate
+                    double discountRate = accountService.getDiscountRate(merchantId);
+
+                    // Place order
+                    boolean success = orderService.placeOrder(order, account, discountRate);
+                    if (success) {
+                        sendResponse(exchange, 200, "{\"orderId\":\"" + orderId + "\"}");
+                    } else {
+                        sendResponse(exchange, 400, "{\"error\":\"Failed to place order\"}");
+                    }
                 } catch (Exception e) {
                     sendResponse(exchange, 500, "{\"error\":\"" + e.getMessage() + "\"}");
                 }
@@ -285,22 +334,23 @@ public class IPOSAPIServer {
                 try {
                     String body = readBody(exchange);
                     String companyName = extractValue(body, "companyName");
-                    String registrationNumber = extractValue(body, "registrationNumber");
-                    String directors = extractValue(body, "directors");
+                    String registrationNumber = extractValue(body, "companyRegNumber");  // changed
+                    String directors = extractValue(body, "directorName");               // changed
                     String businessType = extractValue(body, "businessType");
                     String address = extractValue(body, "address");
-                    String email = extractValue(body, "email");
+                    String email = extractValue(body, "userEmail");                      // changed
+                    String phone = extractValue(body, "phone");
                     String fax = extractValue(body, "fax");
                     boolean preferPhysicalMail = "true".equals(extractValue(body, "preferPhysicalMail"));
 
                     DBConnection db = new DBConnection();
                     int rows = db.update(
                             "INSERT INTO commercial_applications " +
-                                    "(company_name, registration_number, directors, " +
-                                    "business_type, address, email, fax, prefer_physical_mail, status, application_date) " +
-                                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending', CURRENT_DATE())",
+                                    "(company_name, registration_no, director_name, " +
+                                    "business_type, address, email, phone, fax, prefer_physical_mail, status, application_date) " +
+                                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', CURRENT_DATE())",
                             companyName, registrationNumber, directors,
-                            businessType, address, email, fax, preferPhysicalMail ? 1 : 0
+                            businessType, address, email, phone, fax, preferPhysicalMail ? 1 : 0
                     );
 
                     if (rows > 0) {
@@ -318,24 +368,40 @@ public class IPOSAPIServer {
     }
 
     private String extractValue(String json, String key) {
-        String search = "\"" + key + "\":";
-        int start = json.indexOf(search);
-        if (start == -1) return "";
-        start += search.length();
+        String search = "\"" + key + "\"";
+        int keyIndex = json.indexOf(search);
+        if (keyIndex == -1) return "";
 
+        // Find the colon after the key
+        int colonIndex = json.indexOf(":", keyIndex + search.length());
+        if (colonIndex == -1) return "";
+
+        // Skip whitespace after colon
+        int start = colonIndex + 1;
+        while (start < json.length() && Character.isWhitespace(json.charAt(start))) {
+            start++;
+        }
+
+        if (start >= json.length()) return "";
+
+        // String value
         if (json.charAt(start) == '"') {
             start++;
             int end = json.indexOf("\"", start);
+            if (end == -1) return "";
             return json.substring(start, end);
         }
 
+        // Boolean or number value
         int end = start;
-        while (end < json.length() && (Character.isDigit(json.charAt(end)) ||
-                json.charAt(end) == '.' || json.charAt(end) == '-' ||
-                json.charAt(end) == 't' || json.charAt(end) == 'f')) {
+        while (end < json.length() &&
+                json.charAt(end) != ',' &&
+                json.charAt(end) != '}' &&
+                json.charAt(end) != '\n' &&
+                !Character.isWhitespace(json.charAt(end))) {
             end++;
         }
-        return json.substring(start, end);
+        return json.substring(start, end).trim();
     }
 
     private String extractQueryParam(String query, String key) {

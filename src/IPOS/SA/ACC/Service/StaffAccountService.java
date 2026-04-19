@@ -28,33 +28,26 @@ public class StaffAccountService {
      * @return true if the account was created successfully, false otherwise
      * @throws Exception if a database error occurs
      */
-    public boolean createStaff(Staff staff) throws Exception {
-        // Only check username uniqueness
+    public boolean createStaff(Staff staff, String plainPassword) throws Exception {
         if (usernameExists(staff.getUsername())) {
             return false;
         }
 
-        // Generate plain text password for email
-        String originalPassword = staff.getUsername() + "123";
+        // Hashes the password when stored in the database
+        String hashedPassword = hashPassword(plainPassword);
 
-        // Hash the default password to match authentication
-        String defaultPassword = hashPassword(staff.getUsername() + "123");
-
-        // Checks if account already exists
+        // checks if an account for that staff already exists
         ResultSet checkRs = db.query(
                 "SELECT user_id FROM userlogin WHERE user_id = ?",
                 staff.getStaffId()
         );
-
-        if (checkRs.next()) {
-            return false; // Account already exists
-        }
+        if (checkRs.next()) return false;
 
         int rowsAffected = db.update(
                 "INSERT INTO userlogin (username, password_hash, first_Name, sur_Name, email, role, is_Active, phone, address) " +
                         "VALUES (?, ?, ?, ?, ?, ?, 1, ?, ?)",
                 staff.getUsername(),
-                defaultPassword,
+                hashedPassword,
                 staff.getFirstName(),
                 staff.getSurName(),
                 staff.getEmail(),
@@ -63,26 +56,32 @@ public class StaffAccountService {
                 staff.getAddress()
         );
 
-        // Calls the emailService API to send an email to the staff with credentials
+        // Sends an email when the staff account is created
         if (rowsAffected > 0) {
-            sendStaffEmail(staff, originalPassword);
+            sendStaffEmail(staff, plainPassword);
             return true;
         }
-
         return false;
     }
 
+    /**
+     * Sends an email to the newly created staff via the IPOS-PU email service.
+     * Email contains the staff's login credentials.
+     *
+     * @param staff the staff account that was created
+     * @param plainTextPassword the plain text default password to include in the email
+     */
     private void sendStaffEmail(Staff staff, String plainTextPassword) {
         String emailContent = buildStaffAccountEmail(staff, plainTextPassword);
 
         try {
             // Call IPOS-PU email API
             boolean emailSent = IPOSPUEmailClient.produceEmail(
-                    staff.getEmail(),                           // recipient
-                    emailContent,                               // email body
-                    staff.getUsername(),                        // reference (username)
-                    "IPOS-SA",                                  // sender
-                    "StaffManagement"                           // subsystem
+                    staff.getEmail(),
+                    emailContent,
+                    staff.getUsername(),
+                    "IPOS-SA",
+                    "StaffManagement"
             );
 
             if (emailSent) {
@@ -91,12 +90,18 @@ public class StaffAccountService {
                 System.err.println("Failed to send email to " + staff.getEmail());
             }
         } catch (IOException e) {
-            // Log error but don't throw exception - staff was already created
             System.err.println("Email service error for " + staff.getEmail() + ": " + e.getMessage());
-            // Optionally: store failed email in a queue for retry
         }
     }
 
+    /**
+     * Builds the email body content for the staff welcome email.
+     * Includes login credentials and company information.
+     *
+     * @param staff the staff account
+     * @param plainTextPassword the plain text default password
+     * @return the formatted email body as a string
+     */
     private String buildStaffAccountEmail(Staff staff, String plainTextPassword) {
         return "Dear " + staff.getFirstName() + " " + staff.getSurName() + ",\n\n"
                 + "Your staff account has been created in IPOS system.\n\n"
@@ -108,7 +113,13 @@ public class StaffAccountService {
                 + "Regards,\nIPOS System Administrator";
     }
 
-    // Add this helper method
+    /**
+     * Hashes a plain text password using SHA-256 encoding.
+     * Returns the hex string representation of the hash.
+     *
+     * @param password the plain text password to hash
+     * @return the SHA-256 hashed password as a hex string
+     */
     private String hashPassword(String password) {
         try {
             java.security.MessageDigest md = java.security.MessageDigest.getInstance("SHA-256");
@@ -160,7 +171,7 @@ public class StaffAccountService {
                 staff.getRole(),
                 staff.getPhone(),
                 staff.getAddress(),
-                Integer.parseInt(staff.getStaffId())  // Convert staffId (String) to int for user_id
+                Integer.parseInt(staff.getStaffId())
         );
 
         return rowsAffected > 0;

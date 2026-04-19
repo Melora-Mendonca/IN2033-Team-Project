@@ -38,15 +38,8 @@ public class AuthenticationService {
 
         if (user != null) {
 
-            // DEBUG
-            System.out.println("Database returned user with role: " + user.getRole());
-            System.out.println("Selected role from UI: " + selectedRole);
-
             // Sets the role of the user to what they selected, so that the user is guided to the correct dashboard
             user.setRole(selectedRole);
-
-            // DEBUG
-            System.out.println("Normalized role set to: " + user.getRole());
         }
 
         return user;
