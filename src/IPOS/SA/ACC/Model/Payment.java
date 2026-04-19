@@ -17,7 +17,7 @@ public class Payment {
     private final String paymentReference; // the reference for the payment
 
     /**
-     * Constructor — creates a payment record with all required details.
+     * Constructor ; creates a payment record with all required details.
      *
      * @param paymentId unique payment identifier
      * @param merchantId the merchant who made the payment

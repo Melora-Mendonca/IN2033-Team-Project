@@ -12,7 +12,7 @@ public class FixedDiscountPlan extends DiscountPlan {
     private final double percentage;
 
     /**
-     * Constructor — creates a fixed discount plan with the given name and percentage.
+     * Constructor ; creates a fixed discount plan with the given name and percentage.
      *
      * @param planName   the name of the discount plan
      * @param percentage the fixed discount percentage (e.g. 10.0 for 10%)

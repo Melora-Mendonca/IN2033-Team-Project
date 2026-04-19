@@ -17,7 +17,13 @@ public class TestRunner {
                         DiscoverySelectors.selectClass("IPOS.SA.ORD.Model.OrderTest"),
                         DiscoverySelectors.selectClass("IPOS.SA.ORD.Model.InvoiceTest"),
                         DiscoverySelectors.selectClass("IPOS.SA.ORD.OrderStatusTest"),
-                        DiscoverySelectors.selectClass("IPOS.SA.ORD.CatalogueItemTest")
+                        DiscoverySelectors.selectClass("IPOS.SA.ORD.CatalogueItemTest"),
+                        DiscoverySelectors.selectClass("IPOS.SA.RPT.Model.TurnoverRptDataTest"),
+                        DiscoverySelectors.selectClass("IPOS.SA.RPT.Model.StockTurnoverRptDataTest"),
+                        DiscoverySelectors.selectClass("IPOS.SA.RPT.Model.InvoiceRptDataTest"),
+                        DiscoverySelectors.selectClass("IPOS.SA.RPT.Model.MerchantOrderRptDataTest"),
+                        DiscoverySelectors.selectClass("IPOS.SA.RPT.Model.MerchantActivityRptDataTest"),
+                        DiscoverySelectors.selectClass("IPOS.SA.RPT.Model.CommercialApplicationTest")
                 )
                 .build();
 

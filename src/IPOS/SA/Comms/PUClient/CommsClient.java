@@ -94,7 +94,7 @@ public class CommsClient {
         if (is == null) {
             conn.disconnect();
             if (status >= 200 && status < 300) return "OK";
-            throw new IOException("HTTP " + status + " — no response body");
+            throw new IOException("HTTP " + status + " - no response body");
         }
 
         StringBuilder response = new StringBuilder();

@@ -645,7 +645,7 @@ public class AccountManagement extends BaseFrame implements Refreshable {
                 statusLabel.setText("normal");
                 setMessage("Account restored to normal successfully.", true);
             } else {
-                setMessage("Cannot restore — outstanding balance must be cleared first.", false);
+                setMessage("Cannot restore - outstanding balance must be cleared first.", false);
             }
         } catch (Exception ex) {
             setMessage("Error: " + ex.getMessage(), false);

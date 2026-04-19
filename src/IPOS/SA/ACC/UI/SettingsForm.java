@@ -35,7 +35,7 @@ public class SettingsForm extends BaseFrame {
     private final String username;
 
     /**
-     * Constructor — builds the settings screen and loads the user's profile.
+     * Constructor ; builds the settings screen and loads the user's profile.
      *
      * @param fullname the full name of the logged-in user
      * @param role the role of the logged-in user
@@ -79,10 +79,10 @@ public class SettingsForm extends BaseFrame {
         JPanel card = card("MY PROFILE");
 
         // Sets a default value if the user details cannot be accessed, or were not passed correctly
-        usernameValue = infoLabel("—");
-        fullNameValue = infoLabel("—");
-        roleValue     = infoLabel("—");
-        emailValue    = infoLabel("—");
+        usernameValue = infoLabel("-");
+        fullNameValue = infoLabel("-");
+        roleValue     = infoLabel("-");
+        emailValue    = infoLabel("-");
 
         // Updates the fields with the user's details passed in from whichever form the setting form was called from
         // Adds spacing between the fields for formatting
@@ -165,13 +165,13 @@ public class SettingsForm extends BaseFrame {
                 usernameValue.setText(rs.getString("username"));
                 fullNameValue.setText(rs.getString("first_Name") + " " + rs.getString("sur_Name"));
                 roleValue.setText(rs.getString("role"));
-                emailValue.setText(rs.getString("email") != null ? rs.getString("email") : "—");
+                emailValue.setText(rs.getString("email") != null ? rs.getString("email") : "-");
             } else {
                 // Fallback to what was passed in at login if user is not found
                 usernameValue.setText(username != null ? username : "Unknown");
                 fullNameValue.setText(fullname);
                 roleValue.setText(role);
-                emailValue.setText("—");
+                emailValue.setText("-");
             }
         } catch (Exception e) {
             e.printStackTrace();

@@ -3,7 +3,7 @@ package IPOS.SA.ACC.Model;
 /**
  * Represents a flexible tiered discount plan for a merchant account.
  * The discount percentage applied depends on the merchant's monthly order total.
- * Three tiers are defined by two thresholds — lower and middle.
+ * Three tiers are defined by two thresholds ; lower and middle.
  *
  *  * @see DiscountPlan
  *  */
@@ -21,7 +21,7 @@ public class FlexibleDiscountPlan extends DiscountPlan {
     private final double upperRate;
 
     /**
-     * Constructor — creates a flexible tiered discount plan.
+     * Constructor ; creates a flexible tiered discount plan.
      *
      * @param planName the name of the discount plan
      * @param lowerThreshold the lower order total threshold

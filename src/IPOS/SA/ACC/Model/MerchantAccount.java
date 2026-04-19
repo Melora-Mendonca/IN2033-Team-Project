@@ -50,7 +50,7 @@ public class MerchantAccount {
      * @param creditLimit         maximum credit allowed
      * @param outstandingBalance  current outstanding balance
      * @param accountStatus       account status string
-     * @param discountType        discount plan type — "fixed" or "flexible"
+     * @param discountType        discount plan type ; "fixed" or "flexible"
      * @param fixedDiscountRate   fixed discount percentage
      * @param flexibleDiscountRate flexible discount percentage
      * @param registrationDate    date account was registered
@@ -108,7 +108,7 @@ public class MerchantAccount {
     }
 
     /**
-     * Database loading constructor — used when retrieving a full merchant
+     * Database loading constructor ; used when retrieving a full merchant
      * record from the database, without a username field.
      *
      * @param merchantId          unique merchant identifier
@@ -189,7 +189,7 @@ public class MerchantAccount {
     }
 
     /**
-     * Simplified constructor — used for lightweight account retrieval
+     * Simplified constructor ; used for lightweight account retrieval
      * where only key fields are needed, including username and password.
      *
      * @param merchantId         unique merchant identifier

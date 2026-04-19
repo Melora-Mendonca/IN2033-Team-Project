@@ -1,11 +1,11 @@
 package IPOS.SA.ORD;
 
 public enum OrderStatus {
-    ACCEPTED("accepted"),
-    PENDING("pending"),
-    PROCESSING("processing"),
-    DISPATCHED("dispatched"),
-    DELIVERED("delivered");
+    ACCEPTED("accepted"),    // order received and confirmed
+    PENDING("pending"),      // awaiting processing
+    PROCESSING("processing"),// being packed/prepared
+    DISPATCHED("dispatched"),// handed to courier
+    DELIVERED("delivered");  // confirmed arrival
 
     private final String displayName;
 

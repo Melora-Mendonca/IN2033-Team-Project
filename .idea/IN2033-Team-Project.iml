@@ -10,22 +10,7 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="mysql-connector-j-8.0.31" level="application" />
     <orderEntry type="library" name="mysql-connector-j-9.6.0" level="project" />
-    <orderEntry type="module-library" scope="TEST">
-      <library>
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/junit-jupiter-5.9.3.jar!/" />
-          <root url="jar://$MODULE_DIR$/lib/junit-jupiter-api-5.9.3.jar!/" />
-          <root url="jar://$MODULE_DIR$/lib/junit-jupiter-engine-5.9.3.jar!/" />
-          <root url="jar://$MODULE_DIR$/lib/junit-jupiter-params-5.9.3.jar!/" />
-          <root url="jar://$MODULE_DIR$/lib/junit-platform-commons-1.9.3.jar!/" />
-          <root url="jar://$MODULE_DIR$/lib/junit-platform-engine-1.9.3.jar!/" />
-          <root url="jar://$MODULE_DIR$/lib/opentest4j-1.2.0.jar!/" />
-          <root url="jar://$MODULE_DIR$/lib/apiguardian-api-1.1.2.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
+    <orderEntry type="library" scope="TEST" name="junit5" level="project" />
     <orderEntry type="module-library">
       <library>
         <CLASSES>
@@ -61,9 +46,6 @@
         <SOURCES />
       </library>
     </orderEntry>
-    <orderEntry type="library" scope="TEST" name="junit.jupiter" level="application" />
-    <orderEntry type="library" name="junit.jupiter.engine" level="project" />
-    <orderEntry type="library" name="junit.platform.launcher" level="project" />
     <orderEntry type="library" name="json" level="project" />
   </component>
 </module>

@@ -23,6 +23,7 @@ public class InvoiceService {
         this.db = new DBConnection();
     }
 
+    // Creates invoice record and persists to DB; due date is 30 days from today
     public Invoice generateInvoice(Order order, MerchantAccount account, double finalAmount) throws Exception {
         String invoiceId = "INV-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
         LocalDate invoiceDate = LocalDate.now();
@@ -136,6 +137,7 @@ public class InvoiceService {
         new InvoiceDBConnector().updateOverdueDays();
     }
 
+    // Used by the order API to auto-generate an invoice and email the merchant
     public void generateInvoiceForOrder(String orderId) throws Exception {
         DBConnection db = new DBConnection();
 
