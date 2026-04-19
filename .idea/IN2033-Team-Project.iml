@@ -10,7 +10,6 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="mysql-connector-j-8.0.31" level="application" />
     <orderEntry type="library" name="mysql-connector-j-9.6.0" level="project" />
-    <orderEntry type="library" scope="TEST" name="junit5" level="project" />
     <orderEntry type="module-library">
       <library>
         <CLASSES>
@@ -47,5 +46,7 @@
       </library>
     </orderEntry>
     <orderEntry type="library" name="json" level="project" />
+    <orderEntry type="library" name="junit.jupiter" level="project" />
+    <orderEntry type="library" name="junit.platform.launcher" level="application" />
   </component>
 </module>
