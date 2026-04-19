@@ -16,25 +16,47 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.util.List;
-
+/**
+ * Screen that displays a searchable, filterable list of orders.
+ * Allows staff to view order details and manage the order workflow.
+ *
+ * Can operate in two modes:
+ * - All orders — shows every order in the system (no merchant filter)
+ * - Merchant orders — shows only orders for a specific merchant,
+ *   set via the selectedMerchant in AppFrame when navigating from MerchantList
+ *
+ */
 public class OrderManagement extends BaseFrame implements Refreshable {
-
     private final OrderService orderService;
     private final OrderImportService importService;
     private String merchantId;
-
     private JTable orderTable;
     private DefaultTableModel tableModel;
     private JTextField searchField;
     private JComboBox<String> statusFilter;
     private JLabel messageLabel;
 
-    // Called from nav — no merchant filter
+    /**
+     * Constructor; opens the order management screen showing all orders.
+     * Called from the nav menu.
+     *
+     * @param fullname the full name of the logged-in user
+     * @param role the role of the logged-in user
+     * @param router the screen router used for navigation
+     */
     public OrderManagement(String fullname, String role, ScreenRouter router) {
         this(fullname, role, null, router);
     }
 
-    // Called from MerchantList — filtered by merchant
+    /**
+     * Constructor — opens the order management screen filtered by merchant.
+     * Called from MerchantList when a merchant is selected.
+     *
+     * @param fullname the full name of the logged-in user
+     * @param role the role of the logged-in user
+     * @param merchantId the merchant ID to filter by, or null for all orders
+     * @param router the screen router used for navigation
+     */
     public OrderManagement(String fullname, String role, String merchantId, ScreenRouter router) {
         super(fullname, role, "Order Management", router);
         this.merchantId    = merchantId;
@@ -43,7 +65,11 @@ public class OrderManagement extends BaseFrame implements Refreshable {
         buildContent();
         loadOrders();
     }
-
+    /**
+     * Returns the header title; shows the merchant ID if filtering by merchant.
+     *
+     * @return the header title string
+     */
     @Override
     protected String getHeaderTitle() {
         if (merchantId != null) {
@@ -52,25 +78,34 @@ public class OrderManagement extends BaseFrame implements Refreshable {
             return "Order Management";
         }
     }
-
+    /**
+     * Builds and arranges all UI components for this screen.
+     * Includes a search bar, status filter, order table and action buttons.
+     * Action buttons are hidden for Director of Operations (read-only role).
+     */
     private void buildContent() {
         CenterPanel.setLayout(new BorderLayout(0, 0));
         CenterPanel.setBackground(new Color(245, 247, 250));
 
-        // ── TOP BAR ──────────────────────────────────────────
+        // creates a Top bar with search controls
         JPanel topBar = new JPanel(new BorderLayout());
         topBar.setBackground(new Color(17, 24, 39));
         topBar.setBorder(new EmptyBorder(10, 16, 10, 16));
 
+        // Adds a panel for the search button
         JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
         searchPanel.setBackground(new Color(17, 24, 39));
 
+        // Adds a label to the search bar
         JLabel searchLbl = new JLabel("Search:");
         searchLbl.setForeground(Color.WHITE);
         searchLbl.setFont(new Font("Segoe UI", Font.PLAIN, 12));
 
+        // textfield stores the search value to use for the search
         searchField = new JTextField(16);
         searchField.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+
+        // Triggers live search as user types
         searchField.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
             public void insertUpdate(javax.swing.event.DocumentEvent e)  { loadOrders(); }
             public void removeUpdate(javax.swing.event.DocumentEvent e)  { loadOrders(); }
@@ -81,21 +116,24 @@ public class OrderManagement extends BaseFrame implements Refreshable {
         filterLbl.setForeground(Color.WHITE);
         filterLbl.setFont(new Font("Segoe UI", Font.PLAIN, 12));
 
+        // Adds a combo box to effectivley filter through the orders based on status
         statusFilter = new JComboBox<>(new String[]{
                 "All", "pending", "accepted", "processing", "dispatched", "delivered"
         });
         statusFilter.setFont(new Font("Segoe UI", Font.PLAIN, 12));
         statusFilter.addActionListener(e -> loadOrders());
 
+        // Refresh button also relaods all the orders again
         JButton refreshBtn = new JButton("Refresh");
         styleBtn(refreshBtn);
         refreshBtn.addActionListener(e -> loadOrders());
 
-        JButton syncBtn = new JButton("Sync from IPOS-PU");
+        JButton syncBtn = new JButton("Sync from IPOS-CA");
         styleBtn(syncBtn);
         syncBtn.setBackground(new Color(30, 58, 138));
         syncBtn.addActionListener(e -> syncFromIPOSPU());
 
+        // All the search buttons and text fields are added to the search panel at the top of the form
         searchPanel.add(searchLbl);
         searchPanel.add(searchField);
         searchPanel.add(filterLbl);
@@ -104,7 +142,7 @@ public class OrderManagement extends BaseFrame implements Refreshable {
         searchPanel.add(syncBtn);
         topBar.add(searchPanel, BorderLayout.WEST);
 
-        // ── TABLE ─────────────────────────────────────────────
+        // creates a Table setup – cells are not editable
         String[] cols = {
                 "Order ID", "Merchant", "Date", "Status",
                 "Total (£)", "Discount (£)", "Final (£)"
@@ -114,6 +152,7 @@ public class OrderManagement extends BaseFrame implements Refreshable {
             public boolean isCellEditable(int r, int c) { return false; }
         };
 
+        // A new table is created to store all of the order records from the database
         orderTable = new JTable(tableModel);
         orderTable.setFont(new Font("Segoe UI", Font.PLAIN, 12));
         orderTable.setRowHeight(30);
@@ -124,6 +163,7 @@ public class OrderManagement extends BaseFrame implements Refreshable {
         orderTable.getTableHeader().setForeground(Color.WHITE);
         orderTable.getTableHeader().setReorderingAllowed(false);
 
+        // Status colour coding
         orderTable.getColumnModel().getColumn(3).setCellRenderer(
                 new DefaultTableCellRenderer() {
                     public Component getTableCellRendererComponent(JTable t, Object val,
@@ -164,17 +204,20 @@ public class OrderManagement extends BaseFrame implements Refreshable {
                 }
         );
 
+        // Sroll pane to scroll the table
         JScrollPane scroll = new JScrollPane(orderTable);
         scroll.setBorder(BorderFactory.createEmptyBorder());
 
-        // ── BOTTOM BUTTONS ────────────────────────────────────
+        // creates a bottom panel with action buttons and status label
         JPanel bottomPanel = new JPanel(new BorderLayout());
         bottomPanel.setBackground(new Color(17, 24, 39));
         bottomPanel.setBorder(new EmptyBorder(10, 12, 10, 12));
 
+        // creates a panel to store all the buttons
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
         buttonPanel.setBackground(new Color(17, 24, 39));
 
+        // creates buttons to view, reject and process orders
         JButton viewBtn    = new JButton("View Details");
         JButton acceptBtn  = new JButton("Accept");
         JButton processBtn = new JButton("Mark Processing");
@@ -196,12 +239,14 @@ public class OrderManagement extends BaseFrame implements Refreshable {
         deliverBtn.addActionListener(e -> updateStatus("delivered"));
         rejectBtn.addActionListener(e  -> rejectOrder());
 
+        // Adds the buttons to the button panel
         buttonPanel.add(viewBtn);
         buttonPanel.add(acceptBtn);
         buttonPanel.add(processBtn);
         buttonPanel.add(deliverBtn);
         buttonPanel.add(rejectBtn);
 
+        // if the user is a director, the vuttons are disabled as the director cannot process orders
         if (role.equals("Director of Operations")) {
             acceptBtn.setVisible(false);
             processBtn.setVisible(false);
@@ -209,6 +254,7 @@ public class OrderManagement extends BaseFrame implements Refreshable {
             rejectBtn.setVisible(false);
         }
 
+        // Adds a message label to notify user of any errors
         messageLabel = new JLabel(" ");
         messageLabel.setFont(new Font("Segoe UI", Font.PLAIN, 11));
         messageLabel.setForeground(Color.WHITE);
@@ -221,7 +267,13 @@ public class OrderManagement extends BaseFrame implements Refreshable {
         CenterPanel.add(bottomPanel, BorderLayout.SOUTH);
     }
 
-    // ── DATA METHODS ─────────────────────────────────────────
+
+    /**
+     * Loads orders from the database into the table.
+     * If merchantId is set, loads only that merchant's orders.
+     * Otherwise loads all orders. Applies the current search text
+     * and status filter to the query.
+     */
     private void loadOrders() {
         tableModel.setRowCount(0);
         try {
@@ -246,7 +298,10 @@ public class OrderManagement extends BaseFrame implements Refreshable {
             e.printStackTrace();
         }
     }
-
+    /**
+     * Displays a popup showing the full details of the selected order.
+     * Shows order metadata, line items and dispatch details if available.
+     */
     private void viewOrderDetails() {
         int row = orderTable.getSelectedRow();
         if (row == -1) { setMsg("Select an order to view.", false); return; }
@@ -271,7 +326,12 @@ public class OrderManagement extends BaseFrame implements Refreshable {
             setMsg("Error: " + e.getMessage(), false);
         }
     }
-
+    /**
+     * Accepts a pending order.
+     * Updates the order status, increases the merchant's outstanding balance,
+     * reduces stock and generates an invoice automatically.
+     * Only pending orders can be accepted.
+     */
     private void acceptOrder() {
         int row = orderTable.getSelectedRow();
         if (row == -1) { setMsg("Select an order first.", false); return; }
@@ -295,7 +355,13 @@ public class OrderManagement extends BaseFrame implements Refreshable {
             setMsg("Error: " + e.getMessage(), false);
         }
     }
-
+    /**
+     * Updates the status of the selected order to a new status.
+     * Validates that the transition follows the correct workflow order.
+     * Invalid transitions are blocked with an error message.
+     *
+     * @param newStatus the new status to apply
+     */
     private void updateStatus(String newStatus) {
         int row = orderTable.getSelectedRow();
         if (row == -1) { setMsg("Select an order first.", false); return; }
@@ -319,7 +385,11 @@ public class OrderManagement extends BaseFrame implements Refreshable {
             setMsg("Error: " + e.getMessage(), false);
         }
     }
-
+    /**
+     * Rejects a pending order after confirmation.
+     * Shows a confirmation dialog before rejecting.
+     * Only pending orders can be rejected.
+     */
     private void rejectOrder() {
         int row = orderTable.getSelectedRow();
         if (row == -1) { setMsg("Select an order first.", false); return; }
@@ -348,7 +418,11 @@ public class OrderManagement extends BaseFrame implements Refreshable {
             setMsg("Error: " + e.getMessage(), false);
         }
     }
-
+    /**
+     * Imports undelivered orders from IPOS-PU on a background thread.
+     * Updates the status bar with the number of orders imported.
+     * Reloads the order table after syncing completes.
+     */
     private void syncFromIPOSPU() {
         setMsg("Syncing from IPOS-PU...", true);
         new Thread(() -> {
@@ -368,18 +442,31 @@ public class OrderManagement extends BaseFrame implements Refreshable {
             }
         }).start();
     }
-
+    /**
+     * Imports undelivered orders from IPOS-PU on a background thread.
+     * Updates the status bar with the number of orders imported.
+     * Reloads the order table after syncing completes.
+     */
     private boolean isValidTransition(String current, String next) {
         switch (current) {
-            case "pending":    return next.equals("accepted");
-            case "accepted":   return next.equals("processing");
-            case "processing": return next.equals("dispatched");
-            case "dispatched": return next.equals("delivered");
-            default:           return false;
+            case "pending":
+                return next.equals("accepted");
+            case "accepted":
+                return next.equals("processing");
+            case "processing":
+                return next.equals("dispatched");
+            case "dispatched":
+                return next.equals("delivered");
+            default:
+                return false;
         }
     }
 
-    // ── HELPERS ──────────────────────────────────────────────
+    /**
+     * Applies a consistent visual style to an action button.
+     *
+     * @param btn the button to style
+     */
     private void styleBtn(JButton btn) {
         btn.setBackground(new Color(30, 70, 90));
         btn.setForeground(Color.WHITE);
@@ -387,14 +474,23 @@ public class OrderManagement extends BaseFrame implements Refreshable {
         btn.setBorderPainted(false);
         btn.setFont(new Font("Segoe UI", Font.PLAIN, 12));
     }
-
+    /**
+     * Displays a success or error message in the status bar.
+     *
+     * @param text the message to display
+     * @param success true for a green success message, false for a red error message
+     */
     private void setMsg(String text, boolean success) {
         messageLabel.setText(text);
         messageLabel.setForeground(success
                 ? new Color(0, 200, 100)
                 : new Color(255, 100, 100));
     }
-
+    /**
+     * Called by the screen router when this screen becomes visible.
+     * Reads the currently selected merchant from AppFrame and reloads
+     * the order list accordingly. Clears the merchant filter if none selected.
+     */
     public void onShow() {
         this.merchantId = AppFrame.getInstance().getSelectedMerchant();
         loadOrders();

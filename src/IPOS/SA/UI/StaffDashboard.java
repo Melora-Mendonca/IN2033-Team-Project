@@ -11,12 +11,6 @@ import java.awt.*;
 
 public class StaffDashboard extends BaseFrame implements Refreshable{
     private final StaffService dashboardService;
-    private JPanel CardsPanel;
-    private JPanel tableWrapper;
-    private JTable ordersTable;
-    private JScrollPane ordersScroll;
-    private JPanel ordersPanel;
-    private JLabel ordersTitle;
 
     public StaffDashboard(String fullname, String role, String username, ScreenRouter router) {
         super(fullname, role, username,"Staff Dashboard", router);

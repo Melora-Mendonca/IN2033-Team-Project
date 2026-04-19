@@ -8,7 +8,16 @@ import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.util.List;
-
+/**
+ * Manager Dashboard screen for IPOS-SA.
+ * Displayed after a Director of Operations logs in successfully.
+ * Shows four summary stat cards and a low stock items table:
+ * - Stat cards: low stock count, total invoices, total turnover, stock deliveries
+ * - Low Stock Items table: catalogue items below minimum level, highlighted in light red
+ *
+ * Data is loaded from the database via ManagerService and refreshed
+ * automatically each time the screen is shown.
+ */
 public class ManagerDashboard extends BaseFrame implements Refreshable{
 
     private final ManagerService dashboardService;
@@ -24,7 +33,11 @@ public class ManagerDashboard extends BaseFrame implements Refreshable{
 
         loadDashboardData();
     }
-
+    /**
+     * Returns the personalised header title shown at the top of the screen.
+     *
+     * @return the header title string including the user's full name
+     */
     @Override
     protected String getHeaderTitle() {
         return "Welcome back, " + fullname;
@@ -42,7 +55,13 @@ public class ManagerDashboard extends BaseFrame implements Refreshable{
                     "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
-
+    /**
+     * Builds the four summary stat cards at the top of the dashboard.
+     * Shows low stock count, total invoices this month,
+     * total turnover this month and stock deliveries this month.
+     *
+     * @param data the dashboard data containing the values for each card
+     */
     private void createCardsPanel(ManagerDashboardData data) {
         CardsPanel = new JPanel(new GridLayout(1, 3, 16, 16));
         CardsPanel.setBorder(BorderFactory.createEmptyBorder(16, 16, 16, 16));
@@ -70,7 +89,17 @@ public class ManagerDashboard extends BaseFrame implements Refreshable{
 
         CenterPanel.add(CardsPanel, BorderLayout.NORTH);
     }
-
+    /**
+     * Builds a single stat card with a title, large numeric value and subtitle.
+     *
+     * @param title    the card heading
+     * @param value    the numeric value to display prominently
+     * @param subtitle the descriptive subtitle below the value
+     * @param bg       the card background colour
+     * @param titleFg  the foreground colour for the title and value labels
+     * @param subFg    the foreground colour for the subtitle label
+     * @return the assembled stat card panel
+     */
     private JPanel buildCard(String title, String value, String subtitle,
                              Color bg, Color titleFg, Color subFg) {
         JPanel card = new JPanel();
@@ -102,14 +131,25 @@ public class ManagerDashboard extends BaseFrame implements Refreshable{
 
         return card;
     }
-
+    /**
+     * Creates the table wrapper and adds the low stock items table to it.
+     *
+     * @param data the dashboard data containing the low stock items list
+     */
     private void createTables(ManagerDashboardData data) {
         tableWrapper = new JPanel(new GridLayout(1, 1, 16, 0));
         tableWrapper.setBackground(new Color(245, 247, 250));
         createStockTable(data.getLowStockItems());
         CenterPanel.add(tableWrapper, BorderLayout.CENTER);
     }
-
+    /**
+     * Builds the Low Stock Items table and adds it to the table wrapper.
+     * Rows where current stock is below the minimum level are
+     * highlighted in light red.
+     * Shows a placeholder row if no low stock items exist.
+     *
+     * @param lowStockItems the list of low stock items to display
+     */
     private void createStockTable(List<LowStockItem> lowStockItems) {
         JPanel stockPanel = new JPanel(new BorderLayout(0, 8));
         stockPanel.setBackground(Color.WHITE);
@@ -172,7 +212,10 @@ public class ManagerDashboard extends BaseFrame implements Refreshable{
         stockPanel.add(scroll,     BorderLayout.CENTER);
         tableWrapper.add(stockPanel);
     }
-
+    /**
+     * Called by the screen router when this screen becomes visible.
+     * Reloads all dashboard data so counts and tables are always current.
+     */
     @Override
     public void onShow() {
         loadDashboardData();

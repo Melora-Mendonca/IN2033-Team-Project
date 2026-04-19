@@ -7,15 +7,25 @@ import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.print.*;
-
+/**
+ * Popup window that displays the full details of a single invoice.
+ * Opened from InvoiceListFrame when a user double-clicks a row
+ * or clicks the View Invoice button.
+ *
+ * Extends JFrame rather than BaseFrame as it is a standalone popup
+ * with no navigation sidebar.
+ */
 public class InvoiceDisplayFrame extends JFrame {
 
     private static final Color DARK_NAVY = new Color(14, 37, 48);
-    private static final Color ACCENT    = new Color(17, 54, 74);
-    private static final Color BG        = new Color(245, 247, 250);
+    private static final Color BG = new Color(245, 247, 250);
 
     private final Invoice invoice;
-
+    /**
+     * Constructor; creates and displays the invoice popup window.
+     *
+     * @param invoice the invoice to display
+     */
     public InvoiceDisplayFrame(Invoice invoice) {
         this.invoice = invoice;
         setTitle("Invoice — " + invoice.getInvoiceId());
@@ -25,7 +35,10 @@ public class InvoiceDisplayFrame extends JFrame {
         buildUI();
         setVisible(true);
     }
-
+    /**
+     * Builds and assembles the main window layout with header,
+     * scrollable invoice panel and footer.
+     */
     private void buildUI() {
         JPanel root = new JPanel(new BorderLayout());
         root.setBackground(BG);
@@ -34,7 +47,11 @@ public class InvoiceDisplayFrame extends JFrame {
         root.add(buildFooter(), BorderLayout.SOUTH);
         setContentPane(root);
     }
-
+    /**
+     * Builds the dark navy header bar with the "Invoice Details" title.
+     *
+     * @return the header panel
+     */
     private JPanel buildHeader() {
         JPanel header = new JPanel(new BorderLayout());
         header.setBackground(DARK_NAVY);
@@ -46,14 +63,19 @@ public class InvoiceDisplayFrame extends JFrame {
         return header;
     }
 
-    // The printable invoice panel — returned so it can be sent to the printer too
+    /**
+     * Builds the main invoice content panel showing all invoice details.
+     * This panel is also used as the basis for the printed version.
+     *
+     * @return the invoice content panel
+     */
     private JPanel buildInvoicePanel() {
         JPanel panel = new JPanel();
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
         panel.setBackground(Color.WHITE);
         panel.setBorder(BorderFactory.createEmptyBorder(24, 32, 24, 32));
 
-        // Title
+        // Creates the Title
         JLabel title = new JLabel("IPOS — Invoice");
         title.setFont(new Font("Segoe UI", Font.BOLD, 22));
         title.setForeground(DARK_NAVY);
@@ -61,20 +83,25 @@ public class InvoiceDisplayFrame extends JFrame {
         panel.add(title);
         panel.add(Box.createVerticalStrut(16));
 
-        // Metadata grid
+        // Creates a Metadata grid to store all the details about the invoice
         JPanel meta = new JPanel(new GridLayout(5, 2, 8, 4));
         meta.setBackground(Color.WHITE);
         meta.setMaximumSize(new Dimension(Integer.MAX_VALUE, 120));
         meta.setAlignmentX(Component.LEFT_ALIGNMENT);
-        meta.add(boldLabel("Invoice ID:"));    meta.add(plainLabel(invoice.getInvoiceId()));
-        meta.add(boldLabel("Order ID:"));      meta.add(plainLabel(invoice.getOrderId()));
-        meta.add(boldLabel("Merchant ID:"));   meta.add(plainLabel(invoice.getMerchantId()));
-        meta.add(boldLabel("Invoice Date:"));  meta.add(plainLabel(invoice.getInvoiceDate().toString()));
-        meta.add(boldLabel("Due Date:"));      meta.add(plainLabel(invoice.getDueDate().toString()));
+        meta.add(boldLabel("Invoice ID:"));
+        meta.add(plainLabel(invoice.getInvoiceId()));
+        meta.add(boldLabel("Order ID:"));
+        meta.add(plainLabel(invoice.getOrderId()));
+        meta.add(boldLabel("Merchant ID:"));
+        meta.add(plainLabel(invoice.getMerchantId()));
+        meta.add(boldLabel("Invoice Date:"));
+        meta.add(plainLabel(invoice.getInvoiceDate().toString()));
+        meta.add(boldLabel("Due Date:"));
+        meta.add(plainLabel(invoice.getDueDate().toString()));
         panel.add(meta);
         panel.add(Box.createVerticalStrut(20));
 
-        // Divider
+        // Creates a Divider
         JSeparator sep = new JSeparator();
         sep.setForeground(new Color(200, 210, 220));
         sep.setMaximumSize(new Dimension(Integer.MAX_VALUE, 1));
@@ -82,12 +109,13 @@ public class InvoiceDisplayFrame extends JFrame {
         panel.add(sep);
         panel.add(Box.createVerticalStrut(16));
 
-        // Line items table
+        // creates a table to display the individual order items in each invoice
         String[] cols = {"Item ID", "Description", "Quantity", "Unit Price (£)", "Line Total (£)"};
         DefaultTableModel model = new DefaultTableModel(cols, 0) {
             public boolean isCellEditable(int r, int c) { return false; }
         };
 
+        // Iterates though each order item and populates the table with details regarding the item
         if (invoice.getItems() != null) {
             for (OrderItem item : invoice.getItems()) {
                 model.addRow(new Object[]{
@@ -100,6 +128,7 @@ public class InvoiceDisplayFrame extends JFrame {
             }
         }
 
+        // Creates a table to store each item
         JTable itemsTable = new JTable(model);
         itemsTable.setFont(new Font("Segoe UI", Font.PLAIN, 12));
         itemsTable.setRowHeight(28);
@@ -109,6 +138,7 @@ public class InvoiceDisplayFrame extends JFrame {
         itemsTable.getTableHeader().setBackground(DARK_NAVY);
         itemsTable.getTableHeader().setForeground(Color.WHITE);
 
+        // Scroll pane to scroll through the table
         JScrollPane scroll = new JScrollPane(itemsTable);
         scroll.setBorder(BorderFactory.createLineBorder(new Color(220, 225, 230)));
         scroll.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -116,7 +146,7 @@ public class InvoiceDisplayFrame extends JFrame {
         panel.add(scroll);
         panel.add(Box.createVerticalStrut(20));
 
-        // Totals section
+        // Divided line to seerate the total from the items , with vertical spacing for formatting
         JSeparator sep2 = new JSeparator();
         sep2.setForeground(new Color(200, 210, 220));
         sep2.setMaximumSize(new Dimension(Integer.MAX_VALUE, 1));
@@ -124,10 +154,13 @@ public class InvoiceDisplayFrame extends JFrame {
         panel.add(sep2);
         panel.add(Box.createVerticalStrut(12));
 
+        // Totals section, which stores the amount of the order, how much has been paid, what is outstanding and the status of the order
         JPanel totals = new JPanel(new GridLayout(4, 2, 4, 6));
         totals.setBackground(Color.WHITE);
         totals.setMaximumSize(new Dimension(400, 100));
         totals.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        // Adds labels to each of the data fields
         totals.add(boldLabel("Total Amount:"));
         totals.add(plainLabel(String.format("£%.2f", invoice.getTotalAmount())));
         totals.add(boldLabel("Amount Paid:"));
@@ -135,13 +168,14 @@ public class InvoiceDisplayFrame extends JFrame {
         totals.add(boldLabel("Outstanding Balance:"));
         totals.add(plainLabel(String.format("£%.2f", invoice.getOutstandingBalance())));
 
+        // Adds a status label for any error notifications
         JLabel statusKey = new JLabel("Status:");
         statusKey.setFont(new Font("Segoe UI", Font.BOLD, 14));
         statusKey.setForeground(DARK_NAVY);
         JLabel statusVal = new JLabel(invoice.getStatus().toUpperCase());
         statusVal.setFont(new Font("Segoe UI", Font.BOLD, 14));
 
-        // Color code the status
+        // Color codes the status label
         switch (invoice.getStatus()) {
             case "paid":
                 statusVal.setForeground(new Color(0, 120, 0));
@@ -161,11 +195,11 @@ public class InvoiceDisplayFrame extends JFrame {
 
         panel.add(totals);
 
-        // Add overdue days warning if applicable
+        // Adds overdue days warning if applicable
         if (invoice.isOverdue()) {
             JPanel warningPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
             warningPanel.setBackground(Color.WHITE);
-            JLabel warning = new JLabel("⚠️ This invoice is " + invoice.getDaysOverdue() + " days overdue.");
+            JLabel warning = new JLabel("This invoice is " + invoice.getDaysOverdue() + " days overdue.");
             warning.setFont(new Font("Segoe UI", Font.BOLD, 12));
             warning.setForeground(new Color(200, 50, 50));
             warningPanel.add(warning);
@@ -174,7 +208,14 @@ public class InvoiceDisplayFrame extends JFrame {
 
         return panel;
     }
-
+    /**
+     * Looks up the description of a catalogue item by its ID.
+     * Used to display item names in the line items table.
+     * Returns the item ID as a fallback if the description cannot be found.
+     *
+     * @param itemId the catalogue item ID to look up
+     * @return the item description, or the item ID if not found
+     */
     private String getItemDescription(String itemId) {
         try {
             IPOS.SA.DB.DBConnection db = new IPOS.SA.DB.DBConnection();
@@ -183,16 +224,21 @@ public class InvoiceDisplayFrame extends JFrame {
                 return rs.getString("description");
             }
         } catch (Exception e) {
-            // Return item ID if description not found
+            // Returns item ID if description not found
         }
         return itemId;
     }
-
+    /**
+     * Builds the footer bar with Close and Print Invoice buttons.
+     *
+     * @return the footer panel
+     */
     private JPanel buildFooter() {
         JPanel footer = new JPanel(new FlowLayout(FlowLayout.RIGHT, 12, 8));
         footer.setBackground(Color.WHITE);
         footer.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, new Color(220, 220, 220)));
 
+        // Creates the print button to allow the user to e able to print a selected invoice
         JButton printBtn = new JButton("Print Invoice");
         printBtn.setFont(new Font("Segoe UI", Font.BOLD, 12));
         printBtn.setBackground(DARK_NAVY);
@@ -202,6 +248,7 @@ public class InvoiceDisplayFrame extends JFrame {
         printBtn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         printBtn.addActionListener(e -> printInvoice());
 
+        // Creates a close button for the user to e able to close the invoice display form
         JButton closeBtn = new JButton("Close");
         closeBtn.setFont(new Font("Segoe UI", Font.BOLD, 12));
         closeBtn.setBackground(new Color(107, 114, 128));
@@ -214,7 +261,14 @@ public class InvoiceDisplayFrame extends JFrame {
         footer.add(printBtn);
         return footer;
     }
+    /**
+     * Sends the invoice to the printer.
+     * Builds a print-optimised panel, scales it to fit the page width
+     * and uses the Java PrinterJob API to print it.
+     * Shows an error dialog if printing fails.
+     */
 
+    // CLAUDE AI was used in this method to assist in the programming of the printing logic //
     private void printInvoice() {
         PrinterJob job = PrinterJob.getPrinterJob();
         job.setJobName("Invoice — " + invoice.getInvoiceId());
@@ -225,13 +279,13 @@ public class InvoiceDisplayFrame extends JFrame {
             Graphics2D g2d = (Graphics2D) graphics;
             g2d.translate(pageFormat.getImageableX(), pageFormat.getImageableY());
 
-            // Scale to fit the page width
+            // Scales to fit the page width
             double pageWidth  = pageFormat.getImageableWidth();
             double panelWidth = 700;
             double scale = pageWidth / panelWidth;
             g2d.scale(scale, scale);
 
-            // Build a fresh panel sized for printing
+            // Builds a fresh panel sized for printing
             JPanel printPanel = buildPrintPanel();
             printPanel.setSize(700, 800);
             printPanel.doLayout();
@@ -249,8 +303,13 @@ public class InvoiceDisplayFrame extends JFrame {
             }
         }
     }
-
-    // Builds a self-contained panel for the printer (no scroll panes)
+    /**
+     * Builds a simplified self-contained panel optimised for printing.
+     * Uses plain label rows rather than scroll panes to ensure
+     * all content renders correctly on the printed page.
+     *
+     * @return the print-optimised invoice panel
+     */
     private JPanel buildPrintPanel() {
         JPanel panel = new JPanel();
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
@@ -289,7 +348,13 @@ public class InvoiceDisplayFrame extends JFrame {
 
         return panel;
     }
-
+    /**
+     * Builds a simplified self-contained panel optimised for printing.
+     * Uses plain label rows rather than scroll panes to ensure
+     * all content renders correctly on the printed page.
+     *
+     * @return the print-optimised invoice panel
+     */
     private JPanel printRow(String key, String value) {
         JPanel row = new JPanel(new FlowLayout(FlowLayout.LEFT, 4, 0));
         row.setBackground(Color.WHITE);
@@ -301,13 +366,23 @@ public class InvoiceDisplayFrame extends JFrame {
         row.add(v);
         return row;
     }
-
+    /**
+     * Creates a bold label used for field names in the metadata grid.
+     *
+     * @param text the label text
+     * @return the bold label
+     */
     private JLabel boldLabel(String text) {
         JLabel lbl = new JLabel(text);
         lbl.setFont(new Font("Segoe UI", Font.BOLD, 12));
         return lbl;
     }
-
+    /**
+     * Creates a plain label used for field values in the metadata grid.
+     *
+     * @param text the label text
+     * @return the plain label
+     */
     private JLabel plainLabel(String text) {
         JLabel lbl = new JLabel(text);
         lbl.setFont(new Font("Segoe UI", Font.PLAIN, 12));

@@ -200,20 +200,20 @@ public class CommercialAppForm extends BaseFrame {
                 String details =
                         "APPLICATION DETAILS\n" +
                                 "=".repeat(45) + "\n" +
-                                "ID:             " + app.getApplicationId()                              + "\n" +
-                                "Company:        " + app.getCompanyName()                                + "\n" +
-                                "Reg No:         " + app.getRegistrationNo()                             + "\n" +
-                                "Business Type:  " + nullSafe(app.getBusinessType())                     + "\n" +
-                                "Director:       " + nullSafe(app.getDirectorName())                     + "\n" +
-                                "Email:          " + app.getEmail()                                      + "\n" +
-                                "Phone:          " + nullSafe(app.getPhone())                            + "\n" +
-                                "Fax:            " + nullSafe(app.getFax())                              + "\n" +
-                                "Address:        " + nullSafe(app.getAddress())                          + "\n" +
-                                "Date Applied:   " + app.getApplicationDate()                            + "\n" +
-                                "-".repeat(45)                                                            + "\n" +
-                                "Status:         " + app.getStatus().toUpperCase()                       + "\n" +
+                                "ID:             " + app.getApplicationId()  + "\n" +
+                                "Company:        " + app.getCompanyName()   + "\n" +
+                                "Reg No:         " + app.getRegistrationNo()   + "\n" +
+                                "Business Type:  " + nullSafe(app.getBusinessType()) + "\n" +
+                                "Director:       " + nullSafe(app.getDirectorName()) + "\n" +
+                                "Email:          " + app.getEmail() + "\n" +
+                                "Phone:          " + nullSafe(app.getPhone()) + "\n" +
+                                "Fax:            " + nullSafe(app.getFax()) + "\n" +
+                                "Address:        " + nullSafe(app.getAddress())+ "\n" +
+                                "Date Applied:   " + app.getApplicationDate()  + "\n" +
+                                "-".repeat(45) + "\n" +
+                                "Status:         " + app.getStatus().toUpperCase() + "\n" +
                                 "Review Date:    " + (app.getReviewDate() != null
-                                ? app.getReviewDate().toString() : "—")                              + "\n" +
+                                ? app.getReviewDate().toString() : "—")  + "\n" +
                                 "Review Notes:   " + nullSafe(app.getReviewNotes());
 
                 JTextArea textArea = new JTextArea(details);
@@ -336,7 +336,6 @@ public class CommercialAppForm extends BaseFrame {
 
         } catch (Exception e) {
             System.err.println("Could not notify PU system: " + e.getMessage());
-            // Don't throw — PU notification failure shouldn't block the approval
         }
     }
 

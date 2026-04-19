@@ -8,12 +8,28 @@ import IPOS.SA.RPT.UI.*;
 
 import javax.swing.*;
 import java.awt.*;
-
+/**
+ * The main application frame for IPOS-SA.
+ * Implemented as a singleton — only one instance exists throughout the application.
+ *
+ * Uses a CardLayout to manage all screens in a single JFrame window.
+ * Navigation between screens is handled by the ScreenRouter.
+ * All screens are registered as named cards using the SCREEN_ constants.
+ *
+ * On startup only the login screen is loaded. After successful authentication
+ * all screens for the logged-in user are loaded via loadUserScreens().
+ *
+ * Also acts as a shared state holder for the currently selected merchant ID,
+ * used to pass context between the merchant list and order/invoice screens.
+ */
 public class AppFrame extends JFrame {
 
     private final CardLayout cards = new CardLayout();
+    /** CardLayout used to switch between registered screens. */
     private final JPanel root = new JPanel(cards);
+    /** Root panel containing all screen cards. */
     private final ScreenRouter router;
+    /** Router used by all screens to navigate to other screens. */
     private String selectedMerchantId;
 
     public static final String SCREEN_LOGIN = "login";
@@ -48,14 +64,23 @@ public class AppFrame extends JFrame {
 
     // Singleton instance
     private static AppFrame instance;
-
+    /**
+     * Returns the singleton instance of AppFrame.
+     * Creates it if it does not yet exist.
+     *
+     * @return the single AppFrame instance
+     */
     public static AppFrame getInstance() {
         if (instance == null) {
             instance = new AppFrame();
         }
         return instance;
     }
-
+    /**
+     * Private constructor — creates the main application window.
+     * Sets up the CardLayout, creates the ScreenRouter and
+     * loads the login screen as the initial view.
+     */
     private AppFrame() {
         super("IPOS-SA");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -80,7 +105,20 @@ public class AppFrame extends JFrame {
             System.out.println("Root components: " + root.getComponentCount());
         });
     }
-
+    /**
+     * Registers all application screens for the logged-in user.
+     * Called by LoginForm after successful authentication.
+     * All screens are added as named cards to the root panel
+     * so the ScreenRouter can navigate between them.
+     *
+     * Multiple variants of some screens are registered for context-specific
+     * navigation — for example MerchantList is registered three times
+     * (default, orders context and invoices context).
+     *
+     * @param fullname the full name of the logged-in user
+     * @param role     the role of the logged-in user
+     * @param username the username of the logged-in user
+     */
     public void loadUserScreens(String fullname, String role, String username) {
         this.fullname = fullname;
         this.role = role;
@@ -114,15 +152,29 @@ public class AppFrame extends JFrame {
         root.add(new ManageItem(fullname, role, "DELIVERY", router), SCREEN_MANAGE_ITEM_DELIVERY);
 
     }
-
+    /**
+     * Returns the ScreenRouter used for navigation between screens.
+     *
+     * @return the screen router
+     */
     public ScreenRouter getRouter() {
         return router;
     }
-
+    /**
+     * Stores the ID of the merchant selected in MerchantList.
+     * Read by OrderManagement and InvoiceListFrame to filter their data.
+     *
+     * @param merchantId the selected merchant ID
+     */
     public void setSelectedMerchant(String merchantId) {
         this.selectedMerchantId = merchantId;
     }
-
+    /**
+     * Returns the ID of the currently selected merchant.
+     * Used by OrderManagement and InvoiceListFrame to filter by merchant.
+     *
+     * @return the selected merchant ID, or null if none selected
+     */
     public String getSelectedMerchant() {
         return selectedMerchantId;
     }

@@ -9,7 +9,20 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-
+/**
+ * Abstract base panel for all screens in IPOS-SA.
+ * Provides a consistent layout with a header bar, navigation sidebar
+ * and a central content area that each subclass populates.
+ *
+ * Extends JPanel rather than JFrame — all screens are panels registered
+ * as cards in AppFrame's CardLayout and switched via ScreenRouter.
+ *
+ * The navigation sidebar is role-sensitive — different nav items are
+ * shown depending on the logged-in user's role. Expandable nav items
+ * reveal sub-options when clicked.
+ *
+ * Subclasses must implement getHeaderTitle() to provide their page heading.
+ */
 public abstract class BaseFrame extends JPanel {
 
     protected String fullname;
@@ -27,11 +40,28 @@ public abstract class BaseFrame extends JPanel {
     protected JLabel navIcon;
     protected JButton logoutBtn;
     protected JSeparator divider;
-
+    /**
+     * Constructor — builds the screen without a username.
+     * Used for screens that do not need to pass username to the settings form.
+     *
+     * @param fullname the full name of the logged-in user
+     * @param role     the role of the logged-in user
+     * @param title    the window title
+     * @param router   the screen router used for navigation
+     */
     public BaseFrame(String fullname, String role, String title, ScreenRouter router) {
         this(fullname, role, null, title, router);
     }
-
+    /**
+     * Full constructor — builds the screen with all user session details.
+     * Used by screens that need to pass username through to child screens.
+     *
+     * @param fullname the full name of the logged-in user
+     * @param role     the role of the logged-in user
+     * @param username the username of the logged-in user
+     * @param title    the window title
+     * @param router   the screen router used for navigation
+     */
     public BaseFrame(String fullname, String role, String username, String title, ScreenRouter router) {
         this.fullname = fullname;
         this.role = role;
@@ -47,7 +77,9 @@ public abstract class BaseFrame extends JPanel {
         createNavPanel();
         createContentContainer();
     }
-
+    /**
+     * Builds the top header bar showing the screen title and user role subtitle.
+     */
     private void createHeaderPanel() {
         HeaderPanel = new JPanel();
         HeaderPanel.setLayout(new BoxLayout(HeaderPanel, BoxLayout.X_AXIS));
@@ -71,7 +103,12 @@ public abstract class BaseFrame extends JPanel {
         textPanel.add(headerSubTitle);
         HeaderPanel.add(textPanel);
     }
-
+    /**
+     * Builds the left navigation sidebar.
+     * Nav items shown are determined by the logged-in user's role.
+     * Expandable items reveal sub-options when clicked.
+     * A logout button is fixed at the bottom of the sidebar.
+     */
     private void createNavPanel() {
         NavPanel = new JPanel();
         NavPanel.setLayout(new BoxLayout(NavPanel, BoxLayout.Y_AXIS));
@@ -152,7 +189,10 @@ public abstract class BaseFrame extends JPanel {
         logoutBtn.addActionListener(e -> handleLogout());
         NavPanel.add(logoutBtn);
     }
-
+    /**
+     * Builds the content container — assembles the header, nav and center panel
+     * into the main panel layout.
+     */
     private void createContentContainer() {
         ContentPanel = new JPanel(new BorderLayout());
         ContentPanel.setBackground(new Color(245, 247, 250));
@@ -167,7 +207,15 @@ public abstract class BaseFrame extends JPanel {
         MainPanel.add(NavPanel, BorderLayout.WEST);
         MainPanel.add(ContentPanel, BorderLayout.CENTER);
     }
-
+    /**
+     * Adds an expandable nav item to the sidebar.
+     * The main button toggles the visibility of the sub-items panel.
+     * Each sub-item fires handleSubNavClick() when clicked.
+     * Sub-items highlight on hover.
+     *
+     * @param label    the label for the expandable parent button
+     * @param subItems the labels for the sub-option buttons
+     */
     protected void addExpandableNavItem(String label, String[] subItems) {
         JButton mainBtn = new JButton(label);
         mainBtn.setFont(new Font("Segoe UI", Font.PLAIN, 13));
@@ -224,7 +272,15 @@ public abstract class BaseFrame extends JPanel {
         NavPanel.add(subPanel);
         NavPanel.add(Box.createVerticalStrut(4));
     }
-
+    /**
+     * Handles navigation when a sub-nav item is clicked.
+     * Maps each sub-item label to its corresponding screen constant
+     * and calls router.goTo() to navigate there.
+     * Special cases for View Debtors List and View Payment History
+     * open dialogs directly rather than navigating to a new screen.
+     *
+     * @param label the label of the sub-nav item that was clicked
+     */
     protected void handleSubNavClick(String label) {
         switch (label) {
             case "View All Merchants":       router.goTo(AppFrame.SCREEN_MERCHANT_LIST); break;
@@ -251,7 +307,15 @@ public abstract class BaseFrame extends JPanel {
                 break;
         }
     }
-
+    /**
+     * Builds a top-level navigation button for the sidebar.
+     * The button navigates to its corresponding screen when clicked.
+     * Active buttons are displayed in a highlighted style.
+     *
+     * @param label  the button label and the screen it navigates to
+     * @param active true if this button should appear in the active/highlighted style
+     * @return the styled navigation button
+     */
     protected JButton buildNavButton(String label, boolean active) {
         JButton btn = new JButton(label);
         btn.setFont(new Font("Segoe UI", active ? Font.BOLD : Font.PLAIN, 13));
@@ -281,10 +345,18 @@ public abstract class BaseFrame extends JPanel {
 
         return btn;
     }
-
+    /**
+     * Handles the logout action.
+     * Navigates back to the login screen via the router.
+     */
     protected void handleLogout() {
         router.goTo(AppFrame.SCREEN_LOGIN);
     }
-
+    /**
+     * Returns the title to display in the page header.
+     * Each subclass provides its own heading string.
+     *
+     * @return the header title string
+     */
     protected abstract String getHeaderTitle();
 }

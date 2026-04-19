@@ -7,7 +7,21 @@ import IPOS.SA.ACC.Service.AuthenticationService;
 import javax.swing.*;
 import java.awt.*;
 import java.util.List;
-
+/**
+ * Login screen for IPOS-SA.
+ * The first screen shown when the application starts.
+ * Extends JPanel and is registered as a card in AppFrame's CardLayout.
+ *
+ * Displays the InfoPharma branding on the left and a login form on the right.
+ * Staff select their role using toggle buttons before entering credentials.
+ * The Staff button reveals a dropdown for selecting specific staff roles.
+ *
+ * On successful login:
+ * - Runs automatic account status checks
+ * - Loads all user screens into AppFrame
+ * - Navigates to the correct dashboard
+ * - Shows a low stock warning if applicable
+ */
 public class LoginForm extends JPanel {
 
     private final AuthenticationService authService;
@@ -67,7 +81,9 @@ public class LoginForm extends JPanel {
         createLogoPanel();
         createLoginPanel();
     }
-
+    /**
+     * Builds the top header bar with the InfoPharma logo and system name.
+     */
     private void createHeader() {
         HeaderPanel.setLayout(new FlowLayout(FlowLayout.LEFT, 24, 0));
         HeaderPanel.setPreferredSize(new Dimension(1000, 54));
@@ -87,7 +103,10 @@ public class LoginForm extends JPanel {
         HeaderPanel.add(headerIcon);
         HeaderPanel.add(headerLabel);
     }
-
+    /**
+     * Builds the left branding panel with the InfoPharma logo,
+     * title text and system feature list.
+     */
     private void createLogoPanel() {
         divider = new JSeparator();
         divider.setForeground(Color.WHITE);
@@ -123,7 +142,9 @@ public class LoginForm extends JPanel {
 
         createFeatureList();
     }
-
+    /**
+     * Populates the branding panel with a bullet list of system features.
+     */
     private void createFeatureList() {
         String[] features = {
                 "  Catalogue management",
@@ -142,7 +163,9 @@ public class LoginForm extends JPanel {
             LogoPanel.add(Box.createVerticalStrut(8));
         }
     }
-
+    /**
+     * Populates the branding panel with a bullet list of system features.
+     */
     private void createLoginPanel() {
         LoginPanel.setLayout(new BoxLayout(LoginPanel, BoxLayout.Y_AXIS));
         LoginPanel.setBackground(new Color(245, 247, 250));
@@ -151,7 +174,11 @@ public class LoginForm extends JPanel {
         createRoleSelection();
         createLoginForm();
     }
-
+    /**
+     * Creates the role selection section with toggle buttons for
+     * Administrator, Director and Staff.
+     * The Staff button reveals a dropdown to choose a specific staff role.
+     */
     private void createRoleSelection() {
         JPanel roleRow = new JPanel(new FlowLayout(FlowLayout.CENTER, 2, 0));
         roleRow.setOpaque(false);
@@ -232,7 +259,11 @@ public class LoginForm extends JPanel {
         LoginPanel.add(Box.createVerticalStrut(8));
         LoginPanel.add(staffPanel);
     }
-
+    /**
+     * Creates the login form with username and password fields,
+     * a show/hide password toggle and the Sign In button.
+     * Pressing Enter in either field triggers the login action.
+     */
     private void createLoginForm() {
         titleLbl = new JLabel("Welcome back");
         titleLbl.setFont(new Font("Segoe UI", Font.BOLD, 22));
@@ -325,7 +356,9 @@ public class LoginForm extends JPanel {
         LoginPanel.add(Box.createVerticalStrut(8));
         LoginPanel.add(statusLbl);
     }
-
+    /**
+     * Creates and styles the Sign In button.
+     */
     private void createLoginButton() {
         loginBtn = new JButton("Sign In");
         loginBtn.setFont(new Font("Segoe UI", Font.BOLD, 13));
@@ -339,7 +372,11 @@ public class LoginForm extends JPanel {
         loginBtn.setAlignmentX(Component.LEFT_ALIGNMENT);
         loginBtn.addActionListener(e -> handleLogin());
     }
-
+    /**
+     * Handles the login action when Sign In is clicked or Enter is pressed.
+     * Validates input fields, authenticates via AuthenticationService,
+     * then loads screens and navigates to the correct dashboard.
+     */
     private void handleLogin() {
         String username = userField.getText().trim();
         String password = new String(passField.getPassword());
@@ -384,7 +421,15 @@ public class LoginForm extends JPanel {
             statusLbl.setText("Invalid username, password or role.");
         }
     }
-
+    /**
+     * Navigates the logged-in user to their appropriate dashboard.
+     * For Administrators and Directors — runs auto account status checks
+     * and loads stock warnings before navigating.
+     * Stock warnings are shown after the dashboard loads using invokeLater
+     * to ensure the dashboard is fully visible first.
+     *
+     * @param user the authenticated user
+     */
     private void navigateToDashboard(User user) {
         List<String> warnings = null;
         if (user.getRole().equals("Administrator") ||
@@ -415,7 +460,12 @@ public class LoginForm extends JPanel {
             SwingUtilities.invokeLater(() -> showStockWarning(finalWarnings));
         }
     }
-
+    /**
+     * Displays a warning dialog listing catalogue items below minimum stock level.
+     * Called after successful login for admin and director roles.
+     *
+     * @param warnings list of warning messages for low stock items
+     */
     private void showStockWarning(List<String> warnings) {
         StringBuilder sb = new StringBuilder();
         sb.append("The following items are below minimum stock level:\n\n");

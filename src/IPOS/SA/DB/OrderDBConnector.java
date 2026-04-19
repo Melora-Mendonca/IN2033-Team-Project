@@ -7,10 +7,24 @@ import IPOS.SA.ORD.OrderStatus;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
-
+/**
+ * Database connector for order operations in IPOS-SA.
+ * Provides methods to save, retrieve and update order records
+ * and their associated line items.
+ * Used by OrderService for all order-related database interactions.
+ */
 public class OrderDBConnector {
 
-    // Saves a new order and its items to the database
+    /**
+     * Saves a new order and all its line items to the database.
+     * The order is inserted with status 'pending'.
+     * All order items are inserted as a batch for efficiency.
+     *
+     * @param order  the order to save
+     * @param grossTotal the total order value before discount
+     * @param discount the discount amount applied to the order
+     * @param finalTotal the final order value after discount
+     */
     public void saveOrder(Order order, double grossTotal, double discount, double finalTotal) {
         try {
             Connection conn = new DBConnection().getConn();
@@ -43,7 +57,14 @@ public class OrderDBConnector {
         }
     }
 
-    // Gets all orders for display in the order management table
+
+    /**
+     * Retrieves all orders for display in the order management table.
+     * Returns key fields including dispatch and courier details.
+     * Results are ordered by order date descending.
+     *
+     * @return list of order rows, each containing 9 fields for the table display
+     */
     public List<Object[]> getOrdersForDisplay() {
         List<Object[]> rows = new ArrayList<>();
         try {
@@ -75,7 +96,14 @@ public class OrderDBConnector {
         return rows;
     }
 
-    // Gets order items for a specific order
+    /**
+     * Retrieves all line items for a specific order.
+     * Used by InvoiceDisplayFrame and OrderProcessingFrame to show
+     * the pick list and invoice line items.
+     *
+     * @param orderId the unique order identifier
+     * @return list of OrderItem objects for the specified order
+     */
     public List<OrderItem> getItemsForOrder(String orderId) {
         List<OrderItem> items = new ArrayList<>();
         try {
@@ -98,7 +126,13 @@ public class OrderDBConnector {
         return items;
     }
 
-    // Updates order status
+    /**
+     * Updates the status of an order.
+     * Used to advance the order through the workflow stages.
+     *
+     * @param orderId the unique order identifier
+     * @param status  the new status string to apply
+     */
     public void updateOrderStatus(String orderId, String status) {
         try {
             Connection conn = new DBConnection().getConn();
@@ -113,7 +147,18 @@ public class OrderDBConnector {
         }
     }
 
-    // Updates dispatch details and sets status to dispatched
+    /**
+     * Updates dispatch details for an order and sets its status to dispatched.
+     * Records the dispatched by name, dispatch date, courier name,
+     * courier reference number and expected delivery date.
+     * Called by OrderProcessingFrame when a Delivery Employee dispatches an order.
+     *
+     * @param orderId          the unique order identifier
+     * @param dispatchedBy     the full name of the staff member dispatching the order
+     * @param courier          the name of the courier service
+     * @param courierRef       the courier tracking reference number
+     * @param expectedDelivery the expected delivery date as a string, or empty if unknown
+     */
     public void dispatchOrder(String orderId, String dispatchedBy, String courier,
                               String courierRef, String expectedDelivery) {
         try {
@@ -134,7 +179,14 @@ public class OrderDBConnector {
         }
     }
 
-    // Reduces stock when order is placed
+
+    /**
+     * Reduces the available stock of a catalogue item by the given quantity.
+     * Called when an order is accepted to reflect the stock committed to the order.
+     *
+     * @param itemId   the unique catalogue item identifier
+     * @param quantity the number of packs to deduct from availability
+     */
     public void reduceStock(String itemId, int quantity) {
         try {
             Connection conn = new DBConnection().getConn();

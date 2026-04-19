@@ -16,11 +16,17 @@ import java.awt.*;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
-
+/**
+ * Order Processing screen for IPOS-SA.
+ * Adapts its behaviour and layout based on the logged-in user's role
+ *
+ * The screen contains three panels:
+ * - Orders table — shows relevant orders for the role
+ * - Order Items table — shows the pick list for the selected order
+ * - Action panel — either picking confirmation or dispatch form depending on role
+ */
 public class OrderProcessingFrame extends BaseFrame {
-
     private final OrderService orderService;
-
     private JTable orderTable;
     private DefaultTableModel tableModel;
 
@@ -43,6 +49,13 @@ public class OrderProcessingFrame extends BaseFrame {
     // Common components
     private JButton refreshButton;
 
+    /**
+     * Constructor — builds the screen and configures it for the logged-in role.
+     *
+     * @param fullname the full name of the logged-in user
+     * @param role the role of the logged-in user
+     * @param router the screen router used for navigation
+     */
     public OrderProcessingFrame(String fullname, String role, ScreenRouter router) {
         super(fullname, role, getTitleByRole(role), router);
         this.orderService = new OrderService(new AccountService(), new InvoiceService());
@@ -50,7 +63,12 @@ public class OrderProcessingFrame extends BaseFrame {
         configureByRole();
         loadOrders();
     }
-
+    /**
+     * Returns the window title based on the user's role.
+     *
+     * @param role the user's role
+     * @return the appropriate title string
+     */
     private static String getTitleByRole(String role) {
         if (role.equals("Warehouse Employee")) {
             return "Order Picking & Packing";
@@ -59,7 +77,11 @@ public class OrderProcessingFrame extends BaseFrame {
         }
         return "Order Processing";
     }
-
+    /**
+     * Returns the header title based on the user's role.
+     *
+     * @return the header title string
+     */
     @Override
     protected String getHeaderTitle() {
         if (role.equals("Warehouse Employee")) {
@@ -69,7 +91,11 @@ public class OrderProcessingFrame extends BaseFrame {
         }
         return "Order Processing";
     }
-
+    /**
+     * Returns the header title based on the user's role.
+     *
+     * @return the header title string
+     */
     private void buildContent() {
         CenterPanel.setLayout(new BorderLayout());
         CenterPanel.setBackground(new Color(245, 247, 250));
@@ -90,12 +116,17 @@ public class OrderProcessingFrame extends BaseFrame {
 
         CenterPanel.add(mainContent, BorderLayout.CENTER);
 
+        // Creates the picking panel or the dispatch panel based on the user
         pickingPanel = createPickingPanel();
         dispatchPanel = createDispatchPanel();
 
         CenterPanel.add(dispatchPanel, BorderLayout.SOUTH);
     }
-
+    /**
+     * Swaps the action panel at the bottom based on the user's role.
+     * Warehouse Employee sees the picking panel.
+     * Delivery Employee sees the dispatch panel.
+     */
     private void configureByRole() {
         if (role.equals("Warehouse Employee")) {
             CenterPanel.remove(dispatchPanel);
@@ -109,7 +140,13 @@ public class OrderProcessingFrame extends BaseFrame {
             CenterPanel.repaint();
         }
     }
-
+    /**
+     * Builds the orders table panel showing orders relevant to the current role.
+     * Includes a title, refresh button and colour-coded status column.
+     * Selecting a row loads the corresponding order items in the pick list.
+     *
+     * @return the orders table panel
+     */
     private JPanel createTablePanel() {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBackground(Color.WHITE);
@@ -196,7 +233,11 @@ public class OrderProcessingFrame extends BaseFrame {
         panel.add(scroll, BorderLayout.CENTER);
         return panel;
     }
-
+    /**
+     * Returns the orders table title based on the user's role.
+     *
+     * @return the table title string
+     */
     private String getTableTitle() {
         if (role.equals("Warehouse Employee")) {
             return "Orders Ready for Picking";
@@ -206,6 +247,13 @@ public class OrderProcessingFrame extends BaseFrame {
         return "All Orders";
     }
     // ── ORDER ITEMS PANEL (Pick List) ───────────────────────────────────
+    /**
+     * Builds the order items pick list panel.
+     * Shows the items and quantities for the selected order.
+     * Used by the Warehouse Employee to verify what needs to be picked.
+     *
+     * @return the order items panel
+     */
     private JPanel createOrderDetailsPanel() {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBackground(Color.WHITE);
@@ -243,7 +291,12 @@ public class OrderProcessingFrame extends BaseFrame {
         panel.add(scroll, BorderLayout.CENTER);
         return panel;
     }
-
+    /**
+     * Builds the picking confirmation panel for Warehouse Employee.
+     * Shows an instruction label and a Confirm Picked and Packed button.
+     *
+     * @return the picking action panel
+     */
     private JPanel createPickingPanel() {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBackground(Color.WHITE);
@@ -279,7 +332,14 @@ public class OrderProcessingFrame extends BaseFrame {
         panel.add(fieldsPanel, BorderLayout.CENTER);
         return panel;
     }
-
+    /**
+     * Builds the dispatch form panel for Delivery Employee.
+     * Contains fields for courier name, reference number, expected delivery
+     * date and a Mark as Dispatched button.
+     * Required fields are marked with an asterisk in red.
+     *
+     * @return the dispatch action panel
+     */
     private JPanel createDispatchPanel() {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBackground(Color.WHITE);
@@ -340,7 +400,13 @@ public class OrderProcessingFrame extends BaseFrame {
         panel.add(fieldsPanel, BorderLayout.CENTER);
         return panel;
     }
-
+    /**
+     * Loads orders from the database filtered by the current role.
+     * Warehouse Employee sees pending, accepted and processing orders.
+     * Delivery Employee sees only processing orders.
+     * Other roles see all orders.
+     * Shows a message if no relevant orders are found.
+     */
     private void loadOrders() {
         try {
             List<Object[]> allOrders = orderService.getAllOrders();
@@ -381,7 +447,13 @@ public class OrderProcessingFrame extends BaseFrame {
             JOptionPane.showMessageDialog(this, "Error loading orders: " + e.getMessage());
         }
     }
-
+    /**
+     * Loads orders from the database filtered by the current role.
+     * Warehouse Employee sees pending, accepted and processing orders.
+     * Delivery Employee sees only processing orders.
+     * Other roles see all orders.
+     * Shows a message if no relevant orders are found.
+     */
     private void loadItems() {
         itemsTableModel.setRowCount(0);
 
@@ -406,7 +478,12 @@ public class OrderProcessingFrame extends BaseFrame {
             e.printStackTrace();
         }
     }
-
+    /**
+     * Looks up the description of a catalogue item by its ID.
+     *
+     * @param itemId the catalogue item ID
+     * @return the item description, or "Unknown" if not found
+     */
     private String getItemDescription(String itemId) {
         try {
             catalogueService catService = new catalogueService();
@@ -416,7 +493,13 @@ public class OrderProcessingFrame extends BaseFrame {
             return "Unknown";
         }
     }
-
+    /**
+     * Marks the selected order as picked and packed.
+     * Validates the order is in pending or accepted status.
+     * Shows a confirmation dialog listing all items to pick.
+     * On confirmation — reduces catalogue stock for all items and
+     * advances the order status to processing.
+     */
     private void markAsPicked() {
         int row = orderTable.getSelectedRow();
         if (row < 0) {
@@ -482,7 +565,12 @@ public class OrderProcessingFrame extends BaseFrame {
                     JOptionPane.ERROR_MESSAGE);
         }
     }
-
+    /**
+     * Dispatches the selected order.
+     * Validates the order is in processing status and all courier
+     * details have been entered. Updates the order with dispatch
+     * details and advances the status to dispatched.
+     */
     private void dispatchOrder() {
         int row = orderTable.getSelectedRow();
         if (row < 0) {
@@ -530,7 +618,11 @@ public class OrderProcessingFrame extends BaseFrame {
             JOptionPane.showMessageDialog(this, "Error: " + e.getMessage());
         }
     }
-
+    /**
+     * Clears all input fields in the active action panel.
+     * Resets courier fields for Delivery Employee.
+     * Resets expected delivery date to 3 days from today.
+     */
     private void clearInputFields() {
         if (role.equals("Warehouse Employee")) {
             if (quantityPickedField != null) {
@@ -550,7 +642,11 @@ public class OrderProcessingFrame extends BaseFrame {
             }
         }
     }
-
+    /**
+     * Applies a consistent visual style to a JTable.
+     *
+     * @param table the table to style
+     */
     private void styleTable(JTable table) {
         table.setFont(new Font("Segoe UI", Font.PLAIN, 12));
         table.setRowHeight(30);

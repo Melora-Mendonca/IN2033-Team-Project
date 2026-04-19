@@ -14,12 +14,19 @@ import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableRowSorter;
 import java.awt.*;
 import java.util.List;
-
+/**
+ * Screen that displays a searchable, filterable list of invoices.
+ * Can operate in two modes:
+ * - All invoices — shows every invoice in the system (no merchant filter)
+ * - Merchant invoices — shows only invoices for a specific merchant,
+ *   set via the selectedMerchant in AppFrame when navigating from MerchantList
+ *
+ * Data is refreshed via onShow() each time the screen becomes visible.
+ */
 public class InvoiceListFrame extends BaseFrame implements Refreshable {
 
     private final InvoiceService invoiceService;
     private String merchantId;
-
     private JTable invoiceTable;
     private DefaultTableModel tableModel;
     private TableRowSorter<DefaultTableModel> sorter;
@@ -27,20 +34,39 @@ public class InvoiceListFrame extends BaseFrame implements Refreshable {
     private JComboBox<String> statusFilter;
     private JLabel messageLabel;
 
-    // Called from nav — no merchant filter
+    /**
+     * Constructor; opens the invoice list showing all invoices.
+     * Called from the nav menu.
+     *
+     * @param fullname the full name of the logged-in user
+     * @param role the role of the logged-in user
+     * @param router the screen router used for navigation
+     */
     public InvoiceListFrame(String fullname, String role, ScreenRouter router) {
         this(fullname, role, null, router);
     }
 
-    // Called from MerchantList — filtered by merchant
+    /**
+     * Constructor; opens the invoice list filtered by a specific merchant.
+     * Called from MerchantList when a merchant is selected.
+     *
+     * @param fullname the full name of the logged-in user
+     * @param role the role of the logged-in user
+     * @param merchantId the merchant ID to filter by, or null for all invoices
+     * @param router the screen router used for navigation
+     */
     public InvoiceListFrame(String fullname, String role, String merchantId, ScreenRouter router) {
         super(fullname, role, "Invoice Management", router);
-        this.merchantId     = merchantId;
+        this.merchantId = merchantId;
         this.invoiceService = new InvoiceService();
         buildContent();
         loadInvoices();
     }
-
+    /**
+     * Returns the header title; shows the merchant ID if filtering by merchant.
+     *
+     * @return the header title string
+     */
     @Override
     protected String getHeaderTitle() {
         if (merchantId != null) {
@@ -49,25 +75,33 @@ public class InvoiceListFrame extends BaseFrame implements Refreshable {
             return "Invoice Management";
         }
     }
-
+    /**
+     * Builds and arranges all UI components for this screen.
+     * Includes a search bar, status filter, invoice table and action buttons.
+     */
     private void buildContent() {
         CenterPanel.setLayout(new BorderLayout(0, 0));
         CenterPanel.setBackground(new Color(245, 247, 250));
 
-        // ── TOP BAR ──────────────────────────────────────────
+        // creates a Top bar with search controls
         JPanel topBar = new JPanel(new BorderLayout());
         topBar.setBackground(new Color(17, 24, 39));
         topBar.setBorder(new EmptyBorder(10, 16, 10, 16));
 
+        // Adds a panel for the search button
         JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
         searchPanel.setBackground(new Color(17, 24, 39));
 
+        // Adds a label to the search bar
         JLabel searchLbl = new JLabel("Search:");
         searchLbl.setForeground(Color.WHITE);
         searchLbl.setFont(new Font("Segoe UI", Font.PLAIN, 12));
 
+        // textfield stores the search value to use for the search
         searchField = new JTextField(16);
         searchField.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+
+        // Triggers live search as user types
         searchField.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
             public void insertUpdate(javax.swing.event.DocumentEvent e)  { loadInvoices(); }
             public void removeUpdate(javax.swing.event.DocumentEvent e)  { loadInvoices(); }
@@ -84,6 +118,7 @@ public class InvoiceListFrame extends BaseFrame implements Refreshable {
         statusFilter.setFont(new Font("Segoe UI", Font.PLAIN, 12));
         statusFilter.addActionListener(e -> loadInvoices());
 
+        // Refresh button also updates overdue days before reloading
         JButton refreshBtn = new JButton("Refresh");
         styleBtn(refreshBtn);
         refreshBtn.addActionListener(e -> {
@@ -91,6 +126,7 @@ public class InvoiceListFrame extends BaseFrame implements Refreshable {
             loadInvoices();
         });
 
+        // All the search buttons and text fields are added to the search panel at the top of the form
         searchPanel.add(searchLbl);
         searchPanel.add(searchField);
         searchPanel.add(filterLbl);
@@ -98,7 +134,7 @@ public class InvoiceListFrame extends BaseFrame implements Refreshable {
         searchPanel.add(refreshBtn);
         topBar.add(searchPanel, BorderLayout.WEST);
 
-        // ── TABLE ─────────────────────────────────────────────
+        // creates a Table setup – cells are not editable
         String[] cols = {
                 "Invoice ID", "Order ID", "Merchant", "Invoice Date",
                 "Due Date", "Total (£)", "Paid (£)", "Status", "Days Overdue"
@@ -108,6 +144,7 @@ public class InvoiceListFrame extends BaseFrame implements Refreshable {
             public boolean isCellEditable(int r, int c) { return false; }
         };
 
+        // A new table is created to store all of the invoice records from the database
         invoiceTable = new JTable(tableModel);
         invoiceTable.setFont(new Font("Segoe UI", Font.PLAIN, 12));
         invoiceTable.setRowHeight(30);
@@ -118,6 +155,7 @@ public class InvoiceListFrame extends BaseFrame implements Refreshable {
         invoiceTable.getTableHeader().setForeground(Color.WHITE);
         invoiceTable.getTableHeader().setReorderingAllowed(false);
 
+        // Enable column sorting
         sorter = new TableRowSorter<>(tableModel);
         invoiceTable.setRowSorter(sorter);
 
@@ -141,24 +179,20 @@ public class InvoiceListFrame extends BaseFrame implements Refreshable {
                 }
         );
 
-        // Double click opens invoice details
-        invoiceTable.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseClicked(java.awt.event.MouseEvent e) {
-                if (e.getClickCount() == 2) openSelectedInvoice();
-            }
-        });
-
+        // Sroll pane to scroll the table
         JScrollPane scroll = new JScrollPane(invoiceTable);
         scroll.setBorder(BorderFactory.createEmptyBorder());
 
-        // ── BOTTOM BUTTONS ────────────────────────────────────
+        // creates a bottom panel with action buttons and status label
         JPanel bottomPanel = new JPanel(new BorderLayout());
         bottomPanel.setBackground(new Color(17, 24, 39));
         bottomPanel.setBorder(new EmptyBorder(10, 12, 10, 12));
 
+        // creates a panel to store all the buttons
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
         buttonPanel.setBackground(new Color(17, 24, 39));
 
+        // creates buttons to view and generate invoices
         JButton viewBtn     = new JButton("View Invoice");
         JButton generateBtn = new JButton("Generate Invoice");
         styleBtn(viewBtn);
@@ -167,9 +201,11 @@ public class InvoiceListFrame extends BaseFrame implements Refreshable {
         viewBtn.addActionListener(e     -> openSelectedInvoice());
         generateBtn.addActionListener(e -> generateInvoiceForOrder());
 
+        // Adds the buttons to the button panel
         buttonPanel.add(viewBtn);
         buttonPanel.add(generateBtn);
 
+        // Adds a message label to notify user of any errors
         messageLabel = new JLabel(" ");
         messageLabel.setFont(new Font("Segoe UI", Font.PLAIN, 11));
         messageLabel.setForeground(Color.WHITE);
@@ -182,10 +218,18 @@ public class InvoiceListFrame extends BaseFrame implements Refreshable {
         CenterPanel.add(bottomPanel, BorderLayout.SOUTH);
     }
 
-    // ── DATA METHODS ─────────────────────────────────────────
+    /**
+     * Loads invoices from the database into the table.
+     * If merchantId is set, loads only that merchant's invoices.
+     * Otherwise loads all invoices. Applies the current search text
+     * and status filter to the query.
+     */
     private void loadInvoices() {
+        // clears the table of all records
         tableModel.setRowCount(0);
         try {
+
+            // uses the search filter to identify the records that match the given critieria and add them to a list
             String search = searchField != null ? searchField.getText().trim() : "";
             String status = statusFilter != null
                     ? statusFilter.getSelectedItem().toString() : "All";
@@ -197,6 +241,7 @@ public class InvoiceListFrame extends BaseFrame implements Refreshable {
                 rows = invoiceService.getAllInvoices(status, search);
             }
 
+            // each item in the list is iterated and added to the table again effectively making it appear as if the table was filtered
             for (Object[] row : rows) tableModel.addRow(row);
 
             if (messageLabel != null)
@@ -207,7 +252,10 @@ public class InvoiceListFrame extends BaseFrame implements Refreshable {
             e.printStackTrace();
         }
     }
-
+    /**
+     * Opens the InvoiceDisplayFrame popup for the selected invoice row.
+     * Converts the view row index to the model index to handle sorting correctly.
+     */
     private void openSelectedInvoice() {
         int row = invoiceTable.getSelectedRow();
         if (row < 0) {
@@ -228,7 +276,11 @@ public class InvoiceListFrame extends BaseFrame implements Refreshable {
             setMsg("Error: " + e.getMessage(), false);
         }
     }
-
+    /**
+     * Prompts staff to enter an order ID and generates an invoice for it.
+     * Checks that an invoice does not already exist for the order
+     * before generating a new one.
+     */
     private void generateInvoiceForOrder() {
         String orderId = JOptionPane.showInputDialog(this,
                 "Enter Order ID to generate invoice for:",
@@ -237,7 +289,7 @@ public class InvoiceListFrame extends BaseFrame implements Refreshable {
         if (orderId == null || orderId.trim().isEmpty()) return;
 
         try {
-            // Check invoice doesn't already exist
+            // Checks invoice doesn't already exist
             List<Object[]> existing = invoiceService.getAllInvoices("All", orderId.trim());
             for (Object[] row : existing) {
                 if (row[1].toString().equals(orderId.trim())) {
@@ -256,6 +308,11 @@ public class InvoiceListFrame extends BaseFrame implements Refreshable {
     }
 
     // ── HELPERS ──────────────────────────────────────────────
+    /**
+     * Applies a consistent visual style to an action button.
+     *
+     * @param btn the button to style
+     */
     private void styleBtn(JButton btn) {
         btn.setBackground(new Color(30, 70, 90));
         btn.setForeground(Color.WHITE);
@@ -263,14 +320,23 @@ public class InvoiceListFrame extends BaseFrame implements Refreshable {
         btn.setBorderPainted(false);
         btn.setFont(new Font("Segoe UI", Font.PLAIN, 12));
     }
-
+    /**
+     * Displays a success or error message in the status bar.
+     *
+     * @param text    the message to display
+     * @param success true for a green success message, false for a red error message
+     */
     private void setMsg(String text, boolean success) {
         messageLabel.setText(text);
         messageLabel.setForeground(success
                 ? new Color(0, 200, 100)
                 : new Color(255, 100, 100));
     }
-
+    /**
+     * Called by the screen router when this screen becomes visible.
+     * Reads the currently selected merchant from AppFrame and reloads
+     * the invoice list accordingly. Clears the merchant filter if none selected.
+     */
     public void onShow() {
         this.merchantId = AppFrame.getInstance().getSelectedMerchant();
         loadInvoices();

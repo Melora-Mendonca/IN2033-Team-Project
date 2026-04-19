@@ -6,10 +6,21 @@ import IPOS.SA.ORD.Model.OrderItem;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
-
+/**
+ * Database connector for invoice operations in IPOS-SA.
+ * Provides methods to save, retrieve and update invoice records.
+ * Used by InvoiceService and PaymentService to interact with
+ * the invoice table in the database.
+ */
 public class InvoiceDBConnector {
 
     // Saves a new invoice to the database
+    /**
+     * Saves a new invoice record to the database.
+     * Called when an order is accepted and an invoice is generated automatically.
+     *
+     * @param invoice the invoice to save
+     */
     public void saveInvoice(Invoice invoice) {
         try {
             Connection conn = new DBConnection().getConn();
@@ -32,6 +43,13 @@ public class InvoiceDBConnector {
     }
 
     // Gets all invoices for display
+    /**
+     * Retrieves all invoices from the database for display in the invoice list.
+     * Joins with the order and merchant tables to include the merchant's company name.
+     * Results are ordered by invoice date descending.
+     *
+     * @return list of invoice rows, each containing 9 fields for the table display
+     */
     public List<Object[]> getInvoicesForDisplay() {
         List<Object[]> rows = new ArrayList<>();
         try {
@@ -66,6 +84,14 @@ public class InvoiceDBConnector {
     }
 
     // Gets invoices for a specific merchant
+    /**
+     * Retrieves all invoices for a specific merchant.
+     * Joins with the order table to filter by merchant ID.
+     * Results are ordered by invoice date descending.
+     *
+     * @param merchantId the unique merchant identifier to filter by
+     * @return list of invoice rows for the specified merchant
+     */
     public List<Object[]> getInvoicesByMerchant(String merchantId) {
         List<Object[]> rows = new ArrayList<>();
         try {
@@ -98,6 +124,14 @@ public class InvoiceDBConnector {
     }
 
     // Gets a single invoice by ID
+    /**
+     * Retrieves a single invoice by its ID including all line items.
+     * Joins with the order table to retrieve the merchant ID.
+     * Uses OrderDBConnector to load the associated order items.
+     *
+     * @param invoiceId the unique invoice identifier
+     * @return the fully populated Invoice object, or null if not found
+     */
     public Invoice getInvoiceById(String invoiceId) {
         try {
             Connection conn = new DBConnection().getConn();
@@ -131,6 +165,16 @@ public class InvoiceDBConnector {
     }
 
     // Updates invoice after payment recorded
+    /**
+     * Updates the amount paid and payment status of an invoice after a payment is recorded.
+     * Determines the new status automatically:
+     * - paid    if newAmountPaid >= totalAmount
+     * - partial if newAmountPaid > 0 but less than total
+     * - unpaid  if newAmountPaid is 0
+     *
+     * @param invoiceId      the unique invoice identifier
+     * @param newAmountPaid  the updated total amount paid
+     */
     public void updatePayment(String invoiceId, double newAmountPaid) {
         try {
             Connection conn = new DBConnection().getConn();
@@ -157,8 +201,20 @@ public class InvoiceDBConnector {
     }
 
     // Updates overdue days and status for all unpaid invoices
+    /**
+     * Updates the days overdue count and payment status for all unpaid invoices.
+     * Runs a single SQL UPDATE that recalculates days overdue using DATEDIFF
+     * and sets the correct status for each invoice:
+     * - paid    if amount_paid >= total_amount
+     * - overdue if past due date and not fully paid
+     * - partial if partially paid but not overdue
+     * - unpaid  otherwise
+     *
+     * Called on Refresh to keep invoice statuses current.
+     */
     public void updateOverdueDays() {
         try {
+            // Creates a connectin with the database and update the invoice table with a record detailing the newly created invoice
             Connection conn = new DBConnection().getConn();
             String sql =
                     "UPDATE invoice SET " +

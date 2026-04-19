@@ -19,19 +19,38 @@ public class AdminDashboard extends BaseFrame implements Refreshable{
     private JPanel tableWrapper;
     private JTable OrderStatusTable;
     private JTable LowStockTable;
-
+    /**
+     * Admin Dashboard screen for IPOS-SA.
+     * Displayed after an Administrator logs in successfully.
+     * Shows three summary stat cards and two data tables:
+     * - Stat cards: low stock count, stock deliveries this month, overdue payments
+     * - Recent Orders table: latest orders with colour-coded status column
+     * - Low Stock Items table: catalogue items below their minimum stock level,
+     *   highlighted in light red
+     *
+     * Data is loaded from the database via AdminService and refreshed
+     * automatically each time the screen is shown.
+     */
     public AdminDashboard(String fullname, String role, String username, ScreenRouter router) {
         super(fullname, role, username,"Admin Dashboard", router);
         this.dashboardService = new AdminService();
 
         loadDashboardData();
     }
-
+    /**
+     * Returns the personalised header title shown at the top of the screen.
+     *
+     * @return the header title string including the user's full name
+     */
     @Override
     protected String getHeaderTitle() {
         return "Welcome back, " + fullname;
     }
-
+    /**
+     * Loads all dashboard data from the database and rebuilds the
+     * stat cards and tables. Clears the panel before reloading
+     * to prevent duplicate components when the screen is revisited.
+     */
     private void loadDashboardData() {
         try {
             // Clear existing content before reloading
@@ -52,7 +71,11 @@ public class AdminDashboard extends BaseFrame implements Refreshable{
                     "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
-
+    /**
+     * Loads all dashboard data from the database and rebuilds the
+     * stat cards and tables. Clears the panel before reloading
+     * to prevent duplicate components when the screen is revisited.
+     */
     private void createCardsPanel(AdminDashboardData data) {
         CardsPanel = new JPanel(new GridLayout(1, 3, 16, 16));
         CardsPanel.setBorder(BorderFactory.createEmptyBorder(16, 16, 16, 16));
@@ -75,7 +98,17 @@ public class AdminDashboard extends BaseFrame implements Refreshable{
 
         CenterPanel.add(CardsPanel, BorderLayout.NORTH);
     }
-
+    /**
+     * Builds a single stat card with a title, large numeric value and subtitle.
+     *
+     * @param title    the card heading (e.g. "Low Stock Items")
+     * @param value    the numeric value to display prominently
+     * @param subtitle the descriptive subtitle below the value
+     * @param bg       the card background colour
+     * @param titleFg  the foreground colour for the title and value labels
+     * @param subFg    the foreground colour for the subtitle label
+     * @return the assembled stat card panel
+     */
     private JPanel buildCard(String title, String value, String subtitle,
                              Color bg, Color titleFg, Color subFg) {
         JPanel card = new JPanel();
@@ -107,7 +140,12 @@ public class AdminDashboard extends BaseFrame implements Refreshable{
 
         return card;
     }
-
+    /**
+     * Creates the table wrapper panel and populates it with the
+     * recent orders table on the left and low stock table on the right.
+     *
+     * @param data the dashboard data containing orders and low stock items
+     */
     private void createTables(AdminDashboardData data) {
         tableWrapper = new JPanel(new GridLayout(1, 2, 16, 0));
         tableWrapper.setBackground(new Color(245, 247, 250));
@@ -117,7 +155,14 @@ public class AdminDashboard extends BaseFrame implements Refreshable{
 
         CenterPanel.add(tableWrapper, BorderLayout.CENTER);
     }
-
+    /**
+     * Builds the Recent Orders table and adds it to the table wrapper.
+     * The Status column uses colour-coded labels matching the order workflow:
+     * pending (purple), accepted (yellow), being_processed (blue),
+     * dispatched (orange), delivered (green).
+     *
+     * @param orders the list of recent order summaries to display
+     */
     private void createOrdersTable(List<OrderSummary> orders) {
         JPanel ordersPanel = new JPanel(new BorderLayout(0, 8));
         ordersPanel.setBackground(Color.WHITE);
@@ -184,7 +229,13 @@ public class AdminDashboard extends BaseFrame implements Refreshable{
         ordersPanel.add(scroll,      BorderLayout.CENTER);
         tableWrapper.add(ordersPanel);
     }
-
+    /**
+     * Builds the Low Stock Items table and adds it to the table wrapper.
+     * Rows where current stock is below the minimum level are
+     * highlighted in light red.
+     *
+     * @param lowStockItems the list of low stock items to display
+     */
     private void createStockTable(List<LowStockItem> lowStockItems) {
         JPanel stockPanel = new JPanel(new BorderLayout(0, 8));
         stockPanel.setBackground(Color.WHITE);
@@ -245,7 +296,10 @@ public class AdminDashboard extends BaseFrame implements Refreshable{
         stockPanel.add(scroll, BorderLayout.CENTER);
         tableWrapper.add(stockPanel);
     }
-
+    /**
+     * Called by the screen router when this screen becomes visible.
+     * Reloads all dashboard data so counts and tables are always current.
+     */
     @Override
     public void onShow() {
         loadDashboardData();
