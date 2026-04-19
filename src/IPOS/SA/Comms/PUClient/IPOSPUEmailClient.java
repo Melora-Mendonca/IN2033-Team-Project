@@ -12,10 +12,10 @@ public class IPOSPUEmailClient {
     /**
      * Calls IPOS-PU's email service to send an email
      *
-     * @param email     Recipient email address (maps to IPOS-PU's "to" field)
-     * @param content   Email content/body (maps to IPOS-PU's "body" field)
+     * @param email Recipient email address (maps to IPOS-PU's "to" field)
+     * @param content Email content/body (maps to IPOS-PU's "body" field)
      * @param reference Reference ID (maps to IPOS-PU's "subject" field)
-     * @param sender    Sender system identifier (NOT used by IPOS-PU)
+     * @param sender Sender system identifier (NOT used by IPOS-PU)
      * @param subsystem Subsystem requesting the email (NOT used by IPOS-PU)
      * @return true if email was sent successfully, false otherwise
      */
@@ -23,7 +23,7 @@ public class IPOSPUEmailClient {
                                        String reference, String sender,
                                        String subsystem) throws IOException {
 
-        // Build JSON matching what IPOS-PU actually expects
+        // Builds JSON matching what IPOS-PU actually expects
         // IPOS-PU expects: "to", "subject", "body"
         String json = "{"
                 + "\"to\":\""      + escapeJson(email)    + "\","
@@ -34,7 +34,7 @@ public class IPOSPUEmailClient {
         System.out.println("[IPOSPUEmailClient] Sending email to IPOS-PU at: " + BASE_URL);
         System.out.println("[IPOSPUEmailClient] JSON: " + json);
 
-        // Make POST request to IPOS-PU (no "/produce" suffix)
+        // Makes POST request to IPOS-PU (no "/produce" suffix)
         String response = post(BASE_URL, json);
 
         // IPOS-PU returns "email sent" on success
@@ -44,6 +44,15 @@ public class IPOSPUEmailClient {
         return success;
     }
 
+    /**
+     * Sends a JSON POST request to the given URL and returns the response body.
+     * Throws an IOException for any non-2xx HTTP response.
+     *
+     * @param urlStr the target URL
+     * @param json the JSON payload to send
+     * @return the response body as a string, or "OK" if the body is empty
+     * @throws IOException if the connection fails or a non-2xx status is returned
+     */
     private static String post(String urlStr, String json) throws IOException {
         URL url = new URL(urlStr);
         HttpURLConnection conn = (HttpURLConnection) url.openConnection();
@@ -60,6 +69,7 @@ public class IPOSPUEmailClient {
         }
 
         int status = conn.getResponseCode();
+        // Use error stream for non-2xx responses so the body can be read and reported
         InputStream is = (status >= 200 && status < 300)
                 ? conn.getInputStream()
                 : conn.getErrorStream();
@@ -86,6 +96,12 @@ public class IPOSPUEmailClient {
         return response.toString();
     }
 
+    /**
+     * Escapes special characters in a string for safe inclusion in a JSON value.
+     *
+     * @param s the string to escape
+     * @return the escaped string, or an empty string if the input is null
+     */
     private static String escapeJson(String s) {
         if (s == null) return "";
         return s.replace("\\", "\\\\")

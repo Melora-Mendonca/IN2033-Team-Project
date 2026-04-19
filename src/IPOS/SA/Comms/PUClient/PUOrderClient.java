@@ -73,6 +73,7 @@ public class PUOrderClient {
         }
 
         int status = conn.getResponseCode();
+        // Use error stream for non-2xx responses so the body can be read and reported
         InputStream is = (status >= 200 && status < 300)
                 ? conn.getInputStream()
                 : conn.getErrorStream();

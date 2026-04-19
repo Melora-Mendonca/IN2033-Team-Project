@@ -50,7 +50,7 @@ public class MerchantList extends BaseFrame implements Refreshable {
     public MerchantList(String fullname, String role, String callerContext, ScreenRouter router) {
         super(fullname, role, getTitleForContext(callerContext), router);
         this.accountService = new AccountService();
-        this.callerContext = callerContext;
+        this.callerContext = callerContext; // stores the context, of which class called the list and for what purpose
         buildContent(); // creates the main form for the GUI
         loadMerchantData(); // Loads the merchant records from the database
     }
@@ -92,27 +92,33 @@ public class MerchantList extends BaseFrame implements Refreshable {
         topBar.setBackground(new Color(17, 24, 39));
         topBar.setBorder(new EmptyBorder(10, 16, 10, 16));
 
+        // Adds a panel for the search button
         JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
         searchPanel.setBackground(new Color(17, 24, 39));
 
+        // Adds a label to the search bar
         JLabel searchLabel = new JLabel("Search by Merchant ID or Business Name:");
         searchLabel.setForeground(Color.WHITE);
         searchLabel.setFont(new Font("Segoe UI", Font.PLAIN, 12));
 
+        // textfield stores the search value to use for the search
         searchField = new JTextField(20);
         searchField.setFont(new Font("Segoe UI", Font.PLAIN, 12));
 
+        // Adds buttons to perform the search
         JButton searchButton = new JButton("Search");
         JButton refreshButton = new JButton("Refresh");
         styleBtn(searchButton);
         styleBtn(refreshButton);
 
+        // Adds functionality to the search button to identify the requested record, and display it on it's own
         searchButton.addActionListener(e -> searchMerchants());
         refreshButton.addActionListener(e -> {
             searchField.setText("");
             loadMerchantData();
         });
 
+        // All the search buttons and text fields are added to the search panel at the top fo the form
         searchPanel.add(searchLabel);
         searchPanel.add(searchField);
         searchPanel.add(searchButton);
@@ -125,6 +131,7 @@ public class MerchantList extends BaseFrame implements Refreshable {
             public boolean isCellEditable(int row, int column) { return false; }
         };
 
+        // A new table is created to store all of the merchant records from the database
         merchantTable = new JTable(tableModel);
         merchantTable.setFont(new Font("Segoe UI", Font.PLAIN, 12));
         merchantTable.setRowHeight(30);
@@ -135,7 +142,8 @@ public class MerchantList extends BaseFrame implements Refreshable {
         merchantTable.getTableHeader().setBackground(new Color(17, 24, 39));
         merchantTable.getTableHeader().setForeground(Color.WHITE);
 
-        // Row colour renderer: highlights suspended accounts in light red and defaulted accounts in darker red
+        // reads the Status column for each row from the database and colours the whole row
+        // light red for suspended accounts and darker red for in default accounts. Normal accounts stay white.
         merchantTable.setDefaultRenderer(Object.class,
                 new javax.swing.table.DefaultTableCellRenderer() {
                     public Component getTableCellRendererComponent(JTable t, Object val,
@@ -155,6 +163,7 @@ public class MerchantList extends BaseFrame implements Refreshable {
                     }
                 });
 
+        // Sroll pane to scroll the table
         JScrollPane scroll = new JScrollPane(merchantTable);
         scroll.setBorder(BorderFactory.createEmptyBorder());
 
@@ -168,6 +177,7 @@ public class MerchantList extends BaseFrame implements Refreshable {
 
         // the buttons vary depending on which screen opened this list
         if ("DEFAULT".equals(callerContext)) {
+            // View Details, View Orders, View Invoices, Create Account buttons
             JButton viewDetailsButton = new JButton("View Details");
             JButton viewOrdersButton = new JButton("View Orders");
             JButton viewInvoicesButton = new JButton("View Invoices");
@@ -176,6 +186,7 @@ public class MerchantList extends BaseFrame implements Refreshable {
             styleBtn(viewOrdersButton);
             styleBtn(viewInvoicesButton);
 
+            // Button opens up the account management page with pre-loaded merchant data
             viewDetailsButton.addActionListener(e -> {
                 int row = merchantTable.getSelectedRow();
                 if (row >= 0) {
@@ -187,6 +198,7 @@ public class MerchantList extends BaseFrame implements Refreshable {
                 }
             });
 
+            // Button opens up the order management page pre-filtered to the requesting merchant's orders
             viewOrdersButton.addActionListener(e -> {
                 int row = merchantTable.getSelectedRow();
                 if (row >= 0) {
@@ -198,6 +210,7 @@ public class MerchantList extends BaseFrame implements Refreshable {
                 }
             });
 
+            // Button opens up the invoice list pre-filtered by merchant ID for the merchant's invoices
             viewInvoicesButton.addActionListener(e -> {
                 int row = merchantTable.getSelectedRow();
                 if (row >= 0) {
@@ -222,12 +235,14 @@ public class MerchantList extends BaseFrame implements Refreshable {
             }
 
         } else if ("ORDERS".equals(callerContext)) {
+            // View Orders button + Back button + instruction label
             JButton selectButton = new JButton("View Orders");
             JButton backButton = new JButton("← Back");
 
             styleBtn(selectButton);
             styleBtn(backButton);
 
+            // Button opens up the order management page pre-filtered to the merchant's orders
             selectButton.addActionListener(e -> {
                 int row = merchantTable.getSelectedRow();
                 if (row >= 0) {
@@ -237,23 +252,27 @@ public class MerchantList extends BaseFrame implements Refreshable {
                 }
             });
 
+            // Button returns to the dashboard
             backButton.addActionListener(e -> router.goTo(AppFrame.SCREEN_ADMIN_DASHBOARD));
 
             buttonPanel.add(selectButton);
             buttonPanel.add(backButton);
 
+            // Creates a small instruction label in the button panel to instruct the user
             JLabel instructionLabel = new JLabel("Select a merchant to view their orders");
             instructionLabel.setFont(new Font("Segoe UI", Font.ITALIC, 11));
             instructionLabel.setForeground(new Color(200, 200, 200));
             bottomPanel.add(instructionLabel, BorderLayout.CENTER);
 
         } else if ("INVOICES".equals(callerContext)) {
+            // View Invoices button + Back button + instruction label
             JButton selectButton = new JButton("View Invoices");
             JButton backButton = new JButton("← Back");
 
             styleBtn(selectButton);
             styleBtn(backButton);
 
+            // Button opens up the invoice list, pre-filtered to the merchant's invoices
             selectButton.addActionListener(e -> {
                 int row = merchantTable.getSelectedRow();
                 if (row >= 0) {
@@ -264,10 +283,12 @@ public class MerchantList extends BaseFrame implements Refreshable {
                     JOptionPane.showMessageDialog(this, "Please select a merchant.");
                 }
             });
+            // button returns the user back to the dashboard page
             backButton.addActionListener(e -> router.goTo(AppFrame.SCREEN_ADMIN_DASHBOARD));
             buttonPanel.add(selectButton);
             buttonPanel.add(backButton);
 
+            // Creates a small instruction label in the button panel to instruct the user
             JLabel instructionLabel = new JLabel("Select a merchant to view their invoices");
             instructionLabel.setFont(new Font("Segoe UI", Font.ITALIC, 11));
             instructionLabel.setForeground(new Color(200, 200, 200));
@@ -295,10 +316,12 @@ public class MerchantList extends BaseFrame implements Refreshable {
             List<MerchantAccount> merchants = accountService.getAllAccounts();
             tableModel.setRowCount(0);
 
+            // each account in the list of merchants is iterated through and statuses and balances are updated
             for (MerchantAccount m : merchants) {
                 String status = m.getStatus().toString();
                 if (m.getOutstandingBalance() > m.getCreditLimit()) status = "OVERDUE";
 
+                // each row is populated with the merchant's details retrieved from the merchant account
                 tableModel.addRow(new Object[]{
                         m.getMerchantId(),
                         m.getBusinessName(),
@@ -330,6 +353,7 @@ public class MerchantList extends BaseFrame implements Refreshable {
             List<MerchantAccount> all = accountService.getAllAccounts();
             List<MerchantAccount> filtered = new ArrayList<>();
 
+            // iterates through all the records in the table adding the ones that meet the search critiera to a seperate list
             for (MerchantAccount m : all) {
                 if (m.getMerchantId().toLowerCase().contains(search) ||
                         m.getBusinessName().toLowerCase().contains(search) ||
@@ -338,11 +362,13 @@ public class MerchantList extends BaseFrame implements Refreshable {
                 }
             }
 
+            // the table is rest, and the filered list is iterated, and each record in that list is displayed on the table, creating the appearance of a filtered list
             tableModel.setRowCount(0);
             for (MerchantAccount m : filtered) {
                 String status = m.getStatus().toString();
                 if (m.getOutstandingBalance() > m.getCreditLimit()) status = "OVERDUE";
 
+                // each row is populated with the merchant's details retrieved from the merchant account
                 tableModel.addRow(new Object[]{
                         m.getMerchantId(),
                         m.getBusinessName(),

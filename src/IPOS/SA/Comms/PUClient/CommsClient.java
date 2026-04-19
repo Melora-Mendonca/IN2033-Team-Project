@@ -61,8 +61,15 @@ public class CommsClient {
         return post(BASE_URL + "/payment", json);
     }
 
-    // ── Internal HTTP POST ────────────────────────────────────────────────────
-
+    /**
+     * Sends a JSON POST request to the given URL and returns the response body.
+     * Throws an IOException for any non-2xx HTTP response.
+     *
+     * @param urlStr the target URL
+     * @param json the JSON payload to send
+     * @return the response body as a string, or "OK" if the body is empty
+     * @throws IOException if the connection fails or a non-2xx status is returned
+     */
     private static String post(String urlStr, String json) throws IOException {
         URL url = new URL(urlStr);
         HttpURLConnection conn = (HttpURLConnection) url.openConnection();
@@ -79,6 +86,7 @@ public class CommsClient {
         }
 
         int status = conn.getResponseCode();
+        // Use error stream for non-2xx responses so the body can be read and reported
         InputStream is = (status >= 200 && status < 300)
                 ? conn.getInputStream()
                 : conn.getErrorStream();
@@ -105,6 +113,12 @@ public class CommsClient {
         return response.toString();
     }
 
+    /**
+     * Escapes special characters in a string for safe inclusion in a JSON value.
+     *
+     * @param s the string to escape
+     * @return the escaped string, or an empty string if the input is null
+     */
     private static String escapeJson(String s) {
         if (s == null) return "";
         return s.replace("\\", "\\\\")

@@ -16,6 +16,11 @@ import IPOS.SA.ORD.Model.Order;
 import IPOS.SA.ORD.Model.OrderItem;
 import IPOS.SA.ACC.Model.MerchantAccount;
 
+/**
+ * REST API server for IPOS-SA inter-system communication.
+ * Listens on port 8081 and exposes endpoints for IPOS-CA and IPOS-PU
+ * to interact with the catalogue, orders, invoices and merchant accounts.
+ */
 public class IPOSAPIServer {
 
     private HttpServer server;
@@ -24,6 +29,9 @@ public class IPOSAPIServer {
     private final OrderService orderService;
     private final InvoiceService invoiceService;
 
+    /**
+     * Constructor — initialises all required services.
+     */
     public IPOSAPIServer() {
         this.catalogueService = new catalogueService();
         this.accountService = new AccountService();
@@ -31,14 +39,21 @@ public class IPOSAPIServer {
         this.orderService = new OrderService(accountService, invoiceService);
     }
 
+    /**
+     * Starts the HTTP server on port 8081.
+     * Registers all endpoint handlers and uses a cached thread pool
+     * to handle concurrent requests.
+     *
+     * @throws IOException if the server fails to start
+     */
     public void start() throws IOException {
         server = HttpServer.create(new InetSocketAddress(8081), 0);
 
-        // Inventory Service endpoints
+        // Inventory Service endpoints - to send all the active catalogue items and to deduct stock for an item
         server.createContext("/api/inventory/catalogue", new GetCatalogueHandler());
         server.createContext("/api/inventory/deduct", new DeductStockHandler());
 
-        // Order Service endpoints
+        // Order Service endpoints - to place orders, track orders, get account balance, get credit limits, get order invoices, get account status, and get discount rate
         server.createContext("/api/orders/place", new PlaceOrderHandler());
         server.createContext("/api/orders/track", new TrackDeliveryHandler());
         server.createContext("/api/orders/balance", new GetBalanceHandler());
@@ -47,9 +62,10 @@ public class IPOSAPIServer {
         server.createContext("/api/orders/discount", new GetDiscountPlanHandler());
         server.createContext("/api/orders/credit", new GetCreditLimitHandler());
 
-        // Membership Service endpoint
+        // Membership Service endpoint - to submit commercial membership applications
         server.createContext("/api/membership/request", new RequestMembershipHandler());
 
+        // Use a cached thread pool to handle multiple simultaneous requests
         server.setExecutor(Executors.newCachedThreadPool());
         server.start();
         System.out.println("=== IPOS-SA API SERVER STARTED ===");
@@ -68,6 +84,10 @@ public class IPOSAPIServer {
         System.out.println("==================================");
     }
 
+    /**
+     * Stops the HTTP server.
+     * Called on application shutdown.
+     */
     public void stop() {
         if (server != null) {
             server.stop(0);
@@ -75,6 +95,13 @@ public class IPOSAPIServer {
         }
     }
 
+    /**
+     * Reads the full request body from an HTTP exchange as a string.
+     *
+     * @param exchange the HTTP exchange containing the request
+     * @return the request body as a string
+     * @throws IOException if reading the body fails
+     */
     private String readBody(HttpExchange exchange) throws IOException {
         InputStreamReader isr = new InputStreamReader(exchange.getRequestBody(), StandardCharsets.UTF_8);
         BufferedReader br = new BufferedReader(isr);
@@ -86,6 +113,15 @@ public class IPOSAPIServer {
         return body.toString();
     }
 
+    /**
+     * Sends a JSON response back to the caller.
+     * Sets Content-Type to application/json and allows cross-origin requests.
+     *
+     * @param exchange   the HTTP exchange to respond to
+     * @param statusCode the HTTP status code (e.g. 200, 400, 500)
+     * @param response   the JSON response body string
+     * @throws IOException if writing the response fails
+     */
     private void sendResponse(HttpExchange exchange, int statusCode, String response) throws IOException {
         exchange.getResponseHeaders().set("Content-Type", "application/json");
         exchange.getResponseHeaders().set("Access-Control-Allow-Origin", "*");
@@ -97,12 +133,21 @@ public class IPOSAPIServer {
 
     // INVENTORY HANDLERS METHODS
 
+
+    /**
+     * Handles GET /api/inventory/catalogue
+     * Returns a JSON array of all active catalogue items including
+     * item ID, description, package cost and availability.
+     */
     class GetCatalogueHandler implements HttpHandler {
         @Override
         public void handle(HttpExchange exchange) throws IOException {
             if ("GET".equals(exchange.getRequestMethod())) {
                 try {
+                    // retireves all the active items in the catalogue
                     var items = catalogueService.getAllActiveItems();
+
+                    // builds a JSON string containing each of the active item, and their accociated details
                     StringBuilder json = new StringBuilder("[");
                     for (int i = 0; i < items.size(); i++) {
                         var item = items.get(i);
@@ -115,6 +160,8 @@ public class IPOSAPIServer {
                                 .append("}");
                     }
                     json.append("]");
+
+                    // the JSON string is posted to the calling endpoint
                     sendResponse(exchange, 200, json.toString());
                 } catch (Exception e) {
                     sendResponse(exchange, 500, "{\"error\":\"" + e.getMessage() + "\"}");
@@ -125,16 +172,28 @@ public class IPOSAPIServer {
         }
     }
 
+    /**
+     * Handles POST /api/inventory/deduct
+     * Deducts a specified quantity from a catalogue item's stock.
+     *
+     */
     class DeductStockHandler implements HttpHandler {
         @Override
         public void handle(HttpExchange exchange) throws IOException {
             if ("POST".equals(exchange.getRequestMethod())) {
                 try {
+                    // reads the message sent from the sending endpoint
                     String body = readBody(exchange);
+
+                    // extracts the item id and quantity of the item whose stock is to be deducted
                     String itemId = extractValue(body, "itemId");
                     int quantity = Integer.parseInt(extractValue(body, "quantity"));
+
+                    // deducts the stock of the tiem and returns a true value to mark the deduction as successful
                     boolean success = catalogueService.UpdateCatalogue(itemId, quantity);
                     if (success) {
+
+                        // sends a response back to the endpoint that the request has been completed
                         sendResponse(exchange, 200, "{\"message\":\"Stock deducted successfully\"}");
                     } else {
                         sendResponse(exchange, 400, "{\"error\":\"Failed to deduct stock\"}");
@@ -150,25 +209,34 @@ public class IPOSAPIServer {
 
     // ORDER HANDLER METHODS
 
+    /**
+     * Handles POST /api/orders/place
+     * Places a new order for a merchant. Parses the merchant ID and items
+     * array from the request body, validates the merchant account, calculates
+     * the discount rate and delegates to OrderService.
+     */
     class PlaceOrderHandler implements HttpHandler {
         @Override
         public void handle(HttpExchange exchange) throws IOException {
             if ("POST".equals(exchange.getRequestMethod())) {
                 try {
+                    // reads the message send by the calling endpoint
                     String body = readBody(exchange);
+
+                    // extracts the merchant id that the order belongs to
                     String merchantId = extractValue(body, "merchantId");
 
-                    // Get merchant account
+                    // Gets the merchant account
                     MerchantAccount account = accountService.getAccount(merchantId);
                     if (account == null) {
                         sendResponse(exchange, 400, "{\"error\":\"Merchant not found: " + merchantId + "\"}");
                         return;
                     }
 
-                    // Generate order ID
+                    // Generates an order ID using the current timestamp
                     String orderId = "ORD_" + System.currentTimeMillis();
 
-                    // Parse items array
+                    // Parses the items array in the order JSON
                     java.util.List<OrderItem> orderItems = new java.util.ArrayList<>();
                     int itemsStart = body.indexOf("\"items\"");
                     if (itemsStart != -1) {
@@ -181,25 +249,22 @@ public class IPOSAPIServer {
                             String itemId  = extractValue("{" + cleaned + "}", "itemId");
                             String qtyStr  = extractValue("{" + cleaned + "}", "quantity");
                             if (!itemId.isEmpty() && !qtyStr.isEmpty()) {
+
+                                // Parses rhe quanity and price of each item and stores it as an individual order item, for picking
                                 int qty      = Integer.parseInt(qtyStr);
                                 double price = catalogueService.getItemPrice(itemId);
-
-                                System.out.println("=== PlaceOrder Debug ===");
-                                System.out.println("itemId: [" + itemId + "]");
-                                System.out.println("qty: " + qty);
-                                System.out.println("price: " + price);
                                 orderItems.add(new OrderItem(itemId, qty, price));
                             }
                         }
                     }
 
-                    // Build order object
+                    // Builds an order and places it with the merchant's discount rate
                     Order order = new Order(orderId, merchantId, java.time.LocalDate.now(), orderItems);
 
-                    // Get discount rate
+                    // Gets discount rate
                     double discountRate = accountService.getDiscountRate(merchantId);
 
-                    // Place order
+                    // Places order and sends a response back to the calling endpoint that the request is complete
                     boolean success = orderService.placeOrder(order, account, discountRate);
                     if (success) {
                         sendResponse(exchange, 200, "{\"orderId\":\"" + orderId + "\"}");
@@ -215,14 +280,23 @@ public class IPOSAPIServer {
         }
     }
 
+    /**
+     * Handles GET /api/orders/track?orderID=xxx
+     * Returns tracking details for a specific order including status,
+     * dispatch date, courier name and expected delivery date.
+     */
     class TrackDeliveryHandler implements HttpHandler {
         @Override
         public void handle(HttpExchange exchange) throws IOException {
             if ("GET".equals(exchange.getRequestMethod())) {
                 try {
                     String query = exchange.getRequestURI().getQuery();
+
+                    // retrieves the order ID and the details of the order
                     String orderId = extractQueryParam(query, "orderID");
                     String tracking = orderService.getOrderDetailsText(orderId);
+
+                    // creates a response, sending the order details of that order through to the endpoint
                     sendResponse(exchange, 200, "{\"tracking\":\"" + escapeJson(tracking) + "\"}");
                 } catch (Exception e) {
                     sendResponse(exchange, 500, "{\"error\":\"" + e.getMessage() + "\"}");
@@ -233,6 +307,11 @@ public class IPOSAPIServer {
         }
     }
 
+
+    /**
+     * Handles GET /api/orders/balance?merchantID=xxx
+     * Returns the current outstanding balance for a merchant.
+     */
     class GetBalanceHandler implements HttpHandler {
         @Override
         public void handle(HttpExchange exchange) throws IOException {
@@ -251,6 +330,10 @@ public class IPOSAPIServer {
         }
     }
 
+    /**
+     * Handles GET /api/orders/invoice?orderID=xxx
+     * Returns the invoice details for a specific order as a formatted string.
+     */
     class GetInvoiceHandler implements HttpHandler {
         @Override
         public void handle(HttpExchange exchange) throws IOException {
@@ -269,6 +352,11 @@ public class IPOSAPIServer {
         }
     }
 
+    /**
+     * Handles GET /api/orders/status?merchantID=xxx&status=xxx
+     * Checks whether a merchant's account status matches the given status string.
+     * Returns { "matches": true } or { "matches": false }.
+     */
     class GetAccountStatusHandler implements HttpHandler {
         @Override
         public void handle(HttpExchange exchange) throws IOException {
@@ -289,6 +377,10 @@ public class IPOSAPIServer {
         }
     }
 
+    /**
+     * Handles GET /api/orders/discount?merchantID=xxx
+     * Returns the applicable discount rate percentage for a merchant.
+     */
     class GetDiscountPlanHandler implements HttpHandler {
         @Override
         public void handle(HttpExchange exchange) throws IOException {
@@ -307,6 +399,10 @@ public class IPOSAPIServer {
         }
     }
 
+    /**
+     * Handles GET /api/orders/discount?merchantID=xxx
+     * Returns the applicable discount rate percentage for a merchant.
+     */
     class GetCreditLimitHandler implements HttpHandler {
         @Override
         public void handle(HttpExchange exchange) throws IOException {
@@ -327,22 +423,30 @@ public class IPOSAPIServer {
 
     // MEMBERSHIP HANDLER METHOD
 
+    /**
+     * Handles POST /api/membership/request
+     * Submits a new commercial membership application on behalf of IPOS-CA.
+     * Inserts the application into the commercial_applications table with
+     * a status of pending for review by InfoPharma staff.
+     */
     class RequestMembershipHandler implements HttpHandler {
         @Override
         public void handle(HttpExchange exchange) throws IOException {
             if ("POST".equals(exchange.getRequestMethod())) {
                 try {
+                    // reads the JSON sent by the IPOS-PU endpoint, and extract the strings related to the membership account
                     String body = readBody(exchange);
                     String companyName = extractValue(body, "companyName");
-                    String registrationNumber = extractValue(body, "companyRegNumber");  // changed
-                    String directors = extractValue(body, "directorName");               // changed
+                    String registrationNumber = extractValue(body, "companyRegNumber");
+                    String directors = extractValue(body, "directorName");
                     String businessType = extractValue(body, "businessType");
                     String address = extractValue(body, "address");
-                    String email = extractValue(body, "userEmail");                      // changed
+                    String email = extractValue(body, "userEmail");
                     String phone = extractValue(body, "phone");
                     String fax = extractValue(body, "fax");
                     boolean preferPhysicalMail = "true".equals(extractValue(body, "preferPhysicalMail"));
 
+                    // Connects to the database and insearts the extracted details as a new record in the commercial membership table
                     DBConnection db = new DBConnection();
                     int rows = db.update(
                             "INSERT INTO commercial_applications " +
@@ -354,6 +458,7 @@ public class IPOSAPIServer {
                     );
 
                     if (rows > 0) {
+                        // sends a response back to the IPOS-PU endpoint that the submission of the membership application was successful
                         sendResponse(exchange, 200, "{\"success\":true}");
                     } else {
                         sendResponse(exchange, 400, "{\"success\":false}");
@@ -367,16 +472,25 @@ public class IPOSAPIServer {
         }
     }
 
+    /**
+     * Extracts a value from a JSON string by key.
+     * Handles both string values (quoted) and primitive values (boolean, number).
+     * Note: This is a simple parser — does not handle nested objects or arrays.
+     *
+     * @param json the JSON string to parse
+     * @param key  the key whose value to extract
+     * @return the extracted value as a string, or empty string if not found
+     */
     private String extractValue(String json, String key) {
         String search = "\"" + key + "\"";
         int keyIndex = json.indexOf(search);
         if (keyIndex == -1) return "";
 
-        // Find the colon after the key
+        // Finds the colon after the key
         int colonIndex = json.indexOf(":", keyIndex + search.length());
         if (colonIndex == -1) return "";
 
-        // Skip whitespace after colon
+        // Skips whitespace after colon
         int start = colonIndex + 1;
         while (start < json.length() && Character.isWhitespace(json.charAt(start))) {
             start++;
@@ -384,7 +498,7 @@ public class IPOSAPIServer {
 
         if (start >= json.length()) return "";
 
-        // String value
+        // Extract quoted String value
         if (json.charAt(start) == '"') {
             start++;
             int end = json.indexOf("\"", start);
@@ -392,7 +506,7 @@ public class IPOSAPIServer {
             return json.substring(start, end);
         }
 
-        // Boolean or number value
+        // extract boolean or number value
         int end = start;
         while (end < json.length() &&
                 json.charAt(end) != ',' &&
@@ -404,6 +518,15 @@ public class IPOSAPIServer {
         return json.substring(start, end).trim();
     }
 
+    /**
+     * Extracts a query parameter value from a URL query string.
+     * For example, given "merchantID=M001&status=normal" and key "merchantID",
+     * returns "M001".
+     *
+     * @param query the URL query string
+     * @param key   the parameter name to extract
+     * @return the parameter value, or empty string if not found
+     */
     private String extractQueryParam(String query, String key) {
         if (query == null) return "";
         String[] pairs = query.split("&");
@@ -416,6 +539,13 @@ public class IPOSAPIServer {
         return "";
     }
 
+    /**
+     * Escapes special characters in a string for safe inclusion in a JSON response.
+     * Handles backslashes, quotes, newlines and carriage returns.
+     *
+     * @param value the string to escape
+     * @return the escaped string, or empty string if the value is null
+     */
     private String escapeJson(String value) {
         if (value == null) return "";
         return value.replace("\\", "\\\\")

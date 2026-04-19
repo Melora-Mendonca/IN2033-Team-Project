@@ -27,6 +27,18 @@ import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Screen that displays the pharmaceutical product catalogue.
+ * Shows all active catalogue items in a searchable table.
+ *
+ * The view adapts based on the logged-in user's role:
+ * - Administrator — full table with stock limit, all action buttons enabled
+ * - Director of Operations — full table with stock limit, read-only
+ * - All other roles (Merchant view) — stock limit column hidden, read-only
+ *
+ * Administrators can also use a "View As" dropdown to preview
+ * how the catalogue appears to different roles.
+ */
 public class Catalogue extends BaseFrame implements Refreshable {
 
     private final List<CatalogueItem> Items = new ArrayList<>();
@@ -43,6 +55,13 @@ public class Catalogue extends BaseFrame implements Refreshable {
     private JButton searchButton;
     private JButton deliveryButton;
 
+    /**
+     * Constructor — builds the catalogue screen and loads all active items.
+     *
+     * @param fullname the full name of the logged-in user
+     * @param role the role of the logged-in user
+     * @param router the screen router used for navigation
+     */
     public Catalogue(String fullname, String role, ScreenRouter router) {
         super(fullname, role, "Catalogue", router);
         buildContent();
@@ -50,35 +69,50 @@ public class Catalogue extends BaseFrame implements Refreshable {
         updateTableForSelectedRole();
     }
 
+    /**
+     * Returns the title displayed in the page header.
+     *
+     * @return the header title string
+     */
     @Override
     protected String getHeaderTitle() {
         return "Catalogue";
     }
 
+    /**
+     * Builds and arranges all UI components for this screen.
+     * Includes a search bar, optional role picker, catalogue table
+     * and role-sensitive action buttons.
+     */
     private void buildContent() {
         CenterPanel.setLayout(new BorderLayout(0, 0));
         CenterPanel.setBackground(new Color(245, 247, 250));
 
-        // ── TOP BAR ──────────────────────────────────────────
+        // creates the top bar with the search panel and search buttons
         JPanel topControlPanel = new JPanel(new BorderLayout());
         topControlPanel.setBackground(new Color(17, 24, 39));
         topControlPanel.setBorder(new EmptyBorder(10, 16, 10, 16));
 
+        // Adds a panel for the search button
         JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
         searchPanel.setBackground(new Color(17, 24, 39));
 
+        // Adds a label to the search bar
         JLabel searchLabel = new JLabel("Search by Item ID or Keyword:");
         searchLabel.setForeground(Color.WHITE);
         searchLabel.setFont(new Font("Segoe UI", Font.PLAIN, 12));
 
+        // textfield stores the search value to use for the search
         searchField   = new JTextField(20);
         searchField.setFont(new Font("Segoe UI", Font.PLAIN, 12));
 
+        // Adds buttons to perform the search
         searchButton  = new JButton("Search");
         refreshButton = new JButton("Refresh");
         styleBtn(searchButton);
         styleBtn(refreshButton);
 
+        // Adds functionality to the search button to identify the requested record, and display it on it's own
         searchButton.addActionListener(e  -> searchCatalogue());
         refreshButton.addActionListener(e -> {
             searchField.setText("");
@@ -94,6 +128,7 @@ public class Catalogue extends BaseFrame implements Refreshable {
         JPanel rolePanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
         rolePanel.setBackground(new Color(17, 24, 39));
 
+        // Allows the admin user to be able to view the catalogue as different users
         if (role.equals("Administrator")) {
             JLabel roleLabel = new JLabel("View As:");
             roleLabel.setForeground(Color.WHITE);
@@ -110,8 +145,10 @@ public class Catalogue extends BaseFrame implements Refreshable {
         topControlPanel.add(searchPanel, BorderLayout.WEST);
         topControlPanel.add(rolePanel,   BorderLayout.EAST);
 
-        // ── TABLE ─────────────────────────────────────────────
+
         tableModel     = new DefaultTableModel();
+
+        // A new table is created to store all of the catalogue records from the database
         catalogueTable = new JTable(tableModel);
         catalogueTable.setFont(new Font("Segoe UI", Font.PLAIN, 12));
         catalogueTable.setRowHeight(30);
@@ -122,10 +159,11 @@ public class Catalogue extends BaseFrame implements Refreshable {
         catalogueTable.getTableHeader().setBackground(new Color(17, 24, 39));
         catalogueTable.getTableHeader().setForeground(Color.WHITE);
 
+        // Sroll pane to scroll the table
         JScrollPane scrollPane = new JScrollPane(catalogueTable);
         scrollPane.setBorder(BorderFactory.createEmptyBorder());
 
-        // ── BOTTOM BUTTONS ────────────────────────────────────
+        // creates a bottom panel with action buttons and status label
         JPanel bottomPanel = new JPanel(new BorderLayout());
         bottomPanel.setBackground(new Color(17, 24, 39));
         bottomPanel.setBorder(new EmptyBorder(10, 12, 10, 12));
@@ -133,16 +171,19 @@ public class Catalogue extends BaseFrame implements Refreshable {
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
         buttonPanel.setBackground(new Color(17, 24, 39));
 
+        // Adds action buttons to modify the catalogue at the base of the catalogue
         addButton      = new JButton("Add Item");
         updateButton   = new JButton("Update Item");
         deleteButton   = new JButton("Delete Item");
         deliveryButton = new JButton("Record Delivery");
 
+        // calls the style button method to style the buttons
         styleBtn(addButton);
         styleBtn(updateButton);
         styleBtn(deleteButton);
         styleBtn(deliveryButton);
 
+        // adds functionality to the buttons so that they perform tasks or redirect to differnt pages when clicked
         addButton.addActionListener(e -> router.goTo(AppFrame.SCREEN_MANAGE_ITEM_ADD));
         updateButton.addActionListener(e -> router.goTo(AppFrame.SCREEN_MANAGE_ITEM_EDIT));
         deleteButton.addActionListener(e -> router.goTo(AppFrame.SCREEN_MANAGE_ITEM_DELETE));
@@ -165,7 +206,11 @@ public class Catalogue extends BaseFrame implements Refreshable {
         CenterPanel.add(bottomPanel,     BorderLayout.SOUTH);
     }
 
-    // ── DATA METHODS ─────────────────────────────────────────
+
+    /**
+     * Loads all active catalogue items from the database into the Items list.
+     * Only items where is_active = 1 are loaded.
+     */
     private void loadData() {
         Items.clear();
         try {
@@ -192,6 +237,11 @@ public class Catalogue extends BaseFrame implements Refreshable {
         }
     }
 
+    /**
+     * Updates the table columns and button availability based on the
+     * currently selected role in the dropdown (or the logged-in role
+     * for non-admin users).
+     */
     private void updateTableForSelectedRole() {
         String selectedRole;
 
@@ -216,6 +266,11 @@ public class Catalogue extends BaseFrame implements Refreshable {
         }
     }
 
+    /**
+     * Configures the table for Administrator view.
+     * Shows all 8 columns including stock limit.
+     * All action buttons are enabled.
+     */
     private void setAdminView() {
         String[] columns = {
                 "Item ID", "Description", "Package Type", "Unit",
@@ -225,6 +280,11 @@ public class Catalogue extends BaseFrame implements Refreshable {
         statusLabel.setText("Admin view — " + Items.size() + " items");
     }
 
+    /**
+     * Configures the table for Director of Operations view.
+     * Shows all 8 columns including stock limit.
+     * All action buttons are disabled — read-only.
+     */
     private void setManagerView() {
         String[] columns = {
                 "Item ID", "Description", "Package Type", "Unit",
@@ -234,6 +294,11 @@ public class Catalogue extends BaseFrame implements Refreshable {
         statusLabel.setText("Manager view — read only");
     }
 
+    /**
+     * Configures the table for Merchant view.
+     * Shows 7 columns — the stock limit column is hidden.
+     * All action buttons are disabled — read-only.
+     */
     private void setMerchantView() {
         String[] columns = {
                 "Item ID", "Description", "Package Type", "Unit",
@@ -243,6 +308,18 @@ public class Catalogue extends BaseFrame implements Refreshable {
         statusLabel.setText("Merchant view — stock limit hidden");
     }
 
+    /**
+     * Builds the table with the given columns and item list.
+     * Enables or disables action buttons based on the role permissions.
+     * Shows the stock limit column only when 8 columns are specified.
+     *
+     * @param columns the column headers to display
+     * @param canAdd whether the Add Item button should be enabled
+     * @param canUpdate  whether the Update Item button should be enabled
+     * @param canDelete  whether the Delete Item button should be enabled
+     * @param canRecord  whether the Record Delivery button should be enabled
+     * @param items the list of catalogue items to display
+     */
     private void buildTable(String[] columns, boolean canAdd, boolean canUpdate,
                             boolean canDelete, boolean canRecord,
                             List<CatalogueItem> items) {
@@ -284,6 +361,12 @@ public class Catalogue extends BaseFrame implements Refreshable {
         deliveryButton.setEnabled(canRecord);
     }
 
+    /**
+     * Filters the catalogue table based on the search field text.
+     * Matches against item ID and description.
+     * Restores the full table if the search field is empty.
+     * Applies the correct columns for the currently selected role view.
+     */
     private void searchCatalogue() {
         String searchText = searchField.getText().trim().toLowerCase();
 
@@ -292,6 +375,7 @@ public class Catalogue extends BaseFrame implements Refreshable {
             return;
         }
 
+        // Filters items matching the search text
         List<CatalogueItem> filtered = new ArrayList<>();
         for (CatalogueItem item : Items) {
             if (item.getItemId().toLowerCase().contains(searchText) ||
@@ -300,6 +384,7 @@ public class Catalogue extends BaseFrame implements Refreshable {
             }
         }
 
+        // Applies the correct column set for the selected role view
         String selectedRole = roleComboBox.getSelectedItem().toString();
 
         if (selectedRole.equals("Admin") || selectedRole.equals("Administrator")) {
@@ -326,7 +411,11 @@ public class Catalogue extends BaseFrame implements Refreshable {
         statusLabel.setText(filtered.size() + " item(s) found");
     }
 
-    // ── HELPERS ──────────────────────────────────────────────
+    /**
+     * Applies a consistent visual style to an action button.
+     *
+     * @param btn the button to style
+     */
     private void styleBtn(JButton btn) {
         btn.setBackground(new Color(30, 70, 90));
         btn.setForeground(Color.WHITE);
@@ -335,6 +424,11 @@ public class Catalogue extends BaseFrame implements Refreshable {
         btn.setFont(new Font("Segoe UI", Font.PLAIN, 12));
     }
 
+    /**
+     * Called by the screen router when this screen becomes visible.
+     * Clears the search field, reloads data from the database
+     * and refreshes the table for the current role view.
+     */
     @Override
     public void onShow() {
         searchField.setText("");
