@@ -13,7 +13,7 @@ public abstract class DiscountPlan {
     public final String planName;
 
     /**
-     * Constructor — sets the name of the discount plan.
+     * Constructor ; sets the name of the discount plan.
      *
      * @param planName the name of the discount plan
      */

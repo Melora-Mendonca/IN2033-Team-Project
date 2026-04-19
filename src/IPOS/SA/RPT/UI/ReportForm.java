@@ -487,7 +487,7 @@ public class ReportForm extends BaseFrame {
             java.awt.print.PrinterJob job = java.awt.print.PrinterJob.getPrinterJob();
             job.setJobName("InfoPharma — " + currentReportType);
 
-            // Page format — landscape A4
+            // Page format; landscape A4
             java.awt.print.PageFormat pf = job.defaultPage();
             pf.setOrientation(java.awt.print.PageFormat.LANDSCAPE);
 
@@ -502,7 +502,7 @@ public class ReportForm extends BaseFrame {
                 double pageHeight = pageFormat.getImageableHeight();
 
                 if (pageIndex == 0) {
-                    // Page 1 — title + chart
+                    // Page 1; title + chart
                     // Title
                     g2.setColor(new Color(14, 37, 48));
                     g2.fillRect(0, 0, (int) pageWidth, 36);
@@ -530,7 +530,7 @@ public class ReportForm extends BaseFrame {
                 }
 
                 if (pageIndex == 1) {
-                    // Page 2 — formatted text
+                    // Page 2; formatted text
                     g2.setColor(new Color(14, 37, 48));
                     g2.fillRect(0, 0, (int) pageWidth, 36);
                     g2.setColor(Color.WHITE);

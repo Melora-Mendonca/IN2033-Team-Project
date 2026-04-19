@@ -301,7 +301,7 @@ public class OrderService {
                 "UPDATE merchant SET outstanding_balance = outstanding_balance + ? " +
                         "WHERE merchant_id = ?", finalAmount, merchantId);
 
-        // NOTE: Stock NOT reduced here — reduced when warehouse picks
+        // NOTE: Stock NOT reduced here; reduced when warehouse picks
         InvoiceService invoiceService = new InvoiceService();
         invoiceService.generateInvoiceForOrder(orderId);
 

@@ -11,8 +11,8 @@ import java.awt.*;
 /**
  * Form screen for creating and managing staff accounts in IPOS-SA.
  * Operates in two modes:
- * - CREATE — shows a blank form with password fields to create a new staff account
- * - MANAGE — loads an existing staff account by ID for viewing, updating or deleting
+ * - CREATE ; shows a blank form with password fields to create a new staff account
+ * - MANAGE ; loads an existing staff account by ID for viewing, updating or deleting
  *
  * Accessible to Administrators only.
  */
@@ -38,12 +38,12 @@ public class StaffAccountManagement extends BaseFrame implements Refreshable {
     private JLabel messageLabel;
 
     /**
-     * Constructor — opens the form without a pre-loaded staff ID.
+     * Constructor ; opens the form without a pre-loaded staff ID.
      * Used when navigating directly from the nav menu.
      *
      * @param fullname the full name of the logged-in user
      * @param role the role of the logged-in user
-     * @param mode the form mode — "CREATE" or "MANAGE"
+     * @param mode the form mode ; "CREATE" or "MANAGE"
      * @param router the screen router used for navigation
      */
     public StaffAccountManagement(String fullname, String role, String mode, ScreenRouter router) {
@@ -51,12 +51,12 @@ public class StaffAccountManagement extends BaseFrame implements Refreshable {
     }
 
     /**
-     * Constructor — opens the form and auto-loads a staff account.
+     * Constructor ; opens the form and auto-loads a staff account.
      * Used when navigating from the staff list with a selected staff member.
      *
      * @param fullname the full name of the logged-in user
      * @param role the role of the logged-in user
-     * @param mode the form mode — "CREATE" or "MANAGE"
+     * @param mode the form mode ; "CREATE" or "MANAGE"
      * @param staffId the staff ID to auto-load (can be null)
      * @param router the screen router used for navigation
      */
@@ -247,7 +247,7 @@ public class StaffAccountManagement extends BaseFrame implements Refreshable {
     }
 
     /**
-     * Adds action buttons for CREATE mode — Create Account, Clear and Back.
+     * Adds action buttons for CREATE mode ; Create Account, Clear and Back.
      *
      * @param actionsCard the panel to add the buttons to
      */
@@ -268,7 +268,7 @@ public class StaffAccountManagement extends BaseFrame implements Refreshable {
     }
 
     /**
-     * Adds action buttons for MANAGE mode —
+     * Adds action buttons for MANAGE mode ;
      * Load Account, Update Account, Delete Account, Clear and Back.
      *
      * @param actionsCard the panel to add the buttons to
@@ -322,7 +322,7 @@ public class StaffAccountManagement extends BaseFrame implements Refreshable {
             if (username.contains(" ")) { setMessage("Username cannot contain spaces.", false); return; }
             if (username.length() < 3)  { setMessage("Username must be at least 3 characters.", false); return; }
 
-            // Name format — letters only
+            // Name format ; letters only
             if (!firstName.matches("[a-zA-Z\\s-]+")) { setMessage("First name can only contain letters.", false); return; }
             if (!surName.matches("[a-zA-Z\\s-]+"))   { setMessage("Surname can only contain letters.", false); return; }
 
@@ -372,7 +372,7 @@ public class StaffAccountManagement extends BaseFrame implements Refreshable {
         // Username format check
         if (username.contains(" ")) { setMessage("Username cannot contain spaces.", false); return; }
 
-        // Name format — letters only
+        // Name format ; letters only
         if (!firstName.matches("[a-zA-Z\\s-]+")) { setMessage("First name can only contain letters.", false); return; }
         if (!surName.matches("[a-zA-Z\\s-]+"))   { setMessage("Surname can only contain letters.", false); return; }
 
@@ -616,9 +616,9 @@ public class StaffAccountManagement extends BaseFrame implements Refreshable {
 
     /**
      * Called by the screen router when this screen becomes visible.
-     * In MANAGE mode — reads the selected staff ID from AppFrame
+     * In MANAGE mode ; reads the selected staff ID from AppFrame
      * and auto-loads the staff account.
-     * In CREATE mode — clears the form ready for new input.
+     * In CREATE mode ; clears the form ready for new input.
      */
     @Override
     public void onShow() {

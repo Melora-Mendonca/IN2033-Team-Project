@@ -15,6 +15,7 @@ import java.awt.*;
 import java.util.List;
 import java.awt.Dialog;
 
+// Records payments against invoices; also hosts debtors list and payment history dialogs
 public class PaymentRecording extends BaseFrame implements Refreshable {
 
     private JTable invoiceTable;

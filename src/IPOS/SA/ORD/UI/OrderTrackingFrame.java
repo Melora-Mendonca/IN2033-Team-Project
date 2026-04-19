@@ -12,6 +12,7 @@ import javax.swing.table.DefaultTableCellRenderer;
 import java.awt.*;
 import java.util.List;
 
+// Lets warehouse/delivery staff view and update dispatch details for orders
 public class OrderTrackingFrame extends BaseFrame {
 
     private final OrderService orderService;

@@ -1,5 +1,6 @@
 package IPOS.SA.ORD.Model;
 
+// Single line item within an order
 public class OrderItem {
 
     private final String itemId;

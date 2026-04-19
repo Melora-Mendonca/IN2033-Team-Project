@@ -3,6 +3,7 @@ package IPOS.SA.ORD.Model;
 import java.time.LocalDate;
 import java.util.List;
 
+// Represents an invoice tied to an order; status updates automatically on payment
 public class Invoice {
 
     private final String invoiceId;
@@ -108,7 +109,7 @@ public class Invoice {
     // Setters (for fields that can change)
     public void setAmountPaid(double amountPaid) {
         this.amountPaid = amountPaid;
-        // Update status based on payment
+        // derive status from payment amount
         if (this.amountPaid >= totalAmount) {
             this.status = "paid";
         } else if (this.amountPaid > 0) {

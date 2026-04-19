@@ -17,6 +17,7 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.util.List;
 
+// Table of all merchant orders; supports status filtering and order detail drill-down
 public class OrderManagement extends BaseFrame implements Refreshable {
 
     private final OrderService orderService;
@@ -29,12 +30,12 @@ public class OrderManagement extends BaseFrame implements Refreshable {
     private JComboBox<String> statusFilter;
     private JLabel messageLabel;
 
-    // Called from nav — no merchant filter
+    // Called from nav; no merchant filter
     public OrderManagement(String fullname, String role, ScreenRouter router) {
         this(fullname, role, null, router);
     }
 
-    // Called from MerchantList — filtered by merchant
+    // Called from MerchantList; filtered by merchant
     public OrderManagement(String fullname, String role, String merchantId, ScreenRouter router) {
         super(fullname, role, "Order Management", router);
         this.merchantId    = merchantId;

@@ -9,6 +9,7 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.util.List;
 
+// Overview screen for Director of Operations: turnover, invoices, stock KPIs + low-stock table
 public class ManagerDashboard extends BaseFrame implements Refreshable{
 
     private final ManagerService dashboardService;

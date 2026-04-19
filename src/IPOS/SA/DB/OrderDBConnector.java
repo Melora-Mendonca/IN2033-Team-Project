@@ -8,6 +8,7 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
+// Low-level JDBC operations for the order and orderitem tables
 public class OrderDBConnector {
 
     // Saves a new order and its items to the database
@@ -134,7 +135,7 @@ public class OrderDBConnector {
         }
     }
 
-    // Reduces stock when order is placed
+    // Decrements catalogue availability when an order is placed
     public void reduceStock(String itemId, int quantity) {
         try {
             Connection conn = new DBConnection().getConn();

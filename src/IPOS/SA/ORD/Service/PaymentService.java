@@ -17,7 +17,7 @@ public class PaymentService {
         this.invoiceDB = new InvoiceDBConnector();
     }
 
-    // Records a payment against an invoice
+    // Records a payment, updates invoice status, and reduces merchant outstanding balance
     public void recordPayment(String invoiceId, double amount,
                               String method, String reference) throws Exception {
 
@@ -60,7 +60,7 @@ public class PaymentService {
                 amount, merchantId
         );
 
-        // Check if account should be restored from suspended/in_default
+        // auto-restore account if balance cleared
         ResultSet merchantRs = db.query(
                 "SELECT outstanding_balance, account_status FROM merchant WHERE merchant_id = ?",
                 merchantId
@@ -150,7 +150,7 @@ public class PaymentService {
         return rows;
     }
 
-    // Gets debtors — merchants with overdue invoices for reminders screen
+    // Gets debtors; merchants with overdue invoices for reminders screen
     public List<Object[]> getDebtors() throws Exception {
         List<Object[]> rows = new ArrayList<>();
 

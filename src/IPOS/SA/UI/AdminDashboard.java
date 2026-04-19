@@ -11,6 +11,7 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.util.List;
 
+// Overview screen for Administrators: KPI cards + recent orders + low-stock table
 public class AdminDashboard extends BaseFrame implements Refreshable{
 
     private final AdminService dashboardService;

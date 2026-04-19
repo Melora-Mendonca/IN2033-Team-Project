@@ -264,7 +264,7 @@ public class CommercialAppForm extends BaseFrame {
         if (confirm != JOptionPane.YES_OPTION) return;
 
         try {
-            // Process the application — use 1 as reviewed_by placeholder
+            // Process the application; use 1 as reviewed_by placeholder
             appService.processApplication(appId, decision, notes, 1);
 
             if (decision.equals("approved")) {
@@ -336,7 +336,7 @@ public class CommercialAppForm extends BaseFrame {
 
         } catch (Exception e) {
             System.err.println("Could not notify PU system: " + e.getMessage());
-            // Don't throw — PU notification failure shouldn't block the approval
+            // Don't throw; PU notification failure shouldn't block the approval
         }
     }
 

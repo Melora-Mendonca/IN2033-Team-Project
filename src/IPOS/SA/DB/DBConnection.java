@@ -10,6 +10,7 @@ public class DBConnection {
 
     private Connection conn = null;
 
+    // Retries up to 5 times with 3s delay; handles slow Docker container startup
     public DBConnection() {
         int retries = 5;
         while (retries > 0) {
@@ -27,7 +28,7 @@ public class DBConnection {
         Connection con = null;
 
         String userName = System.getenv().getOrDefault("DB_USER", "root");
-        String pwd = System.getenv().getOrDefault("DB_PASSWORD", "Karkala1998?");
+        String pwd = System.getenv().getOrDefault("DB_PASSWORD", "Kamaal19");
         String dbName = System.getenv().getOrDefault("DB_NAME", "ipos_sa");
         String serverName = System.getenv().getOrDefault("DB_HOST", "localhost");
         String portNumber = System.getenv().getOrDefault("DB_PORT", "3306");
@@ -52,6 +53,7 @@ public class DBConnection {
         return con;
     }
 
+    // Parameterised SELECT; use for all reads
     public ResultSet query(String sql, Object... params) throws SQLException {
         PreparedStatement stmt = conn.prepareStatement(sql);
 
@@ -63,6 +65,7 @@ public class DBConnection {
         return stmt.executeQuery();
     }
 
+    // Parameterised INSERT/UPDATE/DELETE; returns rows affected
     public int update(String sql, Object... params) throws SQLException {
         PreparedStatement stmt = conn.prepareStatement(sql);
 

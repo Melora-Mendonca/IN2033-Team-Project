@@ -5,6 +5,7 @@ import IPOS.SA.ORD.OrderStatus;
 import java.time.LocalDate;
 import java.util.List;
 
+// Represents a merchant's purchase order and its fulfilment state
 public class Order {
 
     private final String orderId;
@@ -52,6 +53,7 @@ public class Order {
         this.status = status;
     }
 
+    // Sum of all line totals before discount
     public double calculateOrderTotal() {
         double total = 0;
         for (OrderItem item : items) {

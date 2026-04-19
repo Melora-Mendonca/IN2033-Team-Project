@@ -7,6 +7,7 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
+// Low-level JDBC operations for the invoice table
 public class InvoiceDBConnector {
 
     // Saves a new invoice to the database
@@ -112,7 +113,7 @@ public class InvoiceDBConnector {
                 Invoice invoice = new Invoice(
                         rs.getString("invoice_id"),
                         orderId,
-                        null,                                          // merchantId — get from Order if needed
+                        null,                                          // merchantId; get from Order if needed
                         rs.getDate("invoice_date").toLocalDate(),
                         rs.getDate("due_date").toLocalDate(),
                         rs.getDouble("total_amount"),
@@ -130,7 +131,7 @@ public class InvoiceDBConnector {
         return null;
     }
 
-    // Updates invoice after payment recorded
+    // Updates amount_paid and derives status (paid / partial / unpaid)
     public void updatePayment(String invoiceId, double newAmountPaid) {
         try {
             Connection conn = new DBConnection().getConn();

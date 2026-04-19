@@ -8,6 +8,7 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.print.*;
 
+// Pop-up window showing full invoice details including line items and payment history
 public class InvoiceDisplayFrame extends JFrame {
 
     private static final Color DARK_NAVY = new Color(14, 37, 48);
@@ -46,7 +47,7 @@ public class InvoiceDisplayFrame extends JFrame {
         return header;
     }
 
-    // The printable invoice panel — returned so it can be sent to the printer too
+    // The printable invoice panel; returned so it can be sent to the printer too
     private JPanel buildInvoicePanel() {
         JPanel panel = new JPanel();
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));

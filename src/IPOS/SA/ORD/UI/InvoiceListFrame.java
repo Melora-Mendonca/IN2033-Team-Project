@@ -15,6 +15,7 @@ import javax.swing.table.TableRowSorter;
 import java.awt.*;
 import java.util.List;
 
+// Searchable/filterable table of all invoices with status badges
 public class InvoiceListFrame extends BaseFrame implements Refreshable {
 
     private final InvoiceService invoiceService;
@@ -27,12 +28,12 @@ public class InvoiceListFrame extends BaseFrame implements Refreshable {
     private JComboBox<String> statusFilter;
     private JLabel messageLabel;
 
-    // Called from nav — no merchant filter
+    // Called from nav; no merchant filter
     public InvoiceListFrame(String fullname, String role, ScreenRouter router) {
         this(fullname, role, null, router);
     }
 
-    // Called from MerchantList — filtered by merchant
+    // Called from MerchantList; filtered by merchant
     public InvoiceListFrame(String fullname, String role, String merchantId, ScreenRouter router) {
         super(fullname, role, "Invoice Management", router);
         this.merchantId     = merchantId;

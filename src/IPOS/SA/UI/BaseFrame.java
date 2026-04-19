@@ -10,6 +10,7 @@ import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
+// Shared layout: header, role-based sidebar nav, and a CenterPanel for each screen's content
 public abstract class BaseFrame extends JPanel {
 
     protected String fullname;
@@ -72,6 +73,7 @@ public abstract class BaseFrame extends JPanel {
         HeaderPanel.add(textPanel);
     }
 
+    // Nav items and sub-menus vary by role
     private void createNavPanel() {
         NavPanel = new JPanel();
         NavPanel.setLayout(new BoxLayout(NavPanel, BoxLayout.Y_AXIS));
@@ -225,6 +227,7 @@ public abstract class BaseFrame extends JPanel {
         NavPanel.add(Box.createVerticalStrut(4));
     }
 
+    // Routes sub-nav clicks to the correct screen constant
     protected void handleSubNavClick(String label) {
         switch (label) {
             case "View All Merchants":       router.goTo(AppFrame.SCREEN_MERCHANT_LIST); break;
